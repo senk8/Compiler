@@ -19,23 +19,35 @@ impl Token{
 #[derive(Debug)]
 pub struct Tokenizer<'a> {
     line: &'a str,
+    cur: &'a str,
+    pos: usize
 }
 
 impl<'a> Tokenizer<'a> {
     pub fn new(line:&'a str)->Tokenizer<'a>{
-        Tokenizer{ line:line }
+        Tokenizer{ line:line , cur:line, pos:0 }
     }
 
     //文字列を数字である限り消費する。
     pub fn consume_num_greedy(&mut self)->&str{
-        let first_non_num_idx = self.line.find(|c| !char::is_numeric(c)).unwrap_or(self.line.len());
-        let (head,tail) = self.line.split_at(first_non_num_idx);
-        self.line = tail;
+        let first_non_num_idx = self.cur.find(|c| !char::is_numeric(c)).unwrap_or(self.cur.len());
+        let (head,tail) = self.cur.split_at(first_non_num_idx);
+        self.cur = tail;
+        self.pos += first_non_num_idx;
         head
     }
 
     fn drop_head(&mut self)->(){
-        self.line = &self.line[1..];
+        self.cur = &self.cur[1..];
+        self.pos+=1;
+    }
+
+    fn error_at(&self,message:&str)->String{
+        let pos = self.pos ;
+        let mut buf = format!("\n{}\n",&self.line);
+        buf.push_str(&format!("{:>width$}","^",width = pos + 1));
+        buf.push_str(&format!("\n{}",message));
+        buf
     }
 }
 
@@ -44,15 +56,15 @@ impl<'a> Iterator for Tokenizer<'a>{
     type Item = Token;
     fn next(&mut self) -> Option<Token> {
         // triming a head of string
-        self.line = self.line.trim_start();
+        self.cur = self.cur.trim_start();
 
-        if self.line.is_empty(){
+        if self.cur.is_empty(){
             return None;
         }
 
-        match self.line.as_bytes()[0] {
+        match self.cur.as_bytes()[0] {
             b'+' => {
-                self.line = &self.line[1..];
+                self.drop_head();
                 Some(TkPlus)
             },
             b'-' => {
@@ -63,7 +75,7 @@ impl<'a> Iterator for Tokenizer<'a>{
                 let head = self.consume_num_greedy();
                 Some(TkNum(usize::from_str_radix(head,10).unwrap()))
             },
-            _ => panic!("unexpected token")
+            _ => panic!(self.error_at("unexpected token"))
         }
     }
 }
