@@ -6,7 +6,7 @@ pub enum Token{
     TkPlus,
     TkMinus
 }
-
+/*
 impl Token{
     pub fn expect_num(&self) -> usize{
         match self {
@@ -14,7 +14,17 @@ impl Token{
            _ => panic!("Error! expect number,found other")
         }
     }
+    pub fn consume(&self,op:char)->bool {
+        match self {
+            TkPlus => if op=='+' { return true } else { return false},
+            TkMinus => if op=='-' { return true } else { return false},
+            _ => panic!("Error! expect number,found other")
+        }
+        token = token->next;
+        return true;
+    }
 }
+*/
 
 #[derive(Debug)]
 pub struct Tokenizer<'a> {
@@ -23,11 +33,46 @@ pub struct Tokenizer<'a> {
     pos: usize
 }
 
+// used for parse
 impl<'a> Tokenizer<'a> {
     pub fn new(line:&'a str)->Tokenizer<'a>{
         Tokenizer{ line:line , cur:line, pos:0 }
     }
 
+    pub fn expect_num(&mut self) -> usize{
+        let token = self.next().unwrap();
+        match token {
+           TkNum(n) => n,
+           _ => panic!("Error! expect number,found other")
+        }
+    }
+
+    pub fn expect(&mut self,op:char) {
+        let token = self.next().unwrap();
+        match token {
+           TkPlus => if op!='+' { panic!("Error! expect number,found other")},
+           TkMinus => if op!='-' { panic!("Error! expect number,found other")},
+           _ => panic!("Error! expect number,found other")
+        }
+    }
+
+/*
+    pub fn consume(&mut self,op:char)->bool {
+        let token = self.next().unwrap();
+        match token {
+            TkPlus => if op=='+' { return true } else { return false},
+            TkMinus => if op=='-' { return true } else { return false},
+            _ => panic!("Error! expect number,found other")
+        }
+        token = token->next;
+        return true;
+    }
+*/
+}
+
+
+// used for tokenize
+impl<'a> Tokenizer<'a> { 
     //文字列を数字である限り消費する。
     pub fn consume_num_greedy(&mut self)->&str{
         let first_non_num_idx = self.cur.find(|c| !char::is_numeric(c)).unwrap_or(self.cur.len());
