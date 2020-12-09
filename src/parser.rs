@@ -23,13 +23,14 @@ pub enum Node{
     }
 }
 
+/*
 struct Parser<'a>{
-    tokenizer:Tokenizer<'a>
+    tokenizer:&'a Tokenizer<'a>
 }
 
-impl<'a> Tokenizer<'a> {
-    pub fn new(line:&'a str)->Tokenizer<'a>{
-        Tokenizer{ line:line , cur:line, pos:0 }
+impl<'a> Parser<'a> {
+    pub fn new(tk:&'a Tokenizer)->Parser<'a>{
+        Parser{ tokenizer:tk }
     }
 
     pub fn expect_num(&mut self) -> usize{
@@ -49,7 +50,7 @@ impl<'a> Tokenizer<'a> {
         }
     }
 }
-
+*/
 /*
     pub fn consume(&mut self,op:char)->bool {
         let token = self.next().unwrap();
