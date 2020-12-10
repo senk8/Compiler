@@ -25,8 +25,7 @@ pub enum Node{
     }
 }
 
-/*
-pub fn expect_num(tokenizer:&mut Tokenizer<'a>) -> usize{
+pub fn expect_num<'a>(tokenizer:&mut Tokenizer<'a>) -> usize{
     let token = tokenizer.next().unwrap();
     match token {
        TkNum(n) => n,
@@ -34,7 +33,7 @@ pub fn expect_num(tokenizer:&mut Tokenizer<'a>) -> usize{
     }
 }
 
-pub fn expect(tokenizer:&mut Tokenizer<'a>,op:char) {
+pub fn expect<'a>(tokenizer:&mut Tokenizer<'a>,op:char) {
     let token = tokenizer.next().unwrap();
     match token {
        TkPlus => if op!='+' { panic!("Error! expect number,found other")},
@@ -43,6 +42,7 @@ pub fn expect(tokenizer:&mut Tokenizer<'a>,op:char) {
     }
 }
 
+/*
 pub fn consume(&mut self,op:char)->bool {
     let token = self.next().unwrap();
     match token {

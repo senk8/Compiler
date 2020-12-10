@@ -13,11 +13,10 @@ fn main() {
     println!(".intel_syntax noprefix");
     println!(".globl main");
     println!("main:");
-    println!("  mov rax, {}" ,tokens_iter.expect_num());
+    println!("  mov rax, {}" ,expect_num(&mut tokens_iter));
 
     while let Some(token) = tokens_iter.next(){
-        //let n = tokens_iter.next().unwrap().expect_num();
-        let n = tokens_iter.expect_num();
+        let n = expect_num(&mut tokens_iter);
         match token {
             Token::TkPlus => println!("  add rax, {}", n),
             Token::TkMinus => println!("  sub rax, {}", n),
