@@ -1,58 +1,22 @@
 use crate::tokenizer::Token::*;
 
-#[derive(Debug)]
+#[derive(Debug,PartialEq)]
 pub enum Token{
     TkNum(usize),
     TkPlus,
     TkMinus
 }
 
-
 #[derive(Debug)]
 pub struct Tokenizer<'a> {
-    line: &'a str,
+    source: &'a str,//構文解析中にエラーを報告するためだけに使う
     cur: &'a str,
     pos: usize
 }
 
-// used for parse
-
-impl<'a> Tokenizer<'a> {
-    pub fn expect_num(&mut self) -> usize{
-        let token = self.next().unwrap();
-        match token {
-           TkNum(n) => n,
-           _ => panic!("Error! expect number,found other")
-        }
-    }
-
-    pub fn expect(&mut self,op:char) {
-        let token = self.next().unwrap();
-        match token {
-           TkPlus => if op!='+' { panic!("Error! expect number,found other")},
-           TkMinus => if op!='-' { panic!("Error! expect number,found other")},
-           _ => panic!("Error! expect number,found other")
-        }
-    }
-    /*
-    pub fn consume(&mut self,op:char)->bool {
-        let token = self.next().unwrap();
-        match token {
-            TkPlus => if op=='+' { return true } else { return false},
-            TkMinus => if op=='-' { return true } else { return false},
-            _ => panic!("Error! expect number,found other")
-        }
-        token = token->next;
-        return true;
-    }
-    */
-}
-
-
-// used for tokenize
 impl<'a> Tokenizer<'a> { 
-    pub fn new(line:&'a str)->Tokenizer<'a>{
-        Tokenizer{ line:line , cur:line, pos:0 }
+    pub fn new(source:&'a str)->Tokenizer<'a>{
+        Tokenizer{ source:source , cur:source, pos:0 }
     }
 
     //文字列を数字である限り消費する。
@@ -61,20 +25,22 @@ impl<'a> Tokenizer<'a> {
         let (head,tail) = self.cur.split_at(first_non_num_idx);
         self.cur = tail;
         self.pos += first_non_num_idx;
-        head
+        return head;
     }
 
+    //文字列の一番最初を取り除く
     fn drop_head(&mut self)->(){
         self.cur = &self.cur[1..];
         self.pos+=1;
     }
 
-    fn error_at(&self,message:&str)->String{
+    //字句解析中のエラーを報告する。
+    fn error_at(&self,description:&str)->String{
         let pos = self.pos ;
-        let mut buf = format!("\n{}\n",&self.line);
-        buf.push_str(&format!("{:>width$}","^",width = pos + 1));
-        buf.push_str(&format!("\n{}",message));
-        buf
+        let mut message = format!("\n{}\n",&self.source);
+        message.push_str(&format!("{:>width$}","^",width = pos + 1));
+        message.push_str(&format!("\n{}",description));
+        return message;
     }
 }
 

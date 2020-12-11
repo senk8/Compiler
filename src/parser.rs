@@ -1,6 +1,8 @@
 
+use crate::tokenizer::*;
 use crate::tokenizer::Tokenizer;
 use crate::tokenizer::Token::*;
+use core::iter::Peekable;
 
 #[derive(Debug)]
 pub enum Node{
@@ -25,32 +27,61 @@ pub enum Node{
     }
 }
 
-pub fn expect_num<'a>(tokenizer:&mut Tokenizer<'a>) -> usize{
-    let token = tokenizer.next().unwrap();
-    match token {
-       TkNum(n) => n,
-       _ => panic!("Error! expect number,found other")
+//TODO below functions are not appropritate because it is not correspond LA.
+
+pub fn expect_num<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>) -> usize{
+    //TODO TKNumでないとifの中に入れないのだが、中でパターンマッチしないとだめか？
+    if let TkNum(_) = tokenizer.peek().unwrap() {
+        match tokenizer.next().unwrap(){
+            TkNum(n) => n,
+            _ => panic!("Error! expect number,found other")
+        }
+    }else{
+        panic!("Error! expect number,found other");
     }
 }
 
-pub fn expect<'a>(tokenizer:&mut Tokenizer<'a>,op:char) {
-    let token = tokenizer.next().unwrap();
-    match token {
-       TkPlus => if op!='+' { panic!("Error! expect number,found other")},
-       TkMinus => if op!='-' { panic!("Error! expect number,found other")},
-       _ => panic!("Error! expect number,found other")
+pub fn expect<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>,expect_token:&Token)->(){
+    let token = tokenizer.peek().unwrap();
+
+    if token != expect_token {
+        panic!("Error! expect number,found other");
+    }
+
+    tokenizer.next();
+}
+
+pub fn consume<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>,expect_token:&Token)->bool {
+    let token = tokenizer.peek().unwrap();
+
+    if token != expect_token {
+        false
+    }else{
+        tokenizer.next();
+        true
     }
 }
 
 /*
-pub fn consume(&mut self,op:char)->bool {
-    let token = self.next().unwrap();
-    match token {
-        TkPlus => if op=='+' { return true } else { return false},
-        TkMinus => if op=='-' { return true } else { return false},
-        _ => panic!("Error! expect number,found other")
+pub fn expr()->Token{
+    let node = NdMul();
+
+    loop {
+        if comsume('+'){
+            node.lhs = Box::new(node);
+            node.rhs = Box::new(NdMul());
+        }else if consume('-') {
+            node.lhs = Box::new(node);
+            node.rhs = Box::new(NdMul());
+        }else{
+            break node;
+        }
     }
-    token = token->next;
-    return true;
 }
+*/
+
+
+/*
+Box::new(NdAdd(lhs,rhs))
+Box::new(NdNum(val))
 */

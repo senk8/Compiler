@@ -8,7 +8,7 @@ use self::parser::*;
 
 fn main() {
     let arg = env::args().nth(1).unwrap();
-    let mut tokens_iter = Tokenizer::new(arg.as_str());
+    let mut tokens_iter = Tokenizer::new(arg.as_str()).peekable();
 
     println!(".intel_syntax noprefix");
     println!(".globl main");
@@ -23,7 +23,7 @@ fn main() {
             Token::TkNum(_) => panic!("unexpected character!")
         }
     }
-
+    
     println!("  ret");
     return;
 }
