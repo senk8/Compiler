@@ -5,6 +5,36 @@ use std::env;
 use self::tokenizer::Tokenizer;
 use self::tokenizer::Token;
 use self::parser::*;
+use self::parser::Node::*;
+
+
+pub fn 
+
+pub fn gen(node:&Node)->() {
+    if let NdNum(n) = node {
+      println!("  push {}", n);
+      return;
+    }
+  
+    gen(*node.0);
+    gen(*node.1);
+  
+    println!("  pop rdi");
+    println!("  pop rax");
+ 
+    match node {
+        NdAdd(_,_) => println!("  add rax, rdi"),
+        NdSub(_,_) => println!("  sub rax, rdi"),
+        NdMul(_,_) => println!("  imul rax, rdi"),
+        NdDiv(_,_) => {
+            println!("  cqo");
+            println!("  idiv rdi");
+        },
+        _ => panic!("unexpected token")
+    }
+
+    println!("  push rax");
+  }
 
 fn main() {
     let arg = env::args().nth(1).unwrap();
@@ -20,7 +50,8 @@ fn main() {
         match token {
             Token::TkPlus => println!("  add rax, {}", n),
             Token::TkMinus => println!("  sub rax, {}", n),
-            Token::TkNum(_) => panic!("unexpected character!")
+            Token::TkNum(_) => panic!("unexpected character!"),
+            _ => panic!("undefined")
         }
     }
     

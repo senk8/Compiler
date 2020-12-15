@@ -4,7 +4,11 @@ use crate::tokenizer::Token::*;
 pub enum Token{
     TkNum(usize),
     TkPlus,
-    TkMinus
+    TkMinus,
+    TkMul,
+    TkDiv,
+    TkLc,
+    TkRc,
 }
 
 #[derive(Debug)]
