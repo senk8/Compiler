@@ -2,41 +2,56 @@ pub mod tokenizer;
 pub mod parser;
 
 use std::env;
+use std::num;
 use self::tokenizer::Tokenizer;
 use self::tokenizer::Token;
 use self::parser::*;
 use self::parser::Node::*;
 
 
-pub fn 
-
 pub fn gen(node:&Node)->() {
     if let NdNum(n) = node {
       println!("  push {}", n);
       return;
     }
-  
-    gen(*node.0);
-    gen(*node.1);
-  
-    println!("  pop rdi");
-    println!("  pop rax");
- 
-    match node {
-        NdAdd(_,_) => println!("  add rax, rdi"),
-        NdSub(_,_) => println!("  sub rax, rdi"),
-        NdMul(_,_) => println!("  imul rax, rdi"),
-        NdDiv(_,_) => {
-            println!("  cqo");
-            println!("  idiv rdi");
+
+    let mut opr = "";
+    match node{
+        NdAdd(lhs,rhs) => {
+            gen(&*lhs);
+            gen(&*rhs);
+            opr = "  add rax, rdi";
+        },
+        NdSub(lhs,rhs) => {
+            gen(&*lhs);
+            gen(&*rhs);
+            opr = "  sub rax, rdi";
+        },
+        NdMul(lhs,rhs) => {
+            gen(&*lhs);
+            gen(&*rhs);
+            opr="  imul rax, rdi";
+        },
+        NdDiv(lhs,rhs) => {
+            gen(&*lhs);
+            gen(&*rhs);
+            opr="  cqo\n  idiv rdi";
         },
         _ => panic!("unexpected token")
     }
-
+ 
+    println!("  pop rdi");
+    println!("  pop rax");
+    println!("{}",opr);
     println!("  push rax");
   }
 
 fn main() {
+    let arg = env::args().nth(1).unwrap();
+    let mut tokens_iter = Tokenizer::new(arg.as_str()).peekable();
+    let node=expr(&mut tokens_iter);
+    println!("{:?}",&node);
+    /*
     let arg = env::args().nth(1).unwrap();
     let mut tokens_iter = Tokenizer::new(arg.as_str()).peekable();
 
@@ -56,5 +71,6 @@ fn main() {
     }
     
     println!("  ret");
+    */
     return;
 }

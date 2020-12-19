@@ -29,24 +29,24 @@ pub fn expect_num<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>) -> usize{
 }
 
 pub fn expect<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>,expect_token:&Token)->(){
-    let token = tokenizer.peek().unwrap();
-
-    if token != expect_token {
-        panic!("Error! expect number,found other");
+    if let Some(token)=tokenizer.peek() {
+        if token != expect_token {
+            panic!("Error! expect number,found other");
+        }
     }
-
     tokenizer.next();
 }
 
 pub fn consume<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>,expect_token:&Token)->bool {
-    let token = tokenizer.peek().unwrap();
-
-    if token != expect_token {
-        false
-    }else{
-        tokenizer.next();
-        true
+    if let Some(token)=tokenizer.peek() {
+        if token == expect_token {
+            tokenizer.next();
+            return true;
+        }else{
+            return false;
+        }
     }
+    return false;
 }
 
 // This function represent following grammar.
