@@ -4,7 +4,11 @@ use crate::tokenizer::Token::*;
 pub enum Token{
     TkNum(usize),
     TkPlus,
-    TkMinus
+    TkMinus,
+    TkMul,
+    TkDiv,
+    TkLc,
+    TkRc,
 }
 
 #[derive(Debug)]
@@ -63,6 +67,14 @@ impl<'a> Iterator for Tokenizer<'a>{
             b'-' => {
                 self.drop_head();
                 Some(TkMinus)
+            },
+            b'*' => {
+                self.drop_head();
+                Some(TkMul)
+            },
+            b'/' => {
+                self.drop_head();
+                Some(TkDiv)
             },
             b'0'|b'1'|b'2'|b'3'|b'4'|b'5'|b'6'|b'7'|b'8'|b'9' =>{
                 let head = self.consume_num_greedy();
