@@ -20,6 +20,6 @@ assert 0 0
 assert 42 42
 assert 21 "5 + 20 - 4"
 assert 142 "7*20+2"
-assert 0 "7-7"
+assert 10 "-10+20"
 
 echo OK

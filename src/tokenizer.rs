@@ -1,4 +1,4 @@
-use crate::tokenizer::Token::*;
+use self::Token::*;
 
 #[derive(Debug,PartialEq)]
 pub enum Token{

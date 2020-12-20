@@ -1,5 +1,5 @@
-use crate::grammar::*;
-use crate::grammar::Node::*;
+use super::parser::node::Node;
+use super::parser::node::Node::*;
 
 pub fn gen(node:&Node)->() {
     if let NdNum(n) = node {

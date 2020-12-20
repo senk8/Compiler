@@ -1,8 +1,9 @@
+use core::iter::Peekable;
 
 use crate::tokenizer::*;
 use crate::tokenizer::Tokenizer;
 use crate::tokenizer::Token::*;
-use core::iter::Peekable;
+
 
 //TODO below functions are not appropritate because it is not correspond LA.
 

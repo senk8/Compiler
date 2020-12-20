@@ -1,15 +1,27 @@
 pub mod tokenizer;
 pub mod parser;
-pub mod grammar;
 pub mod assemble;
 
 use std::env;
-use self::tokenizer::Tokenizer;
-use self::grammar::expr;
-use self::assemble::gen;
+use std::fs::File;
+use std::io::{self,BufReader,BufWriter};
+
+use tokenizer::Tokenizer;
+use parser::expr::expr;
+use assemble::gen;
 
 fn main() {
     let arg = env::args().nth(1).unwrap();
+
+    /*
+    let mut buf = "";
+
+    for result in BufReader::new(File::open(arg.as_str())?).lines() {
+        let l = result?;
+        format!("{}{}",buf,l);
+    }
+    */
+
     let mut tokens_iter = Tokenizer::new(arg.as_str()).peekable();
     let node=expr(&mut tokens_iter);
 
