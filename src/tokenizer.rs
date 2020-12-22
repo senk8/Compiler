@@ -9,6 +9,12 @@ pub enum Token{
     TkDiv,
     TkLc,
     TkRc,
+    TkEq,
+    TkNeq,
+    TkGeq,
+    TkLeq,
+    TkLt,
+    TkGt,
 }
 
 #[derive(Debug)]
@@ -76,6 +82,14 @@ impl<'a> Iterator for Tokenizer<'a>{
                 self.drop_head();
                 Some(TkDiv)
             },
+            b'>' => {
+                self.drop_head();
+                Some(TkLt)
+            }, 
+            b'<' => {
+                self.drop_head();
+                Some(TkGt)
+            }, 
             b'0'|b'1'|b'2'|b'3'|b'4'|b'5'|b'6'|b'7'|b'8'|b'9' =>{
                 let head = self.consume_num_greedy();
                 Some(TkNum(usize::from_str_radix(head,10).unwrap()))

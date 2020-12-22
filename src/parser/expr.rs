@@ -7,47 +7,12 @@ use super::parse_util::*;
 use super::node::Node;
 use super::node::Node::*;
 
-// This function represent following grammar.
-// primary = num | "(" expr ")"*
-pub fn primary<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Node{
-    if consume(tokenizer,&TkRc) {
-        let node = expr(tokenizer);
-        expect(tokenizer,&TkLc);
-        return node;
-    }
-    NdNum(expect_num(tokenizer))
+
+
+pub fn expr<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Node{
+    equality(tokenizer)
 }
 
-// This function represents following grammar.
-// unary    = ("+" | "-")?  primary
-pub fn unary<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Node{
-    if consume(tokenizer,&TkPlus){
-        return primary(tokenizer);
-    }
-    if consume(tokenizer,&TkMinus){
-        return NdSub(Box::new(NdNum(0)),Box::new(primary(tokenizer)))
-    }
-
-    return primary(tokenizer);
-}
-
-
-// This function represent following grammar.
-// mul     = unary ("*" unary | "/" unary)*
-pub fn mul<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Node{
-    let mut node = unary(tokenizer);
-
-    loop {
-        if consume(tokenizer,&TkMul){
-            node = NdMul(Box::new(node),Box::new(unary(tokenizer)));
-        }else if consume(tokenizer,&TkDiv) {
-            node = NdDiv(Box::new(node),Box::new(unary(tokenizer)));
-        }else{
-            break node;
-        }
-    }
-}
-/*
 // equality = relational ("==" relational | "!=" relational)*
 pub fn equality<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Node{
     let mut node = relational(tokenizer);
@@ -73,20 +38,18 @@ pub fn relational<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Node{
         }else if consume(tokenizer,&TkLeq){
             node = NdLeq(Box::new(node),Box::new(add(tokenizer)));
         }else if consume(tokenizer,&TkGt){
-            node = NdGt(Box::new(node),Box::new(add(tokenizer)));
+            node = NdLt(Box::new(add(tokenizer)),Box::new(node));
         }else if consume(tokenizer,&TkGeq){
-            node = NdGeq(Box::new(node),Box::new(add(tokenizer)));
+            node = NdLeq(Box::new(add(tokenizer)),Box::new(node));
         }else{
             break node;
         }
     }
 }
-*/
-
 
 // This function represent following grammar.
-// expr    = mul ("+" mul | "-" mul)*
-pub fn expr<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Node{
+// add    = mul ("+" mul | "-" mul)*
+pub fn add<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Node{
     let mut node = mul(tokenizer);
 
     loop {
@@ -99,3 +62,45 @@ pub fn expr<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Node{
         }
     }
 }
+
+// This function represent following grammar.
+// mul     = unary ("*" unary | "/" unary)*
+pub fn mul<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Node{
+    let mut node = unary(tokenizer);
+
+    loop {
+        if consume(tokenizer,&TkMul){
+            node = NdMul(Box::new(node),Box::new(unary(tokenizer)));
+        }else if consume(tokenizer,&TkDiv) {
+            node = NdDiv(Box::new(node),Box::new(unary(tokenizer)));
+        }else{
+            break node;
+        }
+    }
+}
+
+// This function represent following grammar.
+// primary = num | "(" expr ")"*
+pub fn primary<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Node{
+    if consume(tokenizer,&TkRc) {
+        let node = expr(tokenizer);
+        expect(tokenizer,&TkLc);
+        return node;
+    }
+    NdNum(expect_num(tokenizer))
+}
+
+// This function represents following grammar.
+// unary    = ("+" | "-")?  primary
+pub fn unary<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Node{
+    if consume(tokenizer,&TkPlus){
+        return primary(tokenizer);
+    }
+    if consume(tokenizer,&TkMinus){
+        return NdSub(Box::new(NdNum(0)),Box::new(primary(tokenizer)))
+    }
+
+    return primary(tokenizer);
+}
+
+
