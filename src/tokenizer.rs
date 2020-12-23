@@ -38,9 +38,10 @@ impl<'a> Tokenizer<'a> {
         return head;
     }
 
-    //文字列の一番最初を取り除く
-    fn drop_head(&mut self)->(){
-        self.cur = &self.cur[1..];
+    //文字列の最初を取り除く
+    fn consume_head(&mut self,index:usize)->(){
+        let (head,tail) = self.cur.split_at(index);
+        self.cur = tail;
         self.pos+=1;
     }
 
@@ -60,34 +61,54 @@ impl<'a> Iterator for Tokenizer<'a>{
     fn next(&mut self) -> Option<Token> {
         // triming a head of string
         self.cur = self.cur.trim_start();
+        let ascii=self.cur.as_bytes();
+        let head = ascii.get(0)?;
 
-        if self.cur.is_empty(){
-            return None;
+        if let Some(head) = ascii.get(0..2){
+            match head {
+                b"<=" => {
+                    self.consume_head(2);
+                    return Some(TkLt);
+                }, 
+                b">=" => {
+                    self.consume_head(2);
+                    return Some(TkGt);
+                }, 
+                b"==" => {
+                    self.consume_head(2);
+                    return Some(TkEq);
+                }, 
+                b"!=" => {
+                    self.consume_head(2);
+                    return Some(TkNeq);
+                },
+                _ => (),
+            }
         }
 
-        match self.cur.as_bytes()[0] {
+        match head {
             b'+' => {
-                self.drop_head();
+                self.consume_head(1);
                 Some(TkPlus)
             },
             b'-' => {
-                self.drop_head();
+                self.consume_head(1);
                 Some(TkMinus)
             },
             b'*' => {
-                self.drop_head();
+                self.consume_head(1);
                 Some(TkMul)
             },
             b'/' => {
-                self.drop_head();
+                self.consume_head(1);
                 Some(TkDiv)
             },
-            b'>' => {
-                self.drop_head();
+            b'<' => {
+                self.consume_head(1);
                 Some(TkLt)
             }, 
-            b'<' => {
-                self.drop_head();
+            b'>' => {
+                self.consume_head(1);
                 Some(TkGt)
             }, 
             b'0'|b'1'|b'2'|b'3'|b'4'|b'5'|b'6'|b'7'|b'8'|b'9' =>{

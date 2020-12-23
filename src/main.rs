@@ -10,6 +10,10 @@ use tokenizer::Tokenizer;
 use parser::expr::expr;
 use assemble::gen;
 
+fn print_typename<T>(_: T) {
+    println!("{}", std::any::type_name::<T>());
+}
+
 fn main() {
     let arg = env::args().nth(1).unwrap();
 

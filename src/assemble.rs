@@ -29,7 +29,27 @@ pub fn gen(node:&Node)->() {
             gen(&*rhs);
             opr="  cqo\n  idiv rdi";
         },
-        _ => panic!("unexpected token")
+        NdNeq(lhs,rhs) => {
+            gen(&*lhs);
+            gen(&*rhs);
+            opr="  cmp rax, rdi\n  setne al\n  movzb rax, al";
+        },
+        NdEq(lhs,rhs) => {
+            gen(&*lhs);
+            gen(&*rhs);
+            opr="  cmp rax, rdi\n  sete al\n  movzb rax, al";
+        },
+        NdLt(lhs,rhs) => {
+            gen(&*lhs);
+            gen(&*rhs);
+            opr="  cmp rax, rdi\n  setl al\n  movzb rax, al";
+        },
+        NdLeq(lhs,rhs) => {
+            gen(&*lhs);
+            gen(&*rhs);
+            opr="  cmp rax, rdi\n  setle al\n  movzb rax, al";
+        },
+        _ => panic!("The token has unexpected type")
     }
  
     println!("  pop rdi");
@@ -37,3 +57,4 @@ pub fn gen(node:&Node)->() {
     println!("{}",opr);
     println!("  push rax");
 }
+
