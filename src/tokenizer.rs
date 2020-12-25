@@ -1,8 +1,11 @@
 use self::Token::*;
 
+
+
 #[derive(Debug,PartialEq)]
 pub enum Token{
     TkNum(usize),
+    TkIdent(u8),
     TkPlus,
     TkMinus,
     TkMul,
@@ -15,6 +18,7 @@ pub enum Token{
     TkLeq,
     TkLt,
     TkGt,
+    TkSemicolon,
 }
 
 #[derive(Debug)]
@@ -30,7 +34,16 @@ impl<'a> Tokenizer<'a> {
     }
 
     //文字列を数字である限り消費する。
-    pub fn consume_num_greedy(&mut self)->&str{
+    pub fn consume_num(&mut self)->&str{
+        let first_non_num_idx = self.cur.find(|c| !char::is_numeric(c)).unwrap_or(self.cur.len());
+        let (head,tail) = self.cur.split_at(first_non_num_idx);
+        self.cur = tail;
+        self.pos += first_non_num_idx;
+        return head;
+    }
+
+    //文字列を識別子である限り消費する。
+    pub fn consume_ident(&mut self)->&str{
         let first_non_num_idx = self.cur.find(|c| !char::is_numeric(c)).unwrap_or(self.cur.len());
         let (head,tail) = self.cur.split_at(first_non_num_idx);
         self.cur = tail;
@@ -112,9 +125,15 @@ impl<'a> Iterator for Tokenizer<'a>{
                 Some(TkGt)
             }, 
             b'0'|b'1'|b'2'|b'3'|b'4'|b'5'|b'6'|b'7'|b'8'|b'9' =>{
-                let head = self.consume_num_greedy();
+                let head = self.consume_num();
                 Some(TkNum(usize::from_str_radix(head,10).unwrap()))
             },
+            /*
+            b'0'|b'1'|b'2'|b'3'|b'4'|b'5'|b'6'|b'7'|b'8'|b'9' =>{
+                let head = self.consume_ident();
+                Some(TkIdent())
+            },
+            */
             _ => panic!(self.error_at("unexpected token"))
         }
     }
