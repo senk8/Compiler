@@ -1,5 +1,5 @@
-use super::parser::node::Node;
-use super::parser::node::Node::*;
+use super::types::node::Node;
+use super::types::node::Node::*;
 
 pub fn gen(node:&Node)->() {
     if let NdNum(n) = node {

@@ -1,25 +1,5 @@
-use self::Token::*;
-
-
-
-#[derive(Debug,PartialEq)]
-pub enum Token{
-    TkNum(usize),
-    TkIdent(u8),
-    TkPlus,
-    TkMinus,
-    TkMul,
-    TkDiv,
-    TkLc,
-    TkRc,
-    TkEq,
-    TkNeq,
-    TkGeq,
-    TkLeq,
-    TkLt,
-    TkGt,
-    TkSemicolon,
-}
+use super::types::token::*;
+use super::types::token::TokenKind::*;
 
 #[derive(Debug)]
 pub struct Tokenizer<'a> {
@@ -53,7 +33,7 @@ impl<'a> Tokenizer<'a> {
 
     //文字列の最初を取り除く
     fn consume_head(&mut self,index:usize)->(){
-        let (head,tail) = self.cur.split_at(index);
+        let (_,tail) = self.cur.split_at(index);
         self.cur = tail;
         self.pos+=1;
     }
@@ -70,8 +50,8 @@ impl<'a> Tokenizer<'a> {
 
 
 impl<'a> Iterator for Tokenizer<'a>{
-    type Item = Token;
-    fn next(&mut self) -> Option<Token> {
+    type Item = TokenKind;
+    fn next(&mut self) -> Option<TokenKind> {
         // triming a head of string
         self.cur = self.cur.trim_start();
         let ascii=self.cur.as_bytes();
@@ -81,19 +61,19 @@ impl<'a> Iterator for Tokenizer<'a>{
             match head {
                 b"<=" => {
                     self.consume_head(2);
-                    return Some(TkLt);
+                    return Some(Lt);
                 }, 
                 b">=" => {
                     self.consume_head(2);
-                    return Some(TkGt);
+                    return Some(Gt);
                 }, 
                 b"==" => {
                     self.consume_head(2);
-                    return Some(TkEq);
+                    return Some(Eq);
                 }, 
                 b"!=" => {
                     self.consume_head(2);
-                    return Some(TkNeq);
+                    return Some(Neq);
                 },
                 _ => (),
             }
@@ -102,31 +82,31 @@ impl<'a> Iterator for Tokenizer<'a>{
         match head {
             b'+' => {
                 self.consume_head(1);
-                Some(TkPlus)
+                Some(Plus)
             },
             b'-' => {
                 self.consume_head(1);
-                Some(TkMinus)
+                Some(Minus)
             },
             b'*' => {
                 self.consume_head(1);
-                Some(TkMul)
+                Some(Mul)
             },
             b'/' => {
                 self.consume_head(1);
-                Some(TkDiv)
+                Some(Div)
             },
             b'<' => {
                 self.consume_head(1);
-                Some(TkLt)
+                Some(Lt)
             }, 
             b'>' => {
                 self.consume_head(1);
-                Some(TkGt)
+                Some(Gt)
             }, 
             b'0'|b'1'|b'2'|b'3'|b'4'|b'5'|b'6'|b'7'|b'8'|b'9' =>{
                 let head = self.consume_num();
-                Some(TkNum(usize::from_str_radix(head,10).unwrap()))
+                Some(Num(usize::from_str_radix(head,10).unwrap()))
             },
             /*
             b'0'|b'1'|b'2'|b'3'|b'4'|b'5'|b'6'|b'7'|b'8'|b'9' =>{

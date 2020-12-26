@@ -1,11 +1,18 @@
+use core::iter::Peekable;
 
+use crate::tokenizer::Tokenizer;
+use crate::types::token::TokenKind::*;
+use crate::types::node::*;
 
+use super::parse_util::*;
+use super::expr::expr;
 
-pub fn program<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Vector<Node>{
+// program = stmt* 
+pub fn program<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Vec<Node>{
     let mut trees = vec![];
 
     loop {
-        if consume(tokenizer,&TkMinus) {
+        if let Some(_) = tokenizer.peek() {
             trees.push(stmt(tokenizer));
         }else{
             break trees;
@@ -13,20 +20,9 @@ pub fn program<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Vector<Node>{
     }
 }
 
+//stmt = expr ";"
 pub fn stmt<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Node{
     let node = expr(tokenizer);
-    expect(tokenizer,&TkSemicolon);
-    node
-}
-
-pub fn expr<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Node{
-    assign(tokenizer)
-}
-
-pub fn assign<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Node{
-    let mut node = equality(tokenizer);
-    if consume(tokenizer,) {
-        node = NdAssign(node,assign(tokenizer));
-    }
+    expect(tokenizer,Semicolon);
     node
 }
