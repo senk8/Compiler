@@ -8,7 +8,7 @@ use tokenizer::tokenizer::Tokenizer;
 use parser::stmt::program;
 use assemble::assemble::gen;
 
-fn main() {
+fn main(){
     let arg = env::args().nth(1).unwrap();
 
     let mut tokens_iter = Tokenizer::new(arg.as_str()).peekable();

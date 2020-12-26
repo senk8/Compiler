@@ -1,5 +1,6 @@
 use core::iter::Peekable;
 use crate::tokenizer::tokenizer::Tokenizer;
+use crate::types::token::TokenType::*;
 use crate::types::token::TokenKind::*;
 use crate::types::token::*;
 
@@ -27,8 +28,8 @@ pub fn expect_ident<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>) -> Option<char>{
 }
 
 pub fn expect<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>,expect_token:TokenKind)->(){
-    if let Some(token)=tokenizer.peek() {
-        if *token != expect_token {
+    if let Some(Token(kind))=tokenizer.peek() {
+        if *kind != expect_token {
             panic!("Error! expect number,found other");
         }
     }
@@ -36,8 +37,8 @@ pub fn expect<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>,expect_token:TokenKind)
 }
 
 pub fn consume<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>,expect_token:TokenKind)->bool {
-    if let Some(token)=tokenizer.peek() {
-        if *token == expect_token {
+    if let Some(Token(kind))=tokenizer.peek() {
+        if *kind == expect_token {
             tokenizer.next();
             return true;
         }else{

@@ -1,28 +1,38 @@
 #[derive(Debug,PartialEq)]
-
-pub enum TokenKind{
+pub enum TokenType{
+    Token(TokenKind),
+    Keyword(Symbol),
     Num(usize),
-    Ident(char),
+    Ident
+}
+
+#[derive(Debug,PartialEq)]
+pub enum TokenKind{
+    /* arithmetic operator */
     Plus,
     Minus,
     Mul,
     Div,
-    Lc,
-    Rc,
-    Assign,
+
+    /* rerational operator */
     Eq,
     Neq,
     Geq,
     Leq,
     Lt,
     Gt,
+
+    /* others */
+    Assign,
+
+    /* delimitor */
+    Lc,
+    Rc,
     Semicolon,
 }
 
-/*
-pub enum Token{
-    Keyword(TokenKind),
-    Keyword(TokenKind),
-    Operator(TokenKind),
+#[derive(Debug,PartialEq)]
+pub enum Symbol{
+    If,
+    While,
 }
-*/

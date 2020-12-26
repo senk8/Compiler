@@ -7,7 +7,7 @@ use crate::types::node::*;
 use super::parse_util::*;
 use super::expr::expr;
 
-// program = stmt* 
+// program = stmt * 
 pub fn program<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Vec<Node>{
     let mut trees = vec![];
 

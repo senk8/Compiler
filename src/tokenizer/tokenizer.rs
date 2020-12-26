@@ -1,5 +1,6 @@
 use crate::types::token::*;
 use crate::types::token::TokenKind::*;
+use crate::types::token::TokenType::*;
 
 #[derive(Debug)]
 pub struct Tokenizer<'a> {
@@ -41,30 +42,30 @@ impl<'a> Tokenizer<'a> {
 
 
 impl<'a> Iterator for Tokenizer<'a>{
-    type Item = TokenKind;
-    fn next(&mut self) -> Option<TokenKind> {
+    type Item = TokenType;
+    fn next(&mut self) -> Option<TokenType> {
         // triming a head of string
         self.cur = self.cur.trim_start();
         let ascii=self.cur.as_bytes();
         let head = ascii.get(0)?;
 
-        if let Some(head) = ascii.get(0..2){
-            match head {
+        if let Some(prefix) = ascii.get(0..2){
+            match prefix {
                 b"<=" => {
                     self.consume_head(2);
-                    return Some(Lt);
+                    return Some(Token(Lt));
                 }, 
                 b">=" => {
                     self.consume_head(2);
-                    return Some(Gt);
+                    return Some(Token(Gt));
                 }, 
                 b"==" => {
                     self.consume_head(2);
-                    return Some(Eq);
+                    return Some(Token(Eq));
                 }, 
                 b"!=" => {
                     self.consume_head(2);
-                    return Some(Neq);
+                    return Some(Token(Neq));
                 },
                 _ => (),
             }
@@ -73,35 +74,35 @@ impl<'a> Iterator for Tokenizer<'a>{
         match head {
             b'+' => {
                 self.consume_head(1);
-                Some(Plus)
+                Some(Token(Plus))
             },
             b'-' => {
                 self.consume_head(1);
-                Some(Minus)
+                Some(Token(Minus))
             },
             b'*' => {
                 self.consume_head(1);
-                Some(Mul)
+                Some(Token(Mul))
             },
             b'/' => {
                 self.consume_head(1);
-                Some(Div)
+                Some(Token(Div))
             },
             b'<' => {
                 self.consume_head(1);
-                Some(Lt)
+                Some(Token(Lt))
             }, 
             b'>' => {
                 self.consume_head(1);
-                Some(Gt)
+                Some(Token(Gt))
             }, 
             b'=' => {
                 self.consume_head(1);
-                Some(Assign)
+                Some(Token(Assign))
             }, 
             b';' => {
                 self.consume_head(1);
-                Some(Semicolon)
+                Some(Token(Semicolon))
             }, 
             c =>{
                 if b'0' <= *c && *c <= b'9'{
@@ -111,7 +112,7 @@ impl<'a> Iterator for Tokenizer<'a>{
                    self.consume_head(1);
                    Some(Ident(*c as char))
                 }else{
-                    panic!(self.error_at("unexpected token"));
+                   panic!(self.error_at("unexpected token"));
                 }
            },
         }
