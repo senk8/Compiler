@@ -1,20 +1,28 @@
 use core::iter::Peekable;
-use crate::tokenizer::Tokenizer;
+use crate::tokenizer::tokenizer::Tokenizer;
 use crate::types::token::TokenKind::*;
 use crate::types::token::*;
 
-
 //TODO below functions are not appropritate because it is not correspond LA.
-
-pub fn expect_num<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>) -> usize{
-    //TODO TKNumでないとifの中に入れないのだが、中でパターンマッチしないとだめか？
-    if let Num(_) = tokenizer.peek().unwrap() {
-        match tokenizer.next().unwrap(){
-            Num(n) => n,
-            _ => panic!("Error! expect number,found other")
+pub fn expect_num<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>) -> Option<usize>{
+    if let Some(Num(_)) = tokenizer.peek() {
+        match tokenizer.next(){
+            Some(Num(n)) => Some(n),
+            _ => None,
         }
     }else{
-        panic!("Error! expect number,found other");
+        None
+    }
+}
+
+pub fn expect_ident<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>) -> Option<char>{
+    if let Some(Ident(_)) = tokenizer.peek() {
+        match tokenizer.next(){
+            Some(Ident(c)) => Some(c),
+            _ => None,
+        }
+    }else{
+        None
     }
 }
 

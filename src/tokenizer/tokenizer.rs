@@ -1,5 +1,5 @@
-use super::types::token::*;
-use super::types::token::TokenKind::*;
+use crate::types::token::*;
+use crate::types::token::TokenKind::*;
 
 #[derive(Debug)]
 pub struct Tokenizer<'a> {
@@ -15,15 +15,6 @@ impl<'a> Tokenizer<'a> {
 
     //文字列を数字である限り消費する。
     pub fn consume_num(&mut self)->&str{
-        let first_non_num_idx = self.cur.find(|c| !char::is_numeric(c)).unwrap_or(self.cur.len());
-        let (head,tail) = self.cur.split_at(first_non_num_idx);
-        self.cur = tail;
-        self.pos += first_non_num_idx;
-        return head;
-    }
-
-    //文字列を識別子である限り消費する。
-    pub fn consume_ident(&mut self)->&str{
         let first_non_num_idx = self.cur.find(|c| !char::is_numeric(c)).unwrap_or(self.cur.len());
         let (head,tail) = self.cur.split_at(first_non_num_idx);
         self.cur = tail;
@@ -104,17 +95,25 @@ impl<'a> Iterator for Tokenizer<'a>{
                 self.consume_head(1);
                 Some(Gt)
             }, 
-            b'0'|b'1'|b'2'|b'3'|b'4'|b'5'|b'6'|b'7'|b'8'|b'9' =>{
-                let head = self.consume_num();
-                Some(Num(usize::from_str_radix(head,10).unwrap()))
-            },
-            /*
-            b'0'|b'1'|b'2'|b'3'|b'4'|b'5'|b'6'|b'7'|b'8'|b'9' =>{
-                let head = self.consume_ident();
-                Some(TkIdent())
-            },
-            */
-            _ => panic!(self.error_at("unexpected token"))
+            b'=' => {
+                self.consume_head(1);
+                Some(Assign)
+            }, 
+            b';' => {
+                self.consume_head(1);
+                Some(Semicolon)
+            }, 
+            c =>{
+                if b'0' <= *c && *c <= b'9'{
+                   let head = self.consume_num();
+                   Some(Num(usize::from_str_radix(head,10).unwrap()))
+                }else if b'a' <= *c && *c <= b'z'{
+                   self.consume_head(1);
+                   Some(Ident(*c as char))
+                }else{
+                    panic!(self.error_at("unexpected token"));
+                }
+           },
         }
     }
 }

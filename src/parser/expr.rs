@@ -1,6 +1,6 @@
 use core::iter::Peekable;
 
-use crate::tokenizer::Tokenizer;
+use crate::tokenizer::tokenizer::Tokenizer;
 use crate::types::token::TokenKind::*;
 use crate::types::node::*;
 use crate::types::node::Node::*;
@@ -13,10 +13,10 @@ pub fn expr<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Node{
     assign(tokenizer)
 }
 
-//assign = equality ( "==" assign )?
+//assign = equality ( "=" assign )?
 pub fn assign<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Node{
     let mut node = equality(tokenizer);
-    if consume(tokenizer,Eq) {
+    if consume(tokenizer,Assign) {
         node = NdAssign(Box::new(node),Box::new(assign(tokenizer)));
     }
     node
@@ -89,14 +89,21 @@ pub fn mul<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Node{
 }
 
 // This function represent following grammar.
-// primary = num | "(" expr ")"*
+// primary = num | ident | "(" expr ")"*
 pub fn primary<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Node{
     if consume(tokenizer,Rc) {
         let node = expr(tokenizer);
         expect(tokenizer,Lc);
         return node;
     }
-    NdNum(expect_num(tokenizer))
+    
+    if let Some(c) = expect_ident(tokenizer) {
+        let offset = usize::from(c as u8-b'a');
+        let node = NdLVar((offset+1)*8);
+        return node;
+    }
+
+    NdNum(expect_num(tokenizer).expect("Error! expect number,found other"))
 }
 
 // This function represents following grammar.
@@ -105,6 +112,7 @@ pub fn unary<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Node{
     if consume(tokenizer,Plus){
         return primary(tokenizer);
     }
+
     if consume(tokenizer,Minus){
         return NdSub(Box::new(NdNum(0)),Box::new(primary(tokenizer)))
     }

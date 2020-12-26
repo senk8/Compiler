@@ -24,5 +24,7 @@ assert 1 "1<=3"
 assert 1 "1!=3"
 assert 0 "1==3"
 assert 0 "1>3"
+assert 4 "a=2;a*2;"
+assert 36 "a=3;b=12;a*b;"
 
 echo OK

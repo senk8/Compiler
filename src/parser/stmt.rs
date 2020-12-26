@@ -1,6 +1,6 @@
 use core::iter::Peekable;
 
-use crate::tokenizer::Tokenizer;
+use crate::tokenizer::tokenizer::Tokenizer;
 use crate::types::token::TokenKind::*;
 use crate::types::node::*;
 
