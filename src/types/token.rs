@@ -3,7 +3,7 @@ pub enum TokenType{
     Token(TokenKind),
     Keyword(Symbol),
     Num(usize),
-    Ident
+    Ident(char)
 }
 
 #[derive(Debug,PartialEq)]
