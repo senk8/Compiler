@@ -1,144 +1,138 @@
-use core::iter::Peekable;
-
-use crate::tokenizer::tokenizer::Tokenizer;
-
+use super::*;
 use crate::types::token::TokenKind::*;
 use crate::types::node::*;
 use crate::types::node::Node::*;
-use crate::types::variable::{LVar,SYMBOL_MAP};
 
-use super::parse_util::*;
-
-
-//expr = assign
-pub fn expr<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Node{
-    assign(tokenizer)
-}
-
-//assign = equality ( "=" assign )?
-pub fn assign<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Node{
-    let mut node = equality(tokenizer);
-    if consume(tokenizer,Assign) {
-        node = NdAssign(Box::new(node),Box::new(assign(tokenizer)));
+impl<'a> Parser<'a>{
+    //expr = assign
+    pub(super) fn expr(&mut self)->Node{
+        self.assign()
     }
-    node
-}
 
-// equality = relational ("==" relational | "!=" relational)*
-pub fn equality<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Node{
-    let mut node = relational(tokenizer);
+    //assign = equality ( "=" assign )?
+    pub(super) fn assign(&mut self)->Node{
+        let mut node = self.equality();
+        if self.consume(Assign) {
+            node = NdAssign(Box::new(node),Box::new(self.assign()));
+        }
+        node
+    }
 
-    loop{
-        if consume(tokenizer,Eq){
-            node = NdEq(Box::new(node),Box::new(relational(tokenizer)));
-        }else if consume(tokenizer,Neq){
-            node = NdNeq(Box::new(node),Box::new(relational(tokenizer)));
-        }else{
-            break node;
+    // equality = relational ("==" relational | "!=" relational)*
+    pub(super) fn equality(&mut self)->Node{
+        let mut node = self.relational();
+
+        loop{
+            if self.consume(Eq){
+                node = NdEq(Box::new(node),Box::new(self.relational()));
+            }else if self.consume(Neq){
+                node = NdNeq(Box::new(node),Box::new(self.relational()));
+            }else{
+                break node;
+            }
         }
     }
-}
 
-//relational = add ("<" add | "<=" add | ">" add| ">=" add) *
-pub fn relational<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Node{
-    let mut node = add(tokenizer);
+    //relational = add ("<" add | "<=" add | ">" add| ">=" add) *
+    pub(super) fn relational(&mut self)->Node{
+        let mut node = self.add();
 
-    loop{
-        if consume(tokenizer,Lt){
-            node = NdLt(Box::new(node),Box::new(add(tokenizer)));
-        }else if consume(tokenizer,Leq){
-            node = NdLeq(Box::new(node),Box::new(add(tokenizer)));
-        }else if consume(tokenizer,Gt){
-            node = NdLt(Box::new(add(tokenizer)),Box::new(node));
-        }else if consume(tokenizer,Geq){
-            node = NdLeq(Box::new(add(tokenizer)),Box::new(node));
-        }else{
-            break node;
+        loop{
+            if self.consume(Lt){
+                node = NdLt(Box::new(node),Box::new(self.add()));
+            }else if self.consume(Leq){
+                node = NdLeq(Box::new(node),Box::new(self.add()));
+            }else if self.consume(Gt){
+                node = NdLt(Box::new(self.add()),Box::new(node));
+            }else if self.consume(Geq){
+                node = NdLeq(Box::new(self.add()),Box::new(node));
+            }else{
+                break node;
+            }
         }
     }
-}
 
-// This function represent following grammar.
-// add    = mul ("+" mul | "-" mul)*
-pub fn add<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Node{
-    let mut node = mul(tokenizer);
+    // This function represent following grammar.
+    // add    = mul ("+" mul | "-" mul)*
+    pub(super) fn add(&mut self)->Node{
+        let mut node = self.mul();
 
-    loop {
-        if consume(tokenizer,Plus){
-            node = NdAdd(Box::new(node),Box::new(mul(tokenizer)));
-        }else if consume(tokenizer,Minus) {
-            node = NdSub(Box::new(node),Box::new(mul(tokenizer)));
-        }else{
-            break node;
+        loop {
+            if self.consume(Plus){
+                node = NdAdd(Box::new(node),Box::new(self.mul()));
+            }else if self.consume(Minus) {
+                node = NdSub(Box::new(node),Box::new(self.mul()));
+            }else{
+                break node;
+            }
         }
     }
-}
 
-// This function represent following grammar.
-// mul     = unary ("*" unary | "/" unary)*
-pub fn mul<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Node{
-    let mut node = unary(tokenizer);
+    // This function represent following grammar.
+    // mul     = unary ("*" unary | "/" unary)*
+    pub(super) fn mul(&mut self)->Node{
+        let mut node = self.unary();
 
-    loop {
-        if consume(tokenizer,Mul){
-            node = NdMul(Box::new(node),Box::new(unary(tokenizer)));
-        }else if consume(tokenizer,Div) {
-            node = NdDiv(Box::new(node),Box::new(unary(tokenizer)));
-        }else{
-            break node;
+        loop {
+            if self.consume(Mul){
+                node = NdMul(Box::new(node),Box::new(self.unary()));
+            }else if self.consume(Div) {
+                node = NdDiv(Box::new(node),Box::new(self.unary()));
+            }else{
+                break node;
+            }
         }
     }
+
+    // This function represent following grammar.
+    // primary = num | ident | "(" expr ")"*
+    pub(super) fn primary(&mut self)->Node{
+        if self.consume(Rc) {
+            let node = self.expr();
+            self.expect(Lc);
+            return node;
+        }
+
+        if let Some(name) = self.take_ident(){
+            let result = self.symbol_table.borrow().get(&name).cloned();
+
+            let node = if let Some(lvar)= result {
+                NdLVar(lvar.1)
+            }else{
+                self.set_var(name);
+                NdLVar(self.offset)
+            };
+
+            return node;
+        }
+
+        NdNum(self.take_num().expect("Error! expect number,found other"))
+    }
+
+    // This function represents following grammar.
+    // unary    = ("+" | "-")?  primary
+    pub(super) fn unary(&mut self)->Node{
+        if self.consume(Plus){
+            return self.primary();
+        }
+
+        if self.consume(Minus){
+            return NdSub(Box::new(NdNum(0)),Box::new(self.primary()))
+        }
+
+        return self.primary();
+    }
+
 }
 
-// This function represent following grammar.
-// primary = num | ident | "(" expr ")"*
-pub fn primary<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Node{
-    if consume(tokenizer,Rc) {
-        let node = expr(tokenizer);
-        expect(tokenizer,Lc);
-        return node;
-    }
 
-    if let Some(name) = take_ident(tokenizer){
 
-        let result = SYMBOL_MAP.with(|sm|{
-            sm.borrow().get(&name).map(|x|x.clone())
-        });
 
-        let node = if let Some(lvar)= result {
-            NdLVar(lvar.1)
-        }else{
-            let offset = usize::from(name.chars().next().unwrap() as u8-b'a');
-            let lvar=LVar(name.len(),(offset+1)*8);
 
-            SYMBOL_MAP.with(|sm|{
-                sm.borrow_mut().insert(name,lvar.clone());
-            });
 
-            NdLVar((offset+1)*8)
-            //let offset = usize::from(name as u8-b'a');
-            //let lvar=LVar(name.len(),name.offset+8);
-            //NdLVar(lvar.1);
-        };
 
-        return node;
-    }
 
-    NdNum(take_num(tokenizer).expect("Error! expect number,found other"))
-}
 
-// This function represents following grammar.
-// unary    = ("+" | "-")?  primary
-pub fn unary<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Node{
-    if consume(tokenizer,Plus){
-        return primary(tokenizer);
-    }
 
-    if consume(tokenizer,Minus){
-        return NdSub(Box::new(NdNum(0)),Box::new(primary(tokenizer)))
-    }
-
-    return primary(tokenizer);
-}
 
 
