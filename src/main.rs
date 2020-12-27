@@ -1,18 +1,20 @@
 pub mod tokenizer;
 pub mod parser;
+pub mod lexer;
 pub mod types;
-pub mod assemble;
 
 use std::env;
-use tokenizer::tokenizer::Tokenizer;
-use parser::stmt::program;
-use assemble::assemble::gen;
+use tokenizer::*;
+use parser::*;
+use lexer::assemble::gen;
+
 
 fn main(){
     let arg = env::args().nth(1).unwrap();
 
-    let mut tokens_iter = Tokenizer::new(arg.as_str()).peekable();
-    let trees=program(&mut tokens_iter);
+    let tokens_iter = Tokenizer::new(arg.as_str()).peekable();
+    let mut parser= Parser::new(tokens_iter);
+    let trees=parser.parse();
 
     println!(".intel_syntax noprefix");
     println!(".globl main");

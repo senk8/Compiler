@@ -1,12 +1,12 @@
-#[derive(Debug,PartialEq)]
+#[derive(Debug,PartialEq,Clone)]
 pub enum TokenType{
     Token(TokenKind),
     Keyword(Symbol),
     Num(usize),
-    Ident(char)
+    Ident(String)
 }
 
-#[derive(Debug,PartialEq)]
+#[derive(Debug,PartialEq,Clone)]
 pub enum TokenKind{
     /* arithmetic operator */
     Plus,
@@ -31,8 +31,12 @@ pub enum TokenKind{
     Semicolon,
 }
 
-#[derive(Debug,PartialEq)]
+#[derive(Debug,PartialEq,Clone)]
 pub enum Symbol{
+    /* statement */
     If,
     While,
+    
+    /* statement */
+    Return,
 }

@@ -77,6 +77,14 @@ pub fn gen(node:&Node)->() {
             println!("  mov [rax], rdi");
             println!("  push rdi");
             return;
+        },
+        NdReturn(lhs) => {
+            gen(lhs);
+            println!("  pop rax");
+            println!("  mov rsp, rbp");
+            println!("  pop rbp");
+            println!("  ret");
+            return;
         }
     }
  

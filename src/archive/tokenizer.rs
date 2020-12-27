@@ -1,4 +1,7 @@
-pub mod iterator;
+/*
+use crate::types::token::*;
+use crate::types::token::TokenKind::*;
+use crate::types::token::TokenType::*;
 
 #[derive(Debug)]
 pub struct Tokenizer<'a> {
@@ -48,3 +51,4 @@ impl<'a> Tokenizer<'a> {
         return message;
     }
 }
+*/

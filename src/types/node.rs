@@ -9,6 +9,7 @@ pub enum Node{
     NdLt(Box<Node>,Box<Node>),
     NdLeq(Box<Node>,Box<Node>),
     NdAssign(Box<Node>,Box<Node>),
+    NdReturn(Box<Node>),
     NdLVar(usize),
     NdNum(usize) 
 }
