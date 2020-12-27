@@ -5,7 +5,7 @@ use crate::types::token::TokenKind::*;
 use crate::types::token::*;
 
 //TODO below functions are not appropritate because it is not correspond LA.
-pub fn expect_num<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>) -> Option<usize>{
+pub fn take_num<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>) -> Option<usize>{
     if let Some(Num(_)) = tokenizer.peek() {
         match tokenizer.next(){
             Some(Num(n)) => Some(n),
@@ -16,10 +16,10 @@ pub fn expect_num<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>) -> Option<usize>{
     }
 }
 
-pub fn expect_ident<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>) -> Option<char>{
+pub fn take_ident<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>) -> Option<String>{
     if let Some(Ident(_)) = tokenizer.peek() {
         match tokenizer.next(){
-            Some(Ident(c)) => Some(c),
+            Some(Ident(s)) => Some(s),
             _ => None,
         }
     }else{
@@ -48,3 +48,16 @@ pub fn consume<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>,expect_token:TokenKind
     return false;
 }
 
+/*
+pub fn is_alnum<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->bool {
+    ('a' <= c && c <= 'z') ||
+    ('A' <= c && c <= 'Z') ||
+    ('0' <= c && c <= '9') ||
+    (c == '_')
+}
+
+if prefix = "return" && is_alnum(prefix[6])) {
+    Keyword(Return)
+
+}
+*/

@@ -3,7 +3,7 @@ pub enum TokenType{
     Token(TokenKind),
     Keyword(Symbol),
     Num(usize),
-    Ident(char)
+    Ident(String)
 }
 
 #[derive(Debug,PartialEq)]
@@ -33,6 +33,10 @@ pub enum TokenKind{
 
 #[derive(Debug,PartialEq)]
 pub enum Symbol{
+    /* statement */
     If,
     While,
+    
+    /* statement */
+    Return,
 }

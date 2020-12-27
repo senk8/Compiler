@@ -23,6 +23,15 @@ impl<'a> Tokenizer<'a> {
         return head;
     }
 
+    //文字列を数字である限り消費する。
+    pub fn consume_ident(&mut self)->&str{
+        let first_non_num_idx = self.cur.find(|c| !char::is_alphabetic(c)).unwrap_or(self.cur.len());
+        let (head,tail) = self.cur.split_at(first_non_num_idx);
+        self.cur = tail;
+        self.pos += first_non_num_idx;
+        return head;
+    }
+
     //文字列の最初を取り除く
     fn consume_head(&mut self,index:usize)->(){
         let (_,tail) = self.cur.split_at(index);
@@ -109,8 +118,8 @@ impl<'a> Iterator for Tokenizer<'a>{
                    let head = self.consume_num();
                    Some(Num(usize::from_str_radix(head,10).unwrap()))
                 }else if b'a' <= *c && *c <= b'z'{
-                   self.consume_head(1);
-                   Some(Ident(*c as char))
+                   let head = self.consume_ident();
+                   Some(Ident(String::from(head)))
                 }else{
                    panic!(self.error_at("unexpected token"));
                 }

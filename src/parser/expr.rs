@@ -1,9 +1,11 @@
 use core::iter::Peekable;
 
 use crate::tokenizer::tokenizer::Tokenizer;
+
 use crate::types::token::TokenKind::*;
 use crate::types::node::*;
 use crate::types::node::Node::*;
+use crate::types::variable::{LVar,SYMBOL_MAP};
 
 use super::parse_util::*;
 
@@ -96,14 +98,33 @@ pub fn primary<'a>(tokenizer:&mut Peekable<Tokenizer<'a>>)->Node{
         expect(tokenizer,Lc);
         return node;
     }
-    
-    if let Some(c) = expect_ident(tokenizer) {
-        let offset = usize::from(c as u8-b'a');
-        let node = NdLVar((offset+1)*8);
+
+    if let Some(name) = take_ident(tokenizer){
+
+        let result = SYMBOL_MAP.with(|sm|{
+            sm.borrow().get(&name).map(|x|x.clone())
+        });
+
+        let node = if let Some(lvar)= result {
+            NdLVar(lvar.1)
+        }else{
+            let offset = usize::from(name.chars().next().unwrap() as u8-b'a');
+            let lvar=LVar(name.len(),(offset+1)*8);
+
+            SYMBOL_MAP.with(|sm|{
+                sm.borrow_mut().insert(name,lvar.clone());
+            });
+
+            NdLVar((offset+1)*8)
+            //let offset = usize::from(name as u8-b'a');
+            //let lvar=LVar(name.len(),name.offset+8);
+            //NdLVar(lvar.1);
+        };
+
         return node;
     }
 
-    NdNum(expect_num(tokenizer).expect("Error! expect number,found other"))
+    NdNum(take_num(tokenizer).expect("Error! expect number,found other"))
 }
 
 // This function represents following grammar.
