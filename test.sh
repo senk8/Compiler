@@ -27,5 +27,8 @@ assert 0 "1>3"
 assert 4 "a=2;a*2;"
 assert 36 "a=3;b=12;a*b;"
 assert 36 "abc=3;bc=12;abc*bc;"
+assert 29 "hoge=3;bar=26;hoge+bar;"
+assert 29 "return 29;"
+assert 29 "hoge=3;bar=26;return hoge+bar;"
 
 echo OK

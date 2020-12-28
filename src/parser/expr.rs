@@ -12,7 +12,7 @@ impl<'a> Parser<'a>{
     //assign = equality ( "=" assign )?
     pub(super) fn assign(&mut self)->Node{
         let mut node = self.equality();
-        if self.consume(Assign) {
+        if self.consume_token(Assign) {
             node = NdAssign(Box::new(node),Box::new(self.assign()));
         }
         node
@@ -23,9 +23,9 @@ impl<'a> Parser<'a>{
         let mut node = self.relational();
 
         loop{
-            if self.consume(Eq){
+            if self.consume_token(Eq){
                 node = NdEq(Box::new(node),Box::new(self.relational()));
-            }else if self.consume(Neq){
+            }else if self.consume_token(Neq){
                 node = NdNeq(Box::new(node),Box::new(self.relational()));
             }else{
                 break node;
@@ -38,13 +38,13 @@ impl<'a> Parser<'a>{
         let mut node = self.add();
 
         loop{
-            if self.consume(Lt){
+            if self.consume_token(Lt){
                 node = NdLt(Box::new(node),Box::new(self.add()));
-            }else if self.consume(Leq){
+            }else if self.consume_token(Leq){
                 node = NdLeq(Box::new(node),Box::new(self.add()));
-            }else if self.consume(Gt){
+            }else if self.consume_token(Gt){
                 node = NdLt(Box::new(self.add()),Box::new(node));
-            }else if self.consume(Geq){
+            }else if self.consume_token(Geq){
                 node = NdLeq(Box::new(self.add()),Box::new(node));
             }else{
                 break node;
@@ -58,9 +58,9 @@ impl<'a> Parser<'a>{
         let mut node = self.mul();
 
         loop {
-            if self.consume(Plus){
+            if self.consume_token(Plus){
                 node = NdAdd(Box::new(node),Box::new(self.mul()));
-            }else if self.consume(Minus) {
+            }else if self.consume_token(Minus) {
                 node = NdSub(Box::new(node),Box::new(self.mul()));
             }else{
                 break node;
@@ -74,9 +74,9 @@ impl<'a> Parser<'a>{
         let mut node = self.unary();
 
         loop {
-            if self.consume(Mul){
+            if self.consume_token(Mul){
                 node = NdMul(Box::new(node),Box::new(self.unary()));
-            }else if self.consume(Div) {
+            }else if self.consume_token(Div) {
                 node = NdDiv(Box::new(node),Box::new(self.unary()));
             }else{
                 break node;
@@ -87,7 +87,7 @@ impl<'a> Parser<'a>{
     // This function represent following grammar.
     // primary = num | ident | "(" expr ")"*
     pub(super) fn primary(&mut self)->Node{
-        if self.consume(Rc) {
+        if self.consume_token(Rc) {
             let node = self.expr();
             self.expect(Lc);
             return node;
@@ -112,11 +112,11 @@ impl<'a> Parser<'a>{
     // This function represents following grammar.
     // unary    = ("+" | "-")?  primary
     pub(super) fn unary(&mut self)->Node{
-        if self.consume(Plus){
+        if self.consume_token(Plus){
             return self.primary();
         }
 
-        if self.consume(Minus){
+        if self.consume_token(Minus){
             return NdSub(Box::new(NdNum(0)),Box::new(self.primary()))
         }
 

@@ -14,7 +14,6 @@ fn main(){
 
     let tokens_iter = Tokenizer::new(arg.as_str()).peekable();
     let mut parser= Parser::new(tokens_iter);
-    let trees=parser.parse();
 
     println!(".intel_syntax noprefix");
     println!(".globl main");
@@ -23,6 +22,8 @@ fn main(){
     println!("  push rbp");
     println!("  mov rbp, rsp");
     println!("  sub rsp, 208");
+
+    let trees=parser.parse();
 
     for tree in trees.iter(){
         gen(tree);

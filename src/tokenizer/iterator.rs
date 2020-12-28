@@ -2,6 +2,7 @@ use super::*;
 use crate::types::token::*;
 use crate::types::token::TokenKind::*;
 use crate::types::token::TokenType::*;
+use crate::types::token::Symbol::*;
 
 impl<'a> Iterator for Tokenizer<'a>{
     type Item = TokenType;
@@ -10,6 +11,20 @@ impl<'a> Iterator for Tokenizer<'a>{
         self.cur = self.cur.trim_start();
         let ascii=self.cur.as_bytes();
         let head = ascii.get(0)?;
+
+        if let Some(keyword) = ascii.get(0..6){
+            match keyword {
+                b"return" =>{
+                    if let Some(c) = ascii.get(6){
+                        if !(char::is_alphabetic(*c as char) && char::is_numeric(*c as char) && *c == b'_' ){
+                            self.consume_head(6);
+                            return Some(Keyword(Return));
+                        }
+                    }
+                },
+                _ => (),
+            }
+        }
 
         if let Some(prefix) = ascii.get(0..2){
             match prefix {

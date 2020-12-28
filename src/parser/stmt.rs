@@ -1,5 +1,6 @@
 use super::*;
 use crate::types::token::TokenKind::*;
+use crate::types::token::Symbol::*;
 use crate::types::node::*;
 
 impl<'a> Parser<'a>{
@@ -18,15 +19,12 @@ impl<'a> Parser<'a>{
     /* stmt = expr ";" | "return" expr ";" */
     pub(super) fn stmt(&mut self)->Node{
 
-        /*
-        let node = if consume_keywoed(Return) {
-            NdReturn(expr(tokenizer));
+        let node = if self.consume_keyword(Return) {
+            NdReturn(Box::new(self.expr()))
         }else{
-            expr(tokenizer);
+            self.expr()
         };
-        */
 
-        let node = self.expr();
         self.expect(Semicolon);
         node
     }

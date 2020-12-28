@@ -9,7 +9,6 @@ use crate::tokenizer::*;
 
 use crate::types::token::*;
 use crate::types::token::TokenType::*;
-use crate::types::token::TokenKind::*;
 
 use crate::types::node::*;
 use crate::types::node::Node::*;
@@ -54,7 +53,6 @@ impl<'a> Parser<'a>{
 
 
 impl<'a> Parser<'a>{
-
     fn take_num(&mut self) -> Option<usize>{
         if let Some(Num(_)) = self.look_ahead() {
             match self.next_token() {
@@ -86,9 +84,23 @@ impl<'a> Parser<'a>{
         self.next_token();
     }
 
-    fn consume(&mut self,expect_token:TokenKind)->bool {
+    /* consume methods require that if it unuse wrap value */
+
+    fn consume_token(&mut self,expect_token:TokenKind)->bool {
         if let Some(Token(kind))=self.look_ahead(){
             if kind == expect_token {
+                self.next_token();
+                return true;
+            }else{
+                return false;
+            }
+        }
+        return false;
+    }
+
+    fn consume_keyword(&mut self,expect_symbol:Symbol) -> bool{
+        if let Some(Keyword(symbol))=self.look_ahead(){
+            if symbol == expect_symbol {
                 self.next_token();
                 return true;
             }else{
