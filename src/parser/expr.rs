@@ -90,37 +90,31 @@ impl<'a> Parser<'a>{
         if self.consume_token(Rc) {
             let node = self.expr();
             self.expect(Lc);
-            return node;
-        }
-
-        if let Some(name) = self.take_ident(){
+            node
+        }else if let Some(name) = self.take_ident(){
             let result = self.symbol_table.borrow().get(&name).cloned();
 
-            let node = if let Some(lvar)= result {
+            if let Some(lvar)= result {
                 NdLVar(lvar.1)
             }else{
                 self.set_var(name);
                 NdLVar(self.offset)
-            };
-
-            return node;
+            }
+        }else{
+            NdNum(self.take_num().expect("Error! expect number,found other"))
         }
-
-        NdNum(self.take_num().expect("Error! expect number,found other"))
     }
 
     // This function represents following grammar.
     // unary    = ("+" | "-")?  primary
     pub(super) fn unary(&mut self)->Node{
         if self.consume_token(Plus){
-            return self.primary();
+            self.primary()
+        }else if self.consume_token(Minus){
+            NdSub(Box::new(NdNum(0)),Box::new(self.primary()))
+        }else{
+            self.primary()
         }
-
-        if self.consume_token(Minus){
-            return NdSub(Box::new(NdNum(0)),Box::new(self.primary()))
-        }
-
-        return self.primary();
     }
 
 }

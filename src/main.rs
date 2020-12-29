@@ -6,14 +6,11 @@ pub mod types;
 use std::env;
 use tokenizer::*;
 use parser::*;
-use lexer::assemble::gen;
+use semantic_analyzer::assemble::gen;
 
 
 fn main(){
     let arg = env::args().nth(1).unwrap();
-
-    let tokens_iter = Tokenizer::new(arg.as_str()).peekable();
-    let mut parser= Parser::new(tokens_iter);
 
     println!(".intel_syntax noprefix");
     println!(".globl main");
@@ -23,9 +20,10 @@ fn main(){
     println!("  mov rbp, rsp");
     println!("  sub rsp, 208");
 
-    let trees=parser.parse();
+    let tokenizer = Tokenizer::new(arg.as_str()).peekable();
+    let mut parser= Parser::new(tokenizer);
 
-    for tree in trees.iter(){
+    for tree in parser.parse().iter(){
         gen(tree);
         println!("  pop rax");
     }

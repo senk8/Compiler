@@ -16,7 +16,7 @@ impl<'a> Iterator for Tokenizer<'a>{
             match keyword {
                 b"return" =>{
                     if let Some(c) = ascii.get(6){
-                        if !(char::is_alphabetic(*c as char) && char::is_numeric(*c as char) && *c == b'_' ){
+                        if ! (char::is_alphanumeric(*c as char) || *c == b'_') {
                             self.consume_head(6);
                             return Some(Keyword(Return));
                         }

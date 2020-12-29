@@ -2,9 +2,10 @@ pub mod iterator;
 
 #[derive(Debug)]
 pub struct Tokenizer<'a> {
-    source: &'a str,//構文解析中にエラーを報告するためだけに使う
+    /* it is only used by error_at */
+    source: &'a str,
 
-    /* */
+    /* Cursor */
     cur: &'a str,
     pos: usize
 }
@@ -23,12 +24,12 @@ impl<'a> Tokenizer<'a> {
         return head;
     }
 
-    //文字列を数字である限り消費する。
+    //文字列をアルファベットである限り消費する。
     pub fn consume_ident(&mut self)->&str{
-        let first_non_num_idx = self.cur.find(|c| !char::is_alphabetic(c)).unwrap_or(self.cur.len());
-        let (head,tail) = self.cur.split_at(first_non_num_idx);
+        let first_non_alpha_idx = self.cur.find(|c| !char::is_alphabetic(c)).unwrap_or(self.cur.len());
+        let (head,tail) = self.cur.split_at(first_non_alpha_idx);
         self.cur = tail;
-        self.pos += first_non_num_idx;
+        self.pos += first_non_alpha_idx;
         return head;
     }
 
