@@ -1,15 +1,14 @@
-pub mod tokenizer;
 pub mod parser;
-pub mod lexer;
+pub mod semantic_analyzer;
+pub mod tokenizer;
 pub mod types;
 
-use std::env;
-use tokenizer::*;
 use parser::*;
 use semantic_analyzer::assemble::gen;
+use std::env;
+use tokenizer::*;
 
-
-fn main(){
+fn main() {
     let arg = env::args().nth(1).unwrap();
 
     println!(".intel_syntax noprefix");
@@ -21,15 +20,15 @@ fn main(){
     println!("  sub rsp, 208");
 
     let tokenizer = Tokenizer::new(arg.as_str()).peekable();
-    let mut parser= Parser::new(tokenizer);
+    let mut parser = Parser::new(tokenizer);
 
-    for tree in parser.parse().iter(){
+    for tree in parser.parse().iter() {
         gen(tree);
         println!("  pop rax");
     }
 
     println!("  mov rsp, rbp");
-    println!("  pop rbp"); 
+    println!("  pop rbp");
     println!("  ret");
 
     return;

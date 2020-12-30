@@ -1,13 +1,13 @@
-#[derive(Debug,PartialEq,Clone)]
-pub enum TokenType{
+#[derive(Debug, PartialEq, Clone)]
+pub enum TokenType {
     Token(TokenKind),
     Keyword(Symbol),
     Num(usize),
-    Ident(String)
+    Ident(String),
 }
 
-#[derive(Debug,PartialEq,Clone)]
-pub enum TokenKind{
+#[derive(Debug, PartialEq, Clone)]
+pub enum TokenKind {
     /* arithmetic operator */
     Plus,
     Minus,
@@ -31,12 +31,16 @@ pub enum TokenKind{
     Semicolon,
 }
 
-#[derive(Debug,PartialEq,Clone)]
-pub enum Symbol{
+#[derive(Debug, PartialEq, Clone)]
+pub enum Symbol {
     /* statement */
     If,
     While,
-    
+
     /* statement */
     Return,
 }
+
+
+pub struct Span(usize,usize);
+
