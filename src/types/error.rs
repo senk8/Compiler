@@ -1,5 +1,5 @@
 enum TokenizeError {
-   InvalidChar
+   InvalidChar,
    UnexpectedChar
 }
 

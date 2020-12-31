@@ -33,3 +33,11 @@ fn main() {
 
     return;
 }
+
+mod tests{
+    #[test]
+    fn test_add() {
+        println!("{}",b' ');
+    }
+}
+
