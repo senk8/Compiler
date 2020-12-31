@@ -91,4 +91,16 @@ impl<'a> Tokenizer<'a> {
         self.consume_head(num);
         Some(Token(kind))
     }
+    
+    fn expect_non_id(&mut self,bytes:&[u8],id:usize)->bool{
+        if let Some(c) = bytes.get(6) {
+            if !(char::is_alphanumeric(*c as char) || *c == b'_') {
+                true
+            }else{
+                false
+            }
+        }else{
+            false
+        }
+    }
 }
