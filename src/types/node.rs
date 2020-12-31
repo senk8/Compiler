@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug,Eq,PartialEq,Ord,PartialOrd,Clone,Hash)]
 pub enum Node {
     NdAdd(Box<Node>, Box<Node>),
     NdSub(Box<Node>, Box<Node>),

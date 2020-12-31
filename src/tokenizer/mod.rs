@@ -1,6 +1,34 @@
 pub mod iterator;
+use crate::types::token::*;
+use crate::types::token::TokenType::*;
 
+/*
 #[derive(Debug)]
+pub struct Tokenizer<'a> {
+    /* it is only used by error_at */
+    input: &'a [u8],
+    //source: &'a str,
+
+    /* Cursor */
+    cur: &'a [u8],
+    //cur: &'a str,
+    pos: usize,
+}
+
+impl<'a> Tokenizer<'a> {
+    pub fn new(source: &'a str) -> Tokenizer<'a> {
+        let byte_input = input.as_bytes();
+        Tokenizer {
+            input: byte_input,
+            //source: input,
+            cur: byte_input,
+            //cur: input,
+            pos: 0,
+        }
+    }
+ */
+
+#[derive(Debug,Eq,PartialEq,Ord,PartialOrd,Clone,Default,Hash)]
 pub struct Tokenizer<'a> {
     /* it is only used by error_at */
     source: &'a str,
@@ -57,5 +85,10 @@ impl<'a> Tokenizer<'a> {
         message.push_str(&format!("{:>width$}", "^", width = pos + 1));
         message.push_str(&format!("\n{}", description));
         return message;
+    }
+
+    fn consume_and_tokenize(&mut self, kind:TokenKind,num : usize) -> Option<TokenType> {
+        self.consume_head(num);
+        Some(Token(kind))
     }
 }
