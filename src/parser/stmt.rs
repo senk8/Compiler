@@ -1,6 +1,6 @@
 use super::*;
 use crate::types::node::*;
-use crate::types::token::Symbol::*;
+use crate::types::token::KeywordKind::*;
 use crate::types::token::TokenKind::*;
 
 impl<'a> Parser<'a> {

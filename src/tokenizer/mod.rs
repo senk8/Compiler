@@ -2,56 +2,33 @@ pub mod iterator;
 use crate::types::token::*;
 use crate::types::token::TokenType::*;
 
-/*
-#[derive(Debug)]
-pub struct Tokenizer<'a> {
-    /* it is only used by error_at */
-    input: &'a [u8],
-    //source: &'a str,
-
-    /* Cursor */
-    cur: &'a [u8],
-    //cur: &'a str,
-    pos: usize,
-}
-
-impl<'a> Tokenizer<'a> {
-    pub fn new(source: &'a str) -> Tokenizer<'a> {
-        let byte_input = input.as_bytes();
-        Tokenizer {
-            input: byte_input,
-            //source: input,
-            cur: byte_input,
-            //cur: input,
-            pos: 0,
-        }
-    }
- */
 
 #[derive(Debug,Eq,PartialEq,Ord,PartialOrd,Clone,Default,Hash)]
 pub struct Tokenizer<'a> {
     /* it is only used by error_at */
-    source: &'a str,
+    input: &'a [u8],
 
     /* Cursor */
-    cur: &'a str,
+    cur: &'a [u8],
     pos: usize,
 }
 
 impl<'a> Tokenizer<'a> {
-    pub fn new(source: &'a str) -> Tokenizer<'a> {
+    pub fn new(input: &'a str) -> Tokenizer<'a> {
+        let bytes = input.as_bytes();
         Tokenizer {
-            source: source,
-            cur: source,
+            input: bytes,
+            cur: bytes,
             pos: 0,
         }
     }
 
     //文字列を数字である限り消費する。
-    pub fn consume_num(&mut self) -> &str {
+    fn consume_num(&mut self) -> &[u8] {
         let first_non_num_idx = self
             .cur
-            .find(|c| !char::is_numeric(c))
+            .iter()
+            .position(|c|!c.is_ascii_digit())
             .unwrap_or(self.cur.len());
         let (head, tail) = self.cur.split_at(first_non_num_idx);
         self.cur = tail;
@@ -60,10 +37,11 @@ impl<'a> Tokenizer<'a> {
     }
 
     //文字列をアルファベットである限り消費する。
-    pub fn consume_ident(&mut self) -> &str {
+    fn consume_ident(&mut self) -> &[u8] {
         let first_non_alpha_idx = self
             .cur
-            .find(|c| !char::is_alphabetic(c))
+            .iter()
+            .position(|c|!c.is_ascii_alphabetic())
             .unwrap_or(self.cur.len());
         let (head, tail) = self.cur.split_at(first_non_alpha_idx);
         self.cur = tail;
@@ -78,23 +56,18 @@ impl<'a> Tokenizer<'a> {
         self.pos += 1;
     }
 
-    //字句解析中のエラーを報告する。
-    fn error_at(&self, description: &str) -> String {
-        let pos = self.pos;
-        let mut message = format!("\n{}\n", &self.source);
-        message.push_str(&format!("{:>width$}", "^", width = pos + 1));
-        message.push_str(&format!("\n{}", description));
-        return message;
-    }
-
-    fn consume_and_tokenize(&mut self, kind:TokenKind,num : usize) -> Option<TokenType> {
+    fn consume_and_tokenize(&mut self, kind:TokenKind,num : usize) -> Option<TokenType> 
+    {
         self.consume_head(num);
         Some(Token(kind))
     }
-    
-    fn expect_non_id(&mut self,bytes:&[u8],id:usize)->bool{
-        if let Some(c) = bytes.get(6) {
-            if !(char::is_alphanumeric(*c as char) || *c == b'_') {
+}
+
+
+impl<'a> Tokenizer<'a> {
+    fn expect_non_id(&self,idx:usize)->bool{
+        if let Some(c) = self.cur.get(idx) {
+            if !(c.is_ascii_alphanumeric() || *c == b'_') {
                 true
             }else{
                 false
@@ -102,5 +75,13 @@ impl<'a> Tokenizer<'a> {
         }else{
             false
         }
+    }
+
+    fn error_at(&self, description: &str) -> String {
+        let pos = self.pos;
+        let mut message = format!("\n{}\n", std::str::from_utf8(self.input).unwrap());
+        message.push_str(&format!("{:>width$}", "^", width = pos + 1));
+        message.push_str(&format!("\n{}", description));
+        return message;
     }
 }

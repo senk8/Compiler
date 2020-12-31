@@ -1,5 +1,5 @@
 use super::*;
-use crate::types::token::Symbol::*;
+use crate::types::token::KeywordKind::*;
 use crate::types::token::TokenKind::*;
 use crate::types::token::TokenType::*;
 use crate::types::token::*;
@@ -7,14 +7,15 @@ use crate::types::token::*;
 impl<'a> Iterator for Tokenizer<'a> {
     type Item = TokenType;
     fn next(&mut self) -> Option<TokenType> {
+
         // triming a head of string
+        if let Some(b' ') = self.cur.first() {
+            self.cur = &self.cur[1..];
+        } 
 
-        self.cur = self.cur.trim_start();
-        let ascii = self.cur.as_bytes();
-
-        match ascii {
-            _ if ascii.len() == 0 => None,
-            [b'r',b'e',b't',b'u',b'r',b'n',..] if self.expect_non_id(ascii,6) => {
+        match self.cur {
+            _ if self.cur.is_empty() => None,
+            [b'r',b'e',b't',b'u',b'r',b'n',..] if self.expect_non_id(6) => {
                 self.consume_head(6);
                 Some(Keyword(Return))
             }
@@ -32,11 +33,13 @@ impl<'a> Iterator for Tokenizer<'a> {
             [b';',..] => self.consume_and_tokenize(Semicolon,1),
             [b'0'..=b'9',..] => {
                 let head = self.consume_num();
-                Some(Num(usize::from_str_radix(head, 10).unwrap()))
+                let s = std::str::from_utf8(head).unwrap();
+                Some(Num(usize::from_str_radix(s, 10).unwrap()))
             },
             [b'a'..=b'z',..] => {
                 let head = self.consume_ident();
-                Some(Ident(String::from(head)))
+                let s = std::str::from_utf8(head).unwrap();
+                Some(Ident(String::from(s)))
             },
             _ => panic!(self.error_at("unexpected token")),
         }

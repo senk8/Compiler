@@ -99,9 +99,9 @@ impl<'a> Parser<'a> {
         return false;
     }
 
-    fn consume_keyword(&mut self, expect_symbol: Symbol) -> bool {
-        if let Some(Keyword(symbol)) = self.look_ahead() {
-            if symbol == expect_symbol {
+    fn consume_keyword(&mut self, expect_word: KeywordKind) -> bool {
+        if let Some(Keyword(keyword)) = self.look_ahead() {
+            if keyword == expect_word {
                 self.next_token();
                 return true;
             } else {

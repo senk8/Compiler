@@ -1,10 +1,13 @@
+
+
 #[derive(Debug,Eq,PartialEq,Ord,PartialOrd,Clone,Hash)]
 pub enum TokenType {
     Token(TokenKind),
-    Keyword(Symbol),
+    Keyword(KeywordKind),
     Num(usize),
     Ident(String),
 }
+
 
 #[derive(Debug,Eq,PartialEq,Ord,PartialOrd,Clone,Hash)]
 pub enum TokenKind {
@@ -31,8 +34,9 @@ pub enum TokenKind {
     Semicolon,
 }
 
+
 #[derive(Debug,Eq,PartialEq,Ord,PartialOrd,Clone,Hash)]
-pub enum Symbol {
+pub enum KeywordKind {
     /* statement */
     If,
     While,
@@ -40,6 +44,16 @@ pub enum Symbol {
     /* statement */
     Return,
 }
+
+pub enum DelimitorKind{
+    Lc,
+    Rc,
+    Semicolon
+}
+
+//pub trait Tokenizable{}
+//impl Tokenizable for TokenKind{}
+//impl Tokenizable for Symbol{}
 
 #[derive(Debug,Eq,PartialEq,Ord,PartialOrd,Clone,Default,Hash)]
 pub struct Span(usize,usize);
