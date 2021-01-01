@@ -66,6 +66,14 @@ impl<'a> Parser<'a> {
     }
 
     fn take_ident(&mut self) -> Option<String> {
+
+        /* 
+        match self.look_ahead() {
+            Some(Ident(_)) => Some(self.next_token().unwrap().0),
+            _ => None,
+        }
+        */
+
         if let Some(Ident(_)) = self.look_ahead() {
             match self.next_token() {
                 Some(Ident(s)) => Some(s),

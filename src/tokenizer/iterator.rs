@@ -15,7 +15,7 @@ impl<'a> Iterator for Tokenizer<'a> {
 
         match self.cur {
             _ if self.cur.is_empty() => None,
-            [b'r',b'e',b't',b'u',b'r',b'n',..] if self.expect_non_id(6) => {
+            [b'r',b'e',b't',b'u',b'r',b'n',..] if self.expect_non_idx(6) => {
                 self.consume_head(6);
                 Some(Keyword(Return))
             }

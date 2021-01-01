@@ -9,6 +9,7 @@ pub enum TokenType {
 }
 
 
+
 #[derive(Debug,Eq,PartialEq,Ord,PartialOrd,Clone,Hash)]
 pub enum TokenKind {
     /* arithmetic operator */
@@ -45,16 +46,57 @@ pub enum KeywordKind {
     Return,
 }
 
+#[derive(Debug,Eq,PartialEq,Ord,PartialOrd,Clone,Default,Hash)]
+pub struct Span(usize,usize);
+
+//pub trait Tokenizable{}
+//impl Tokenizable for TokenKind{}
+//impl Tokenizable for Symbol{}
+
+/* 
+#[derive(Debug,Eq,PartialEq,Ord,PartialOrd,Clone,Hash)]
+pub enum Token {
+    Operator(BinOp),
+    Delimitor(DelimitorKind),
+    Keyword(KeywordKind),
+    Num(usize),
+    Ident(String),
+}
+
+#[derive(Debug,Eq,PartialEq,Ord,PartialOrd,Clone,Hash)]
 pub enum DelimitorKind{
     Lc,
     Rc,
     Semicolon
 }
 
-//pub trait Tokenizable{}
-//impl Tokenizable for TokenKind{}
-//impl Tokenizable for Symbol{}
+#[derive(Debug,Eq,PartialEq,Ord,PartialOrd,Clone,Hash)]
+pub enum KeywordKind {
+    /* statement */
+    If,
+    While,
 
-#[derive(Debug,Eq,PartialEq,Ord,PartialOrd,Clone,Default,Hash)]
-pub struct Span(usize,usize);
+    /* statement */
+    Return,
+}
 
+#[derive(Debug,Eq,PartialEq,Ord,PartialOrd,Clone,Hash)]
+pub enum BinOp {
+    /* arithmetic operator */
+    Plus,
+    Minus,
+    Mul,
+    Div,
+
+    /* rerational operator */
+    Eq,
+    Neq,
+    Geq,
+    Leq,
+    Lt,
+    Gt,
+
+    /* others */
+    Assign,
+}
+*/

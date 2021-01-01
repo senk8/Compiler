@@ -65,15 +65,10 @@ impl<'a> Tokenizer<'a> {
 
 
 impl<'a> Tokenizer<'a> {
-    fn expect_non_id(&self,idx:usize)->bool{
-        if let Some(c) = self.cur.get(idx) {
-            if !(c.is_ascii_alphanumeric() || *c == b'_') {
-                true
-            }else{
-                false
-            }
-        }else{
-            false
+    fn expect_non_idx(&self,idx:usize)->bool{
+        match self.cur.get(idx) {
+            Some(c) if !(c.is_ascii_alphanumeric() || *c == b'_') => true,
+            _ => false,
         }
     }
 
