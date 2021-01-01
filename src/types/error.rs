@@ -1,9 +1,11 @@
-enum TokenizeError {
+#[derive(Debug,Eq,PartialEq,Ord,PartialOrd,Clone,Hash,Copy)]
+pub enum TokenizeError {
    InvalidChar,
    UnexpectedChar
 }
 
-enum ParseError {
+#[derive(Debug,Eq,PartialEq,Ord,PartialOrd,Clone,Hash,Copy)]
+pub enum ParseError {
    UnexpectedToken
 }
 

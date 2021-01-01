@@ -5,7 +5,7 @@ use core::iter::Peekable;
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-use crate::tokenizer::*;
+use crate::lexer::*;
 
 use crate::types::token::TokenType::*;
 use crate::types::token::*;
@@ -22,13 +22,13 @@ pub struct Parser<'a> {
     offset: usize,
 
     /* mutable field for tokenizer */
-    tokenizer: RefCell<Peekable<Tokenizer<'a>>>,
+    tokenizer: RefCell<Peekable<Lexer<'a>>>,
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(tokenizer: Peekable<Tokenizer<'a>>) -> Parser<'a> {
+    pub fn new(lexer: Peekable<Lexer<'a>>) -> Parser<'a> {
         Parser {
-            tokenizer: RefCell::new(tokenizer),
+            tokenizer: RefCell::new(lexer),
             symbol_table: RefCell::new(HashMap::new()),
             offset: 0,
         }

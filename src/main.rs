@@ -1,12 +1,12 @@
 pub mod parser;
 pub mod semantic_analyzer;
-pub mod tokenizer;
+pub mod lexer;
 pub mod types;
 
 use parser::*;
 use semantic_analyzer::assemble::gen;
 use std::env;
-use tokenizer::*;
+use lexer::*;
 
 fn main() {
     let arg = env::args().nth(1).unwrap();
@@ -19,8 +19,8 @@ fn main() {
     println!("  mov rbp, rsp");
     println!("  sub rsp, 208");
 
-    let tokenizer = Tokenizer::new(arg.as_str()).peekable();
-    let mut parser = Parser::new(tokenizer);
+    let lexer = Lexer::new(arg.as_str()).peekable();
+    let mut parser = Parser::new(lexer);
 
     for tree in parser.parse().iter() {
         gen(tree);
