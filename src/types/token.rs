@@ -5,9 +5,17 @@ pub enum TokenType {
     Token(TokenKind),
     Keyword(KeywordKind),
     Num(usize),
-    Ident(String),
+    Id(String),
 }
 
+/*
+pub struct Wrap<T> {
+    val:T
+
+}
+*/
+
+//type Token = Wrap<TokenType>
 
 
 #[derive(Debug,Eq,PartialEq,Ord,PartialOrd,Clone,Hash)]

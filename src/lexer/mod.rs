@@ -22,11 +22,11 @@ impl<'a> Lexer<'a> {
 
     //文字列の最初を取り除く
     fn consume(&mut self, n: usize) -> Option<()>{
-        if self.txt.len() <= self.pos + n  {
-            None
-        }else{
+        if self.pos + n <= self.txt.len() {
             self.pos += n;
             Some(())
+        }else{
+            None
         }
     }
 }
@@ -69,7 +69,7 @@ impl<'a> Lexer<'a> {
         }
 
         /* TODO : TokenizeError isn't used  */
-        Some(Ident(
+        Some(Id(
         from_utf8(&self.txt[begin..self.pos])
         .map(|s|String::from(s))
         .unwrap()

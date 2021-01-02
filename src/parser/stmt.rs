@@ -2,28 +2,53 @@ use super::*;
 use crate::types::node::*;
 use crate::types::token::KeywordKind::*;
 use crate::types::token::TokenKind::*;
+use crate::types::error::ParseError;
 
 impl<'a> Parser<'a> {
     // program = stmt *
-    pub(super) fn program(&mut self) -> Vec<Node> {
+    pub(super) fn program(&mut self) -> Result<Vec<Node>,ParseError> {
         let mut trees = vec![];
 
-        while let Some(_) = self.look_ahead() {
-            trees.push(self.stmt());
+        while let Ok(_) = self.look_ahead() {
+            trees.push(self.stmt()?);
         }
 
-        trees
+        Ok(trees)
     }
 
     /* stmt = expr ";" | "return" expr ";" */
-    pub(super) fn stmt(&mut self) -> Node {
-        let node = if self.consume_keyword(Return) {
-            NdReturn(Box::new(self.expr()))
-        } else {
-            self.expr()
-        };
+    pub(super) fn stmt(&mut self) -> Result<Node,ParseError> {
 
-        self.expect(Semicolon);
-        node
+        self.look_ahead().and_then(|tok|
+            match tok{
+                Keyword(Return) => {
+                    self.next_token()?;
+                    Ok(NdReturn(Box::new(self.expr()?)))
+                },
+                _ => self.expr()
+            }
+        ).and_then(|node|
+            match self.look_ahead() {
+                Ok(Token(Semicolon)) => {
+                    self.next_token()?;
+                    Ok(node)
+                },
+                _ => Err(LackSemicolon),
+            }
+        )
     }
 }
+
+
+
+
+        /*
+        let node = if let Ok(_) = self.expect_keyword(Return) {
+        } else {
+        };
+
+        self.expect_delimitor(Semicolon)?;
+        Ok(node)
+
+         */
+ 

@@ -13,6 +13,9 @@ use crate::types::token::*;
 use crate::types::node::Node::*;
 use crate::types::node::*;
 
+use crate::types::error::ParseError;
+use crate::types::error::ParseError::*;
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct LVar(pub usize, pub usize);
 
@@ -40,84 +43,76 @@ impl<'a> Parser<'a> {
             .insert(name.clone(), LVar(name.len(), self.offset));
     }
 
-    pub fn look_ahead(&mut self) -> Option<TokenType> {
-        self.tokenizer.borrow_mut().peek().cloned()
+    pub fn look_ahead(&self) -> Result<TokenType,ParseError> {
+        self.tokenizer.borrow_mut().peek().cloned().ok_or(Eof)
     }
 
-    pub fn next_token(&mut self) -> Option<TokenType> {
-        self.tokenizer.borrow_mut().next()
+    pub fn next_token(&self) -> Result<TokenType,ParseError> {
+        self.tokenizer.borrow_mut().next().ok_or(Eof)
     }
 
-    pub fn parse(&mut self) -> Vec<Node> {
+    pub fn parse(&mut self) -> Result<Vec<Node>,ParseError> {
         self.program()
     }
 }
 
+/*
+
 impl<'a> Parser<'a> {
-    fn take_num(&mut self) -> Option<usize> {
-        if let Some(Num(_)) = self.look_ahead() {
-            match self.next_token() {
-                Some(Num(n)) => Some(n),
-                _ => None,
-            }
-        } else {
-            None
-        }
-    }
-
-    fn take_ident(&mut self) -> Option<String> {
-
-        /* 
-        match self.look_ahead() {
-            Some(Ident(_)) => Some(self.next_token().unwrap().0),
-            _ => None,
-        }
-        */
-
-        if let Some(Ident(_)) = self.look_ahead() {
-            match self.next_token() {
-                Some(Ident(s)) => Some(s),
-                _ => None,
-            }
-        } else {
-            None
-        }
-    }
-
-    fn expect(&mut self, expect_token: TokenKind) -> () {
-        if let Some(Token(kind)) = self.look_ahead() {
-            if kind != expect_token {
-                panic!("Error! expect number,found other");
-            }
-        }
-        self.next_token();
-    }
-
     /* consume methods require that if it unuse wrap value */
 
-    fn consume_token(&mut self, expect_token: TokenKind) -> bool {
-        if let Some(Token(kind)) = self.look_ahead() {
-            if kind == expect_token {
-                self.next_token();
-                return true;
-            } else {
-                return false;
+    fn expect_token(&mut self, expect: TokenKind) -> Result<TokenType,ParseError> {
+        self.look_ahead().and_then(|tok|{
+            match tok {
+               Token(kind) if kind == expect => self.next_token(),
+               Token(kind) => Err(UnexpectedToken),
+               _ => Err(UnexpectedToken),
             }
-        }
-        return false;
+        })
     }
 
-    fn consume_keyword(&mut self, expect_word: KeywordKind) -> bool {
-        if let Some(Keyword(keyword)) = self.look_ahead() {
-            if keyword == expect_word {
-                self.next_token();
-                return true;
-            } else {
-                return false;
+    fn expect_keyword(&mut self, expect: KeywordKind) -> Result<TokenType,ParseError> {
+        self.look_ahead().and_then(|tok|{
+            match tok {
+               Keyword(kind) if kind == expect => self.next_token(),
+               Keyword(kind) => Err(UnexpectedKeyword),
+               _ => Err(UnexpectedKeyword),
             }
-        }
-        return false;
+        })
     }
+
+    fn expect_num(&mut self) -> Result<usize,ParseError> {
+        self.look_ahead().and_then(|tok|{
+            match tok {
+               Num(_) => self.next_token().map(|tok|match tok{
+                   Num(n) => n,
+                   _ => unreachable!(),
+               }),
+               _ => Err(ExpectedNumeric),
+            }
+        })
+    }
+
+    fn expect_id(&mut self) -> Result<String,ParseError> {
+        self.look_ahead().and_then(|tok|{
+            match tok {
+               Id(_) => self.next_token().map(|tok|match tok{
+                   Id(s) => s,
+                   _ => unreachable!(),
+               }),
+               _ => Err(ExpectedIdentifier),
+            }
+        })
+   }
+
+    fn expect_delimitor(&mut self, expect: TokenKind) -> Result<TokenType,ParseError> {
+        self.look_ahead().and_then(|tok|{
+            match tok {
+               Token(kind) if kind == expect => self.next_token(),
+               Token(kind) => Err(UnexpectedDelimitor),
+               _ => Err(UnclosedDelimitor),
+            }
+        })
+   }
 }
-
-
+*/
