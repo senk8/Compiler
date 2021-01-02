@@ -1,2 +1,2 @@
-# new_lang
-自作言語プロジェクトです。
+# safe_c
+C Compiler implemantation by Rust .
