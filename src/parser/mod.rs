@@ -2,16 +2,20 @@ pub mod expr;
 pub mod stmt;
 
 use core::iter::Peekable;
-use std::cell::RefCell;
+use std::cell::{RefCell,Cell};
 use std::collections::HashMap;
 
 use crate::lexer::*;
 
 use crate::types::token::TokenType::*;
+use crate::types::token::TokenKind::*;
 use crate::types::token::*;
 
 use crate::types::node::Node::*;
 use crate::types::node::*;
+
+use crate::types::error::ParseError;
+use crate::types::error::ParseError::*;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct LVar(pub usize, pub usize);
@@ -19,7 +23,7 @@ pub struct LVar(pub usize, pub usize);
 pub struct Parser<'a> {
     /* mutable field for symbol table */
     symbol_table: RefCell<HashMap<String, LVar>>,
-    offset: usize,
+    offset: Cell<usize>,
 
     /* mutable field for tokenizer */
     tokenizer: RefCell<Peekable<Lexer<'a>>>,
@@ -30,94 +34,115 @@ impl<'a> Parser<'a> {
         Parser {
             tokenizer: RefCell::new(lexer),
             symbol_table: RefCell::new(HashMap::new()),
-            offset: 0,
+            offset: Cell::new(0),
         }
     }
-    pub fn set_var(&mut self, name: String) -> () {
-        self.offset = self.offset + 8;
+    pub fn set_var(&self, name: String) -> () {
+        self.offset.set(self.offset.get() + 8);
         self.symbol_table
             .borrow_mut()
-            .insert(name.clone(), LVar(name.len(), self.offset));
+            .insert(name.clone(), LVar(name.len(), self.offset.get()));
     }
 
-    pub fn look_ahead(&mut self) -> Option<TokenType> {
-        self.tokenizer.borrow_mut().peek().cloned()
+    pub fn look_ahead(&self) -> Result<TokenType,ParseError> {
+        self.tokenizer.borrow_mut().peek().cloned().ok_or(Eof)
     }
 
-    pub fn next_token(&mut self) -> Option<TokenType> {
-        self.tokenizer.borrow_mut().next()
+    pub fn next_token(&self) -> Result<TokenType,ParseError> {
+        self.tokenizer.borrow_mut().next().ok_or(Eof)
     }
 
-    pub fn parse(&mut self) -> Vec<Node> {
+    pub fn parse(&self) -> Result<Vec<Node>,ParseError> {
         self.program()
     }
 }
 
-impl<'a> Parser<'a> {
-    fn take_num(&mut self) -> Option<usize> {
-        if let Some(Num(_)) = self.look_ahead() {
-            match self.next_token() {
-                Some(Num(n)) => Some(n),
-                _ => None,
-            }
-        } else {
-            None
+mod tests{
+    use super::*;
+
+    #[test]
+    fn test_parse_arithmetic()->Result<(),ParseError>{
+        let input = "2+1;2-1;2*1;2/1;2+3*3/3-1;";
+        let lexer = Lexer::new(input).peekable();
+        let parser = Parser::new(lexer);
+
+        let result = parser.parse()?;
+
+        let answer = vec![
+            NdAdd(Box::new(NdNum(2)),Box::new(NdNum(1))),
+            NdSub(Box::new(NdNum(2)),Box::new(NdNum(1))),
+            NdMul(Box::new(NdNum(2)),Box::new(NdNum(1))),
+            NdDiv(Box::new(NdNum(2)),Box::new(NdNum(1))),
+            NdSub(
+                Box::new(NdAdd(
+                    Box::new(NdNum(2)),
+                    Box::new(NdDiv(
+                        Box::new(NdMul(Box::new(NdNum(3)),Box::new(NdNum(3)))),
+                        Box::new(NdNum(3))
+                    ))
+                )),
+                Box::new(NdNum(1))
+            )
+        ];
+
+        for (tree,ans) in result.into_iter().zip(answer.into_iter()){
+            assert_eq!(tree,ans);
         }
+
+        Ok(())
     }
 
-    fn take_ident(&mut self) -> Option<String> {
+    #[test]
+    fn test_parse_relatinonal()->Result<(),ParseError>{
+        let input = "2<3;2>3;2<=3;2>=3;2==3;2!=3;";
+        let lexer = Lexer::new(input).peekable();
+        let parser = Parser::new(lexer);
 
-        /* 
-        match self.look_ahead() {
-            Some(Ident(_)) => Some(self.next_token().unwrap().0),
-            _ => None,
-        }
-        */
+        let result = parser.parse()?;
 
-        if let Some(Ident(_)) = self.look_ahead() {
-            match self.next_token() {
-                Some(Ident(s)) => Some(s),
-                _ => None,
-            }
-        } else {
-            None
+        let answer = vec![
+            NdLt(Box::new(NdNum(2)),Box::new(NdNum(3))),
+            NdLt(Box::new(NdNum(3)),Box::new(NdNum(2))),
+            NdLeq(Box::new(NdNum(2)),Box::new(NdNum(3))),
+            NdLeq(Box::new(NdNum(3)),Box::new(NdNum(2))),
+            NdEq(Box::new(NdNum(2)),Box::new(NdNum(3))),
+            NdNeq(Box::new(NdNum(2)),Box::new(NdNum(3))),
+            /*
+            NdEq(
+                Box::new(NdLeq(Box::new(NdNum(2)),
+                            Box::new(NdNum(3)))
+                ),
+                Box::new(NdLeq(Box::new(NdNum(2)),
+                            Box::new(NdNum(3))),
+                )
+            )
+            */
+        ];
+
+        for (tree,ans) in result.into_iter().zip(answer.into_iter()){
+            assert_eq!(tree,ans);
         }
+
+        Ok(())
     }
 
-    fn expect(&mut self, expect_token: TokenKind) -> () {
-        if let Some(Token(kind)) = self.look_ahead() {
-            if kind != expect_token {
-                panic!("Error! expect number,found other");
-            }
-        }
-        self.next_token();
-    }
+    #[test]
+    fn test_parse_keyword()->Result<(),ParseError>{
+        let input = "return 2*2;return 2==2;";
+        let lexer = Lexer::new(input).peekable();
+        let parser = Parser::new(lexer);
 
-    /* consume methods require that if it unuse wrap value */
+        let result = parser.parse()?;
 
-    fn consume_token(&mut self, expect_token: TokenKind) -> bool {
-        if let Some(Token(kind)) = self.look_ahead() {
-            if kind == expect_token {
-                self.next_token();
-                return true;
-            } else {
-                return false;
-            }
-        }
-        return false;
-    }
+        let answer = vec![
+            NdReturn(Box::new(NdMul(Box::new(NdNum(2)),Box::new(NdNum(2))))),
+            NdReturn(Box::new(NdEq(Box::new(NdNum(2)),Box::new(NdNum(2)))))
+        ];
 
-    fn consume_keyword(&mut self, expect_word: KeywordKind) -> bool {
-        if let Some(Keyword(keyword)) = self.look_ahead() {
-            if keyword == expect_word {
-                self.next_token();
-                return true;
-            } else {
-                return false;
-            }
+        for (tree,ans) in result.into_iter().zip(answer.into_iter()){
+            assert_eq!(tree,ans);
         }
-        return false;
+
+        Ok(())
     }
 }
-
-

@@ -8,7 +8,9 @@ use semantic_analyzer::assemble::gen;
 use std::env;
 use lexer::*;
 
-fn main() {
+use crate::types::error::ParseError;
+
+fn main() -> Result<(),ParseError>{
     let arg = env::args().nth(1).unwrap();
 
     println!(".intel_syntax noprefix");
@@ -20,9 +22,9 @@ fn main() {
     println!("  sub rsp, 208");
 
     let lexer = Lexer::new(arg.as_str()).peekable();
-    let mut parser = Parser::new(lexer);
+    let parser = Parser::new(lexer);
 
-    for tree in parser.parse().iter() {
+    for tree in parser.parse()?.iter() {
         gen(tree);
         println!("  pop rax");
     }
@@ -31,13 +33,5 @@ fn main() {
     println!("  pop rbp");
     println!("  ret");
 
-    return;
+    return Ok(());
 }
-
-mod tests{
-    #[test]
-    fn test_add() {
-        println!("{}",b' ');
-    }
-}
-

@@ -6,6 +6,13 @@ pub enum TokenizeError {
 
 #[derive(Debug,Eq,PartialEq,Ord,PartialOrd,Clone,Hash,Copy)]
 pub enum ParseError {
-   UnexpectedToken
+   UnexpectedToken,
+   UnexpectedKeyword,
+   UnexpectedDelimitor,
+   UnclosedDelimitor,
+   ExpectedNumeric,
+   ExpectedIdentifier,
+   LackSemicolon,
+   Eof,
 }
 
