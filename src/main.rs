@@ -22,7 +22,7 @@ fn main() -> Result<(),ParseError>{
     println!("  sub rsp, 208");
 
     let lexer = Lexer::new(arg.as_str()).peekable();
-    let mut parser = Parser::new(lexer);
+    let parser = Parser::new(lexer);
 
     for tree in parser.parse()?.iter() {
         gen(tree);
@@ -35,11 +35,3 @@ fn main() -> Result<(),ParseError>{
 
     return Ok(());
 }
-
-mod tests{
-    #[test]
-    fn test_add() {
-        println!("{}",b' ');
-    }
-}
-

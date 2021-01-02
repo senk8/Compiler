@@ -6,7 +6,7 @@ use crate::types::error::ParseError;
 
 impl<'a> Parser<'a> {
     // program = stmt *
-    pub(super) fn program(&mut self) -> Result<Vec<Node>,ParseError> {
+    pub(super) fn program(&self) -> Result<Vec<Node>,ParseError> {
         let mut trees = vec![];
 
         while let Ok(_) = self.look_ahead() {
@@ -17,7 +17,7 @@ impl<'a> Parser<'a> {
     }
 
     /* stmt = expr ";" | "return" expr ";" */
-    pub(super) fn stmt(&mut self) -> Result<Node,ParseError> {
+    pub(super) fn stmt(&self) -> Result<Node,ParseError> {
 
         self.look_ahead().and_then(|tok|
             match tok{
@@ -28,8 +28,8 @@ impl<'a> Parser<'a> {
                 _ => self.expr()
             }
         ).and_then(|node|
-            match self.look_ahead() {
-                Ok(Token(Semicolon)) => {
+            match self.look_ahead()? {
+                Token(Semicolon) => {
                     self.next_token()?;
                     Ok(node)
                 },
@@ -38,17 +38,3 @@ impl<'a> Parser<'a> {
         )
     }
 }
-
-
-
-
-        /*
-        let node = if let Ok(_) = self.expect_keyword(Return) {
-        } else {
-        };
-
-        self.expect_delimitor(Semicolon)?;
-        Ok(node)
-
-         */
- 
