@@ -7,15 +7,16 @@ use std::collections::HashMap;
 
 use crate::lexer::*;
 
-use crate::types::token::TokenType::*;
-use crate::types::token::TokenKind::*;
 use crate::types::token::*;
 
 use crate::types::node::Node::*;
 use crate::types::node::*;
 
-use crate::types::error::ParseError;
-use crate::types::error::ParseError::*;
+use crate::types::annotation::Pos;
+
+use crate::types::error::{ParseError,ParseErrorKind};
+use crate::types::error::ParseErrorKind::*;
+
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct LVar(pub usize, pub usize);
@@ -44,16 +45,20 @@ impl<'a> Parser<'a> {
             .insert(name.clone(), LVar(name.len(), self.offset.get()));
     }
 
-    pub fn look_ahead(&self) -> Result<TokenType,ParseError> {
-        self.tokenizer.borrow_mut().peek().cloned().ok_or(Eof)
+    pub fn look_ahead(&self) -> Result<Token,ParseError> {
+        self.tokenizer.borrow_mut().peek().cloned().ok_or(ParseError{val:Eof,pos:Pos(0,0)})
     }
 
-    pub fn next_token(&self) -> Result<TokenType,ParseError> {
-        self.tokenizer.borrow_mut().next().ok_or(Eof)
+    pub fn next_token(&self) -> Result<Token,ParseError> {
+        self.tokenizer.borrow_mut().next().ok_or(ParseError{val:Eof,pos:Pos(0,0)})
     }
 
     pub fn parse(&self) -> Result<Vec<Node>,ParseError> {
         self.program()
+    }
+
+    pub fn raise_error(&self,val:ParseErrorKind,pos:Pos)->Result<Node,ParseError> {
+        Err(ParseError{val,pos})
     }
 }
 
@@ -117,6 +122,27 @@ mod tests{
                 )
             )
             */
+        ];
+
+        for (tree,ans) in result.into_iter().zip(answer.into_iter()){
+            assert_eq!(tree,ans);
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_parse_variable()->Result<(),ParseError>{
+        let input = "a=2;b=3;a*b;";
+        let lexer = Lexer::new(input).peekable();
+        let parser = Parser::new(lexer);
+
+        let result = parser.parse()?;
+
+        let answer = vec![
+            NdAssign(Box::new(NdLVar(8)),Box::new(NdNum(2))),
+            NdAssign(Box::new(NdLVar(16)),Box::new(NdNum(3))),
+            NdMul(Box::new(NdLVar(8)),Box::new(NdLVar(16))),
         ];
 
         for (tree,ans) in result.into_iter().zip(answer.into_iter()){

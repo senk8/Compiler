@@ -1,8 +1,13 @@
 pub mod iterator;
-use crate::types::token::*;
-use crate::types::token::TokenType::*;
-use crate::types::error::TokenizeError;
+
 use std::str::from_utf8;
+
+use crate::types::token::*;
+use crate::types::annotation::*;
+use crate::types::token::TokenKind::*;
+
+//use crate::types::error::TokenizeError;
+
 
 #[derive(Debug,Eq,PartialEq,Ord,PartialOrd,Clone,Default,Hash)]
 pub struct Lexer<'a> {
@@ -33,47 +38,49 @@ impl<'a> Lexer<'a> {
 
 impl<'a> Lexer<'a> {
 
-    fn lex_token(&mut self, kind:TokenKind,len : usize) -> Option<TokenType> {
+    fn lex_token(&mut self, val:TokenKind,len : usize) -> Option<Token> {
+        let pos = Pos(self.pos,self.pos+len);
         self.consume(len)?;
-        Some(Token(kind))
-    }
-
-    fn lex_keyword(&mut self,keyword:KeywordKind,len: usize) -> Option<TokenType>{
-        self.consume(len)?;
-        Some(Keyword(keyword))
+        Some(Token{val,pos})
     }
 
     //文字列を数字である限り消費する。
-    fn lex_num(&mut self) -> Option<TokenType> {
+    fn lex_num(&mut self) -> Option<Token> {
         let begin = self.pos;
 
         while self.pos < self.txt.len() && self.txt[self.pos].is_ascii_digit() {
             self.pos+=1;
         }
 
+        let pos = Pos(begin,self.pos);
+
         /* TODO : TokenizeError isn't used  */
-        Some(Num(
-        from_utf8(&self.txt[begin..self.pos])
-        .map(|s|usize::from_str_radix(s,10))
-        .unwrap()
-        .unwrap()
-        ))
+        let val =Num(from_utf8(&self.txt[begin..self.pos])
+                    .map(|s|usize::from_str_radix(s,10))
+                    .unwrap()
+                    .unwrap()
+                 );
+
+        Some(Token{val,pos})
     }
 
     //文字列をアルファベットである限り消費する。
-    fn lex_ident(&mut self) -> Option<TokenType>  {
+    fn lex_ident(&mut self) -> Option<Token>  {
         let begin = self.pos;
 
         while self.pos < self.txt.len() && self.txt[self.pos].is_ascii_alphabetic() {
             self.pos+=1;
         }
 
+        let pos = Pos(begin,self.pos);
+
         /* TODO : TokenizeError isn't used  */
-        Some(Id(
-        from_utf8(&self.txt[begin..self.pos])
-        .map(|s|String::from(s))
-        .unwrap()
-        ))
+        let val =Id(from_utf8(&self.txt[begin..self.pos])
+                    .map(|s|String::from(s))
+                    .unwrap()
+                );
+
+        Some(Token{val,pos})
     }
 }
 
