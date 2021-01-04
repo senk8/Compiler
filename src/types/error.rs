@@ -1,4 +1,4 @@
-use super::annotation::*;
+use super::annotation::Pos;
 use std::fmt;
 use thiserror::Error;
 
