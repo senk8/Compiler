@@ -14,7 +14,7 @@ use crate::types::node::*;
 
 use crate::types::annotation::Pos;
 
-use crate::types::error::ParseError;
+use crate::types::error::{ParseError,ParseErrorKind};
 use crate::types::error::ParseError::*;
 
 
@@ -51,20 +51,35 @@ impl<'a> Parser<'a> {
     }
 
     pub fn look_ahead(&self) -> Result<Token,ParseError> {
-        self.lexer.borrow_mut().peek().cloned().ok_or(Eof(Pos(0,0)," ".to_owned()))
+        use crate::types::error::ParseErrorKind::*;
+        self.lexer.borrow_mut().peek().cloned().ok_or_else(||self.raise_error(Eof,Pos(0,0)).unwrap_err())
     }
 
     pub fn next_token(&self) -> Result<Token,ParseError> {
-        self.lexer.borrow_mut().next().ok_or(Eof(Pos(0,0)," ".to_owned()))
+        use crate::types::error::ParseErrorKind::*;
+        self.lexer.borrow_mut().next().ok_or_else(||self.raise_error(Eof,Pos(0,0)).unwrap_err())
     }
 
     pub fn parse(&self) -> Result<Vec<Node>,ParseError> {
         self.program()
     }
 
-    pub fn raise_error(&self,pos:Pos)->Result<Node,ParseError> {
-        let string_input = std::str::from_utf8(self.input).map(|s|String::from(s)).unwrap();
-        Err(Eof(pos,string_input))
+    pub fn raise_error(&self,kind:ParseErrorKind,pos:Pos)->Result<Node,ParseError> {
+        use crate::types::error::ParseErrorKind::*;
+
+        let begin = pos.0;
+        let mut string_input = std::str::from_utf8(self.input).map(|s|String::from(s)).unwrap();
+        string_input.push_str(&format!("\n{:>width$}\n","^",width = begin + 1));
+
+        Err(match kind {
+            UnexpectedToken => UnexpectedTokenError(pos,string_input),
+            UnclosedDelimitor => UnclosedDelimitorError(pos,string_input),
+            UnexpectedKeyword => UnexpectedKeywordError(pos,string_input),
+            UnexpectedDelimitor => UnexpectedDelimitorError(pos,string_input),
+            Eof => EofError(pos,string_input),
+            LackSemicolon => LackSemicolonError(pos,string_input),
+            _ => SegmentationFault(pos,string_input),
+        })
     }
     
     fn new_opr(&self,lhs:Node,rhs:Node)->Result<Node,ParseError>{
@@ -85,7 +100,6 @@ impl<'a> Parser<'a> {
             Opr(Neq) => NdNeq(Box::new(lhs), Box::new(rhs)),
             x => panic!("{:?}",x),
         });
-        println!("{:?}",x);
         x
     }
 }
