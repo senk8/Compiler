@@ -14,8 +14,8 @@ use crate::types::node::*;
 
 use crate::types::annotation::Pos;
 
-use crate::types::error::{ParseError,ParseErrorKind};
-use crate::types::error::ParseErrorKind::*;
+use crate::types::error::ParseError;
+use crate::types::error::ParseError::*;
 
 
 #[derive(Debug, PartialEq, Clone)]
@@ -27,15 +27,20 @@ pub struct Parser<'a> {
     offset: Cell<usize>,
 
     /* mutable field for tokenizer */
-    tokenizer: RefCell<Peekable<Lexer<'a>>>,
+    lexer: RefCell<Peekable<Lexer<'a>>>,
+    input: &'a [u8],
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(lexer: Peekable<Lexer<'a>>) -> Parser<'a> {
+    pub fn new(lexer: Lexer<'a>) -> Parser<'a> {
+        let input = lexer.get_txt();
+        let ll_1_lexer = lexer.peekable();
+
         Parser {
-            tokenizer: RefCell::new(lexer),
+            lexer: RefCell::new(ll_1_lexer),
             symbol_table: RefCell::new(HashMap::new()),
             offset: Cell::new(0),
+            input: input
         }
     }
     pub fn set_var(&self, name: String) -> () {
@@ -46,47 +51,85 @@ impl<'a> Parser<'a> {
     }
 
     pub fn look_ahead(&self) -> Result<Token,ParseError> {
-        self.tokenizer.borrow_mut().peek().cloned().ok_or(ParseError{val:Eof,pos:Pos(0,0)})
+        self.lexer.borrow_mut().peek().cloned().ok_or(Eof(Pos(0,0)," ".to_owned()))
     }
 
     pub fn next_token(&self) -> Result<Token,ParseError> {
-        self.tokenizer.borrow_mut().next().ok_or(ParseError{val:Eof,pos:Pos(0,0)})
+        self.lexer.borrow_mut().next().ok_or(Eof(Pos(0,0)," ".to_owned()))
     }
 
     pub fn parse(&self) -> Result<Vec<Node>,ParseError> {
         self.program()
     }
 
-    pub fn raise_error(&self,val:ParseErrorKind,pos:Pos)->Result<Node,ParseError> {
-        Err(ParseError{val,pos})
+    pub fn raise_error(&self,pos:Pos)->Result<Node,ParseError> {
+        let string_input = std::str::from_utf8(self.input).map(|s|String::from(s)).unwrap();
+        Err(Eof(pos,string_input))
+    }
+    
+    fn new_opr(&self,lhs:Node,rhs:Node)->Result<Node,ParseError>{
+        use crate::types::token::TokenKind::*;
+        use crate::types::token::OperatorKind::*;
+
+        let x = Ok(match self.next_token()?.val {
+            Opr(Add) => NdAdd(Box::new(lhs), Box::new(rhs)),
+            Opr(Sub) => NdSub(Box::new(lhs), Box::new(rhs)),
+            Opr(Mul) => NdMul(Box::new(lhs), Box::new(rhs)),
+            Opr(Div) => NdDiv(Box::new(lhs), Box::new(rhs)),
+            Opr(Assign) => NdAssign(Box::new(lhs), Box::new(rhs)),
+            Opr(Lt) => NdLt(Box::new(lhs), Box::new(rhs)),
+            Opr(Gt) => NdLt(Box::new(lhs), Box::new(rhs)),
+            Opr(Leq) => NdLeq(Box::new(lhs), Box::new(rhs)),
+            Opr(Geq) => NdLeq(Box::new(lhs), Box::new(rhs)),
+            Opr(Eq) => NdEq(Box::new(lhs), Box::new(rhs)),
+            Opr(Neq) => NdNeq(Box::new(lhs), Box::new(rhs)),
+            x => panic!("{:?}",x),
+        });
+        println!("{:?}",x);
+        x
     }
 }
 
 mod tests{
     use super::*;
 
+    #[allow(dead_code)]
+    macro_rules! new_node {
+        ($f:ident,$lhs:expr,$rhs:expr) => {
+            $f(Box::new($lhs),Box::new($rhs))
+        };
+    }
+
     #[test]
     fn test_parse_arithmetic()->Result<(),ParseError>{
+
         let input = "2+1;2-1;2*1;2/1;2+3*3/3-1;";
-        let lexer = Lexer::new(input).peekable();
+        let lexer = Lexer::new(input);
         let parser = Parser::new(lexer);
 
         let result = parser.parse()?;
 
+        println!("{:?}",new_node!(NdAdd,NdNum(2),NdNum(1)));
+
         let answer = vec![
-            NdAdd(Box::new(NdNum(2)),Box::new(NdNum(1))),
-            NdSub(Box::new(NdNum(2)),Box::new(NdNum(1))),
-            NdMul(Box::new(NdNum(2)),Box::new(NdNum(1))),
-            NdDiv(Box::new(NdNum(2)),Box::new(NdNum(1))),
-            NdSub(
-                Box::new(NdAdd(
-                    Box::new(NdNum(2)),
-                    Box::new(NdDiv(
-                        Box::new(NdMul(Box::new(NdNum(3)),Box::new(NdNum(3)))),
-                        Box::new(NdNum(3))
-                    ))
-                )),
-                Box::new(NdNum(1))
+
+            new_node!(NdAdd,NdNum(2),NdNum(1)),
+            new_node!(NdSub,NdNum(2),NdNum(1)),
+            new_node!(NdMul,NdNum(2),NdNum(1)),
+            new_node!(NdDiv,NdNum(2),NdNum(1)),
+
+            new_node!(NdSub,
+                new_node!(NdAdd,
+                    NdNum(2),
+                    new_node!(NdDiv,
+                        new_node!(NdMul,
+                            NdNum(3),
+                            NdNum(3)
+                        ),
+                        NdNum(3)
+                    )
+                ),
+                NdNum(1)
             )
         ];
 
@@ -100,7 +143,7 @@ mod tests{
     #[test]
     fn test_parse_relatinonal()->Result<(),ParseError>{
         let input = "2<3;2>3;2<=3;2>=3;2==3;2!=3;";
-        let lexer = Lexer::new(input).peekable();
+        let lexer = Lexer::new(input);
         let parser = Parser::new(lexer);
 
         let result = parser.parse()?;
@@ -134,7 +177,7 @@ mod tests{
     #[test]
     fn test_parse_variable()->Result<(),ParseError>{
         let input = "a=2;b=3;a*b;";
-        let lexer = Lexer::new(input).peekable();
+        let lexer = Lexer::new(input);
         let parser = Parser::new(lexer);
 
         let result = parser.parse()?;
@@ -155,7 +198,7 @@ mod tests{
     #[test]
     fn test_parse_keyword()->Result<(),ParseError>{
         let input = "return 2*2;return 2==2;";
-        let lexer = Lexer::new(input).peekable();
+        let lexer = Lexer::new(input);
         let parser = Parser::new(lexer);
 
         let result = parser.parse()?;

@@ -6,7 +6,6 @@ use crate::types::token::DelimitorKind::*;
 use crate::types::token::TokenKind::*;
 
 use crate::types::error::ParseError;
-use crate::types::error::ParseErrorKind::*;
 
 impl<'a> Parser<'a> {
     // program = stmt *
@@ -40,7 +39,7 @@ impl<'a> Parser<'a> {
                 self.next_token()?;
                 Ok(node)
             },
-            _ => self.raise_error(LackSemicolon,next.pos),
+            _ => self.raise_error(next.pos),
         }
     }
 }

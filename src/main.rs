@@ -10,6 +10,8 @@ use lexer::*;
 
 use crate::types::error::ParseError;
 
+
+
 fn main() -> Result<(),ParseError>{
     let arg = env::args().nth(1).unwrap();
 
@@ -21,11 +23,18 @@ fn main() -> Result<(),ParseError>{
     println!("  mov rbp, rsp");
     println!("  sub rsp, 208");
 
-    let lexer = Lexer::new(arg.as_str()).peekable();
+    let lexer = Lexer::new(arg.as_str());
     let parser = Parser::new(lexer);
 
-    for tree in parser.parse()?.iter() {
-        gen(tree);
+    let asts = parser
+                .parse()
+                .map_err(|m|{
+                    eprintln!("{}",m);
+                    m
+                })?;
+
+    for ast in asts.iter() {
+        gen(ast);
         println!("  pop rax");
     }
 

@@ -6,7 +6,6 @@ use crate::types::token::OperatorKind::*;
 use crate::types::token::DelimitorKind::*;
 
 use crate::types::error::ParseError;
-use crate::types::error::ParseErrorKind::*;
 
 macro_rules! new_node {
     ($nx:expr,$lhs:expr,$rhs:expr) => {
@@ -111,7 +110,7 @@ impl<'a> Parser<'a> {
                 let next = self.look_ahead()?;
                 match next.val {
                     Delim(Lc) => Ok(node),
-                    _ => self.raise_error(UnclosedDelimitor,next.pos),
+                    _ => self.raise_error(next.pos),
                 }
             },
             Id(name) => {
@@ -129,7 +128,7 @@ impl<'a> Parser<'a> {
                 self.next_token()?;
                 Ok(NdNum(n))
             }
-            _ => self.raise_error(UnexpectedToken,tok.pos),
+            _ => self.raise_error(tok.pos),
         })
    }
 }
