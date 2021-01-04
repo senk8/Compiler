@@ -11,6 +11,7 @@ pub enum ParseErrorKind {
    ExpectedNumeric,
    ExpectedIdentifier,
    LackSemicolon,
+   LackExpr,
    Eof,
 }
 
@@ -24,23 +25,23 @@ impl fmt::Display for Pos{
 //#[derive(Error,Debug)]
 #[derive(Error,Debug)]
 pub enum ParseError{
-    #[error("Unexpected! :{0} {1}")]
+    #[error("Unexpected! :{0}\n{1}")]
     UnexpectedTokenError(Pos,String),
 
-    #[error("Unexpected! :{0} {1}")]
+    #[error("Unexpected! :{0}\n{1}")]
     UnexpectedKeywordError(Pos,String),
 
-    #[error("Unexpected! :{0} {1}")]
+    #[error("Unexpected! :{0}\n{1}")]
     UnexpectedDelimitorError(Pos,String),
 
-    #[error("Unexpected! :{0} {1}")]
+    #[error("Unexpected! :{0}\n{1}")]
     UnclosedDelimitorError(Pos,String),
 
-    #[error("Unexpected! :{0} {1}")]
+    #[error("Unexpected! :{0}\n{1}")]
     ExpectedNumericError(Pos,String),
 
-    #[error("Unexpected! :{0} {1}")]
-    ExpectedIdentifierError(Pos,String),
+    #[error("Unexpected! :{0}\n{1}")]
+    LackExprError(Pos,String),
 
     #[error("Lack Some Semicolon !. Your input lack a delimitor. : {0}\n{1}")]
     LackSemicolonError(Pos,String),

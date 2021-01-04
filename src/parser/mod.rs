@@ -50,14 +50,12 @@ impl<'a> Parser<'a> {
             .insert(name.clone(), LVar(name.len(), self.offset.get()));
     }
 
-    pub fn look_ahead(&self) -> Result<Token,ParseError> {
-        use crate::types::error::ParseErrorKind::*;
-        self.lexer.borrow_mut().peek().cloned().ok_or_else(||self.raise_error(Eof,Pos(0,0)).unwrap_err())
+    pub fn look_ahead(&self) -> Option<Token> {
+        self.lexer.borrow_mut().peek().cloned()
     }
 
-    pub fn next_token(&self) -> Result<Token,ParseError> {
-        use crate::types::error::ParseErrorKind::*;
-        self.lexer.borrow_mut().next().ok_or_else(||self.raise_error(Eof,Pos(0,0)).unwrap_err())
+    pub fn next_token(&self) -> Option<Token> {
+        self.lexer.borrow_mut().next()
     }
 
     pub fn parse(&self) -> Result<Vec<Node>,ParseError> {
@@ -68,20 +66,40 @@ impl<'a> Parser<'a> {
         use crate::types::error::ParseErrorKind::*;
 
         let begin = pos.0;
-        let mut string_input = std::str::from_utf8(self.input).map(|s|String::from(s)).unwrap();
-        string_input.push_str(&format!("\n{:>width$}\n","^",width = begin + 1));
+        let mut message = std::str::from_utf8(self.input).map(|s|String::from(s)).unwrap();
+        message.push_str(&format!("\n{:>width$}\n","^",width = begin + 1));
 
         Err(match kind {
-            UnexpectedToken => UnexpectedTokenError(pos,string_input),
-            UnclosedDelimitor => UnclosedDelimitorError(pos,string_input),
-            UnexpectedKeyword => UnexpectedKeywordError(pos,string_input),
-            UnexpectedDelimitor => UnexpectedDelimitorError(pos,string_input),
-            Eof => EofError(pos,string_input),
-            LackSemicolon => LackSemicolonError(pos,string_input),
-            _ => SegmentationFault(pos,string_input),
+            UnexpectedToken => UnexpectedTokenError(pos,message),
+            UnclosedDelimitor => UnclosedDelimitorError(pos,message),
+            UnexpectedKeyword => UnexpectedKeywordError(pos,message),
+            UnexpectedDelimitor => UnexpectedDelimitorError(pos,message),
+            Eof => EofError(pos,message),
+            LackSemicolon => LackSemicolonError(pos,message),
+            LackExpr => LackExprError(pos,message),
+            _ => SegmentationFault(pos,message),
         })
     }
-    
+
+    pub fn make_error(&self,kind:ParseErrorKind)-> ParseError {
+        use crate::types::error::ParseErrorKind::*;
+        let pos = Pos(self.input.len(),self.input.len());
+        let mut message = std::str::from_utf8(self.input).map(|s|String::from(s)).unwrap();
+        message.push_str(&format!("\n{:>width$}\n","^",width = pos.0 + 1));
+
+        match kind {
+            UnexpectedToken => UnexpectedTokenError(pos,message),
+            UnclosedDelimitor => UnclosedDelimitorError(pos,message),
+            UnexpectedKeyword => UnexpectedKeywordError(pos,message),
+            UnexpectedDelimitor => UnexpectedDelimitorError(pos,message),
+            Eof => EofError(pos,message),
+            LackSemicolon => LackSemicolonError(pos,message),
+            LackExpr => LackExprError(pos,message),
+            _ => SegmentationFault(pos,message),
+        }
+    }
+   
+    /*
     fn new_opr(&self,lhs:Node,rhs:Node)->Result<Node,ParseError>{
         use crate::types::token::TokenKind::*;
         use crate::types::token::OperatorKind::*;
@@ -102,6 +120,7 @@ impl<'a> Parser<'a> {
         });
         x
     }
+    */
 }
 
 mod tests{

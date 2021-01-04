@@ -10,7 +10,7 @@ use crate::types::error::ParseErrorKind::*;
 
 macro_rules! new_node {
     ($nx:expr,$lhs:expr,$rhs:expr) => {
-        match $nx.val{
+        match $nx.unwrap().val{
             Opr(Add) => NdAdd(Box::new($lhs), Box::new($rhs)),
             Opr(Sub) => NdSub(Box::new($lhs), Box::new($rhs)),
             Opr(Mul) => NdMul(Box::new($lhs), Box::new($rhs)),
@@ -35,20 +35,28 @@ impl<'a> Parser<'a> {
 
     //assign = equality ( "=" assign )?
     pub(super) fn assign(&self) -> Result<Node,ParseError> {
-        self.equality().and_then(|node|match self.look_ahead()?.val {
-            Opr(Assign) => Ok(new_node!(self.next_token()?,node,self.assign()?)),
-            _ => Ok(node),
-        })
+        self.equality().and_then(|node|
+                /* choice "=" assign or None */
+                if let Some(tok) = self.look_ahead(){
+                    match tok.val{
+                        Opr(Assign) => Ok(new_node!(self.next_token(),node,self.assign()?)),
+                        _ => Ok(node),
+                    }
+                }else{ Ok(node) }
+            )
     }
 
     // equality = relational ("==" relational | "!=" relational)*
     pub(super) fn equality(&self) -> Result<Node,ParseError> {
         self.relational().and_then(|mut node|loop{
-           match self.look_ahead()?.val {
-                Opr(Eq) => node = new_node!(self.next_token()?,node,self.relational()?),
-                Opr(Neq) => node = new_node!(self.next_token()?,node,self.relational()?),
-                _ => break Ok(node),
-            }
+            /* choice "=" assign or None */
+            if let Some(tok) = self.look_ahead() {
+                match tok.val{
+                    Opr(Eq) => node = new_node!(self.next_token(),node,self.relational()?),
+                    Opr(Neq) => node = new_node!(self.next_token(),node,self.relational()?),
+                    _ => break Ok(node),
+                }
+            }else {break Ok(node)}
         })
     }
 
@@ -56,66 +64,75 @@ impl<'a> Parser<'a> {
     pub(super) fn relational(&self) -> Result<Node,ParseError> {
 
         self.add().and_then(|mut node|loop { 
-            match self.look_ahead()?.val {
-                Opr(Lt) => node = new_node!(self.next_token()?,node,self.add()?),
-                Opr(Leq) => node = new_node!(self.next_token()?,node,self.add()?),
-                Opr(Gt) => node = new_node!(self.next_token()?,self.add()?,node),
-                Opr(Geq) => node = new_node!(self.next_token()?,self.add()?,node),
-                _ => break Ok(node),
-            }
-        })
+            if let Some(tok) = self.look_ahead() {
+                /* choice "=" assign or None */
+                match tok.val {
+                    Opr(Lt) => node = new_node!(self.next_token(),node,self.add()?),
+                    Opr(Leq) => node = new_node!(self.next_token(),node,self.add()?),
+                    Opr(Gt) => node = new_node!(self.next_token(),self.add()?,node),
+                    Opr(Geq) => node = new_node!(self.next_token(),self.add()?,node),
+                    _ => break Ok(node),
+                }
+            }else{ break Ok(node); }
+       })
 
     }
 
     // add    = mul ("+" mul | "-" mul)*
     pub(super) fn add(&self) -> Result<Node,ParseError> {
         self.mul().and_then(|mut node|loop { 
-            match self.look_ahead()?.val {
-                Opr(Add) => node = new_node!(self.next_token()?,node,self.mul()?),
-                Opr(Sub) => node = new_node!(self.next_token()?,node,self.mul()?),
-                _ => break Ok(node),
-            }
+            if let Some(tok) = self.look_ahead(){
+                /* choice "=" assign or None */
+                match tok.val {
+                    Opr(Add) => node = new_node!(self.next_token(),node,self.mul()?),
+                    Opr(Sub) => node = new_node!(self.next_token(),node,self.mul()?),
+                    _ => break Ok(node),
+                }
+            }else{ break Ok(node); }
         })
     }
 
     // mul     = unary ("*" unary | "/" unary)*
     pub(super) fn mul(&self) -> Result<Node,ParseError> {
         self.unary().and_then(|mut node|loop { 
-            match self.look_ahead()?.val {
-                Opr(Mul) => node=new_node!(self.next_token()?,node,self.unary()?),
-                Opr(Div) => node=new_node!(self.next_token()?,node,self.unary()?),
-                _ => break Ok(node),
-            }
+            if let Some(tok) = self.look_ahead(){
+                match tok.val {
+                    Opr(Mul) => node=new_node!(self.next_token(),node,self.unary()?),
+                    Opr(Div) => node=new_node!(self.next_token(),node,self.unary()?),
+                    _ => break Ok(node), 
+                }
+            }else{ break Ok(node); }
         })
     }
 
     // unary    = ("+" | "-")?  primary
     pub(super) fn unary(&self) -> Result<Node,ParseError> {
-        self.look_ahead().and_then(|tok|match tok.val {
+        if let Some(tok) = self.look_ahead() {
+            match tok.val {
                 Opr(Add) => {
-                    self.next_token()?;
+                    self.next_token();
                     self.primary()
                 },
-                Opr(Sub) => Ok(new_node!(self.next_token()?,NdNum(0),self.primary()?)),
+                Opr(Sub) => Ok(new_node!(self.next_token(),NdNum(0),self.primary()?)),
                 _ => self.primary(),
             }
-        )
+        }else{self.primary()}
     }
 
     // primary = num | ident | "(" expr ")"
     pub(super) fn primary(&self) -> Result<Node,ParseError> {
-        self.look_ahead().and_then(|tok|match tok.val {
+        self.look_ahead().ok_or(self.make_error(LackExpr)).and_then(|tok|match tok.val {
             Delim(Rc) => {
-                self.next_token()?;
+                self.next_token();
                 let node = self.expr()?;
-                let next = self.look_ahead()?;
-                match next.val {
-                    Delim(Lc) => Ok(node),
-                    _ => self.raise_error(UnclosedDelimitor,next.pos),
-                }
+                self.look_ahead().ok_or(self.make_error(Eof)).and_then(|tok|match tok.val{
+                        Delim(Lc) => Ok(node),
+                        _ => self.raise_error(UnclosedDelimitor,tok.pos),
+                    }
+                )
             },
             Id(name) => {
-                self.next_token()?;
+                self.next_token();
                 let result = self.symbol_table.borrow().get(&name).cloned();
 
                 if let Some(lvar) = result {
@@ -126,7 +143,7 @@ impl<'a> Parser<'a> {
                 }
             },
             Num(n) => {
-                self.next_token()?;
+                self.next_token();
                 Ok(NdNum(n))
             }
             _ => self.raise_error(UnexpectedToken,tok.pos),

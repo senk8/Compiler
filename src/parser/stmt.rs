@@ -13,7 +13,7 @@ impl<'a> Parser<'a> {
     pub(super) fn program(&self) -> Result<Vec<Node>,ParseError> {
         let mut trees = vec![];
 
-        while let Ok(_) = self.look_ahead() {
+        while let Some(_) = self.look_ahead() {
             trees.push(self.stmt()?);
         }
 
@@ -23,24 +23,24 @@ impl<'a> Parser<'a> {
     /* stmt = expr ";" | "return" expr ";" */
     pub(super) fn stmt(&self) -> Result<Node,ParseError> {
 
-        let node = self.look_ahead().and_then(|tok|
-            match tok.val{
-                Key(Return) => {
-                    self.next_token()?;
-                    Ok(NdReturn(Box::new(self.expr()?)))
-                },
-                _ => self.expr()
-            }
-        )?;
-
-        let next = self.look_ahead()?;
-
-        match next.val {
-            Delim(Semicolon) => {
-                self.next_token()?;
-                Ok(node)
+        /* choice expr or return */
+        let node = match self.look_ahead().map(|tok|tok.val){
+            Some(Key(Return)) => {
+                self.next_token();
+                Ok(NdReturn(Box::new(self.expr()?)))
             },
-            _ => self.raise_error(LackSemicolon,next.pos),
+            Some(_) => self.expr(),
+            None => self.raise_error(Eof,Pos(0,self.input.len()-1))
+        }?;
+
+        /* try consume ";" */
+        if let Some(tok) = self.next_token() {
+            match tok.val{
+                Delim(Semicolon) => Ok(node),
+                _ => self.raise_error(UnexpectedToken,tok.pos),
+            }
+        }else{
+            Err(self.make_error(LackSemicolon))
         }
     }
 }
