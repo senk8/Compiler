@@ -69,6 +69,47 @@ pub fn gen(node: &Node) -> () {
             println!("  pop rbp");
             println!("  ret");
         }
+        NdIf(lhs, rhs) => {
+            gen(lhs);
+            println!("  pop rax");
+            println!("  cmp rax, 0");
+            println!("  je  .LendXXX");
+            gen(rhs);
+            println!(".LendXXX:");
+        }
+        NdIfElse(first, second, third) => {
+            gen(first);
+            println!("  pop rax");
+            println!("  cmp rax, 0");
+            println!("  je  .LelseXXX");
+            gen(second);
+            println!("  jmp  .LendXXX");
+            println!(".LelseXXX:");
+            gen(third);
+            println!(".LendXXX:");
+        }
+        NdWhile(lhs, rhs) => {
+            println!(".LbeginXXX:");
+            gen(lhs);
+            println!("  pop rax");
+            println!("  cmp rax, 0");
+            println!("  je  .LendXXX");
+            gen(rhs);
+            println!("  jmp .LbeginXXX");
+            println!(".LendXXX:");
+        }
+        NdFor(first, second, third, fourth) => {
+            gen(first);
+            println!(".LbeginXXX:");
+            gen(second);
+            println!("  pop rax");
+            println!("  cmp rax, 0");
+            println!("  je  .LendXXX");
+            gen(third);
+            gen(fourth);
+            println!("  jmp .LbeginXXX");
+            println!(".LendXXX:");
+        }
     };
     return;
 }

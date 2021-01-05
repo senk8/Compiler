@@ -2,7 +2,7 @@ pub mod expr;
 pub mod stmt;
 
 use core::iter::Peekable;
-use std::cell::{RefCell,Cell};
+use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 
 use crate::lexer::*;
@@ -14,9 +14,8 @@ use crate::types::node::*;
 
 use crate::types::annotation::Pos;
 
-use crate::types::error::{ParseError,ParseErrorKind};
 use crate::types::error::ParseError::*;
-
+use crate::types::error::{ParseError, ParseErrorKind};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct LVar(pub usize, pub usize);
@@ -32,7 +31,6 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    
     pub fn new(lexer: Lexer<'a>) -> Parser<'a> {
         let input = lexer.get_txt();
         let ll_1_lexer = lexer.peekable();
@@ -41,7 +39,7 @@ impl<'a> Parser<'a> {
             lexer: RefCell::new(ll_1_lexer),
             symbol_table: RefCell::new(HashMap::new()),
             offset: Cell::new(0),
-            input: input
+            input: input,
         }
     }
     pub fn set_var(&self, name: String) -> () {
@@ -59,47 +57,65 @@ impl<'a> Parser<'a> {
         self.lexer.borrow_mut().next()
     }
 
-    pub fn parse(&self) -> Result<Vec<Node>,ParseError> {
+    pub fn parse(&self) -> Result<Vec<Node>, ParseError> {
         self.program()
     }
 
-    pub fn raise_error(&self,kind:ParseErrorKind,pos:Pos)->Result<Node,ParseError> {
+    pub fn raise_error(&self, kind: ParseErrorKind, pos: Pos) -> Result<Node, ParseError> {
         use crate::types::error::ParseErrorKind::*;
 
         let begin = pos.0;
-        let mut message = std::str::from_utf8(self.input).map(|s|String::from(s)).unwrap();
-        message.push_str(&format!("\n{:>width$}\n","^",width = begin + 1));
+        let mut message = std::str::from_utf8(self.input)
+            .map(|s| String::from(s))
+            .unwrap();
+        message.push_str(&format!("\n{:>width$}\n", "^", width = begin + 1));
 
         Err(match kind {
-            UnexpectedToken => UnexpectedTokenError(pos,message),
-            UnclosedDelimitor => UnclosedDelimitorError(pos,message),
-            UnexpectedKeyword => UnexpectedKeywordError(pos,message),
-            UnexpectedDelimitor => UnexpectedDelimitorError(pos,message),
-            Eof => EofError(pos,message),
-            LackSemicolon => MissingExpressionError(pos,message),
-            LackExpr => MissingSemicolonError(pos,message),
-            _ => SegmentationFault(pos,message),
+            UnexpectedToken => UnexpectedTokenError(pos, message),
+            UnclosedDelimitor => UnclosedDelimitorError(pos, message),
+            UnexpectedKeyword => UnexpectedKeywordError(pos, message),
+            UnexpectedDelimitor => UnexpectedDelimitorError(pos, message),
+            Eof => EofError(pos, message),
+            LackSemicolon => MissingExpressionError(pos, message),
+            LackExpr => MissingSemicolonError(pos, message),
+            _ => SegmentationFault(pos, message),
         })
     }
 
-    pub fn make_error(&self,kind:ParseErrorKind)-> ParseError {
+    pub fn make_error(&self, kind: ParseErrorKind) -> ParseError {
         use crate::types::error::ParseErrorKind::*;
-        let pos = Pos(self.input.len(),self.input.len());
-        let mut message = std::str::from_utf8(self.input).map(|s|String::from(s)).unwrap();
-        message.push_str(&format!("\n{:>width$}\n","^",width = pos.0 + 1));
+        let pos = Pos(self.input.len(), self.input.len());
+        let mut message = std::str::from_utf8(self.input)
+            .map(|s| String::from(s))
+            .unwrap();
+        message.push_str(&format!("\n{:>width$}\n", "^", width = pos.0 + 1));
 
         match kind {
-            UnexpectedToken => UnexpectedTokenError(pos,message),
-            UnclosedDelimitor => UnclosedDelimitorError(pos,message),
-            UnexpectedKeyword => UnexpectedKeywordError(pos,message),
-            UnexpectedDelimitor => UnexpectedDelimitorError(pos,message),
-            Eof => EofError(pos,message),
-            LackSemicolon => MissingSemicolonError(pos,message),
-            LackExpr => MissingExpressionError(pos,message),
-            _ => SegmentationFault(pos,message),
+            UnexpectedToken => UnexpectedTokenError(pos, message),
+            UnclosedDelimitor => UnclosedDelimitorError(pos, message),
+            UnexpectedKeyword => UnexpectedKeywordError(pos, message),
+            UnexpectedDelimitor => UnexpectedDelimitorError(pos, message),
+            Eof => EofError(pos, message),
+            LackSemicolon => MissingSemicolonError(pos, message),
+            LackExpr => MissingExpressionError(pos, message),
+            _ => SegmentationFault(pos, message),
         }
     }
-  
+
+    pub(super) fn expect_tk(&self, kind: TokenKind) -> Result<(), ParseError> {
+        use crate::types::error::ParseErrorKind::*;
+        self.look_ahead()
+            .ok_or(self.make_error(Eof))
+            .and_then(|tok| {
+                if tok.val == kind {
+                    self.consume();
+                    Ok(())
+                } else {
+                    Err(self.make_error(UnexpectedToken))
+                }
+            })
+    }
+
     /*
     fn new_opr(&self,lhs:Node,rhs:Node)->Result<Node,ParseError>{
         use crate::types::token::TokenKind::*;
@@ -119,19 +135,19 @@ impl<'a> Parser<'a> {
             Opr(Neq) => NdNeq(Box::new(lhs), Box::new(rhs)),
             _ => unreachable!(),
         })
-        
+
     }
     */
 }
 
-mod tests{
+mod tests {
     #[allow(unused_imports)]
     use super::*;
 
     #[allow(unused_macros)]
     macro_rules! node {
         ($f:ident,$lhs:expr,$rhs:expr) => {
-            $f(Box::new($lhs),Box::new($rhs))
+            $f(Box::new($lhs), Box::new($rhs))
         };
         ($f:ident,$lhs:expr) => {
             $f(Box::new($lhs))
@@ -139,48 +155,41 @@ mod tests{
     }
 
     #[test]
-    fn test_parse_arithmetic()->Result<(),ParseError>{
-
+    fn test_parse_arithmetic() -> Result<(), ParseError> {
         let input = "2+1;2-1;2*1;2/1;2+3*3/3-1;";
         let lexer = Lexer::new(input);
         let parser = Parser::new(lexer);
 
         let result = parser.parse()?;
 
-        println!("{:?}",node!(NdAdd,NdNum(2),NdNum(1)));
-        println!("{:?}",node!(NdAdd,NdNum(2),NdNum(1)));
+        println!("{:?}", node!(NdAdd, NdNum(2), NdNum(1)));
+        println!("{:?}", node!(NdAdd, NdNum(2), NdNum(1)));
 
         let answer = vec![
-
-            node!(NdAdd,NdNum(2),NdNum(1)),
-            node!(NdSub,NdNum(2),NdNum(1)),
-            node!(NdMul,NdNum(2),NdNum(1)),
-            node!(NdDiv,NdNum(2),NdNum(1)),
-
-            node!(NdSub,
-                node!(NdAdd,
+            node!(NdAdd, NdNum(2), NdNum(1)),
+            node!(NdSub, NdNum(2), NdNum(1)),
+            node!(NdMul, NdNum(2), NdNum(1)),
+            node!(NdDiv, NdNum(2), NdNum(1)),
+            node!(
+                NdSub,
+                node!(
+                    NdAdd,
                     NdNum(2),
-                    node!(NdDiv,
-                        node!(NdMul,
-                            NdNum(3),
-                            NdNum(3)
-                        ),
-                        NdNum(3)
-                    )
+                    node!(NdDiv, node!(NdMul, NdNum(3), NdNum(3)), NdNum(3))
                 ),
                 NdNum(1)
-            )
+            ),
         ];
 
-        for (tree,ans) in result.into_iter().zip(answer.into_iter()){
-            assert_eq!(tree,ans);
+        for (tree, ans) in result.into_iter().zip(answer.into_iter()) {
+            assert_eq!(tree, ans);
         }
 
         Ok(())
     }
 
     #[test]
-    fn test_parse_relatinonal()->Result<(),ParseError>{
+    fn test_parse_relatinonal() -> Result<(), ParseError> {
         let input = "2<3;2>3;2<=3;2>=3;2==3;2!=3;";
         let lexer = Lexer::new(input);
         let parser = Parser::new(lexer);
@@ -188,23 +197,23 @@ mod tests{
         let result = parser.parse()?;
 
         let answer = vec![
-            node!(NdLt,NdNum(2),NdNum(3)),
-            node!(NdLt,NdNum(3),NdNum(2)),
-            node!(NdLeq,NdNum(2),NdNum(3)),
-            node!(NdLeq,NdNum(3),NdNum(2)),
-            node!(NdEq,NdNum(2),NdNum(3)),
-            node!(NdNeq,NdNum(2),NdNum(3)),
+            node!(NdLt, NdNum(2), NdNum(3)),
+            node!(NdLt, NdNum(3), NdNum(2)),
+            node!(NdLeq, NdNum(2), NdNum(3)),
+            node!(NdLeq, NdNum(3), NdNum(2)),
+            node!(NdEq, NdNum(2), NdNum(3)),
+            node!(NdNeq, NdNum(2), NdNum(3)),
         ];
 
-        for (tree,ans) in result.into_iter().zip(answer.into_iter()){
-            assert_eq!(tree,ans);
+        for (tree, ans) in result.into_iter().zip(answer.into_iter()) {
+            assert_eq!(tree, ans);
         }
 
         Ok(())
     }
 
     #[test]
-    fn test_parse_variable()->Result<(),ParseError>{
+    fn test_parse_variable() -> Result<(), ParseError> {
         let input = "a=2;b=3;a*b;";
         let lexer = Lexer::new(input);
         let parser = Parser::new(lexer);
@@ -212,20 +221,20 @@ mod tests{
         let result = parser.parse()?;
 
         let answer = vec![
-            node!(NdAssign,NdLVar(8),NdNum(2)),
-            node!(NdAssign,NdLVar(16),NdNum(3)),
-            node!(NdMul,NdLVar(8),NdLVar(16)),
+            node!(NdAssign, NdLVar(8), NdNum(2)),
+            node!(NdAssign, NdLVar(16), NdNum(3)),
+            node!(NdMul, NdLVar(8), NdLVar(16)),
         ];
 
-        for (tree,ans) in result.into_iter().zip(answer.into_iter()){
-            assert_eq!(tree,ans);
+        for (tree, ans) in result.into_iter().zip(answer.into_iter()) {
+            assert_eq!(tree, ans);
         }
 
         Ok(())
     }
 
     #[test]
-    fn test_parse_keyword()->Result<(),ParseError>{
+    fn test_parse_keyword() -> Result<(), ParseError> {
         let input = "return 2*2;return 2==2;";
         let lexer = Lexer::new(input);
         let parser = Parser::new(lexer);
@@ -233,12 +242,12 @@ mod tests{
         let result = parser.parse()?;
 
         let answer = vec![
-            node!(NdReturn,node!(NdMul,NdNum(2),NdNum(2))),
-            node!(NdReturn,node!(NdEq,NdNum(2),NdNum(2))),
+            node!(NdReturn, node!(NdMul, NdNum(2), NdNum(2))),
+            node!(NdReturn, node!(NdEq, NdNum(2), NdNum(2))),
         ];
 
-        for (tree,ans) in result.into_iter().zip(answer.into_iter()){
-            assert_eq!(tree,ans);
+        for (tree, ans) in result.into_iter().zip(answer.into_iter()) {
+            assert_eq!(tree, ans);
         }
 
         Ok(())

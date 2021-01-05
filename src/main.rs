@@ -1,18 +1,16 @@
+pub mod lexer;
 pub mod parser;
 pub mod semantic_analyzer;
-pub mod lexer;
 pub mod types;
 
+use lexer::*;
 use parser::*;
 use semantic_analyzer::assemble::gen;
 use std::env;
-use lexer::*;
 
 use crate::types::error::ParseError;
 
-
-
-fn main() -> Result<(),ParseError>{
+fn main() -> Result<(), ParseError> {
     let arg = env::args().nth(1).unwrap();
 
     println!(".intel_syntax noprefix");
@@ -26,12 +24,10 @@ fn main() -> Result<(),ParseError>{
     let lexer = Lexer::new(arg.as_str());
     let parser = Parser::new(lexer);
 
-    let asts = parser
-                .parse()
-                .map_err(|m|{
-                    eprintln!("{}",m);
-                    m
-                })?;
+    let asts = parser.parse().map_err(|m| {
+        eprintln!("{}", m);
+        m
+    })?;
 
     for ast in asts.iter() {
         gen(ast);
