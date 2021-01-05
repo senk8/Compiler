@@ -8,6 +8,7 @@ use crate::types::token::DelimitorKind::*;
 use crate::types::error::ParseError;
 use crate::types::error::ParseErrorKind::*;
 
+/*
 macro_rules! new_node {
     ($nx:expr,$lhs:expr,$rhs:expr) => {
         match $nx.unwrap().val{
@@ -26,6 +27,22 @@ macro_rules! new_node {
         }
     };
 }
+*/
+
+macro_rules! node {
+    ($parser:expr,$f:ident,$lhs:expr,$rhs:expr) => {
+        {
+            let _ = $parser.consume();
+            $f(Box::new($lhs),Box::new($rhs))
+        }
+    };
+    ($parser:expr,$f:ident,$lhs:expr) => {
+        {
+            let _ = parser.consume();
+            $f(Box::new($lhs))
+        }
+    };
+}
 
 impl<'a> Parser<'a> {
     //expr = assign
@@ -39,7 +56,7 @@ impl<'a> Parser<'a> {
                 /* choice "=" assign or None */
                 if let Some(tok) = self.look_ahead(){
                     match tok.val{
-                        Opr(Assign) => Ok(new_node!(self.next_token(),node,self.assign()?)),
+                        Opr(Assign) => Ok(node!(self,NdAssign,node,self.assign()?)),
                         _ => Ok(node),
                     }
                 }else{ Ok(node) }
@@ -52,8 +69,8 @@ impl<'a> Parser<'a> {
             /* choice "=" assign or None */
             if let Some(tok) = self.look_ahead() {
                 match tok.val{
-                    Opr(Eq) => node = new_node!(self.next_token(),node,self.relational()?),
-                    Opr(Neq) => node = new_node!(self.next_token(),node,self.relational()?),
+                    Opr(Eq) => node = node!(self,NdEq,node,self.relational()?),
+                    Opr(Neq) => node = node!(self,NdNeq,node,self.relational()?),
                     _ => break Ok(node),
                 }
             }else {break Ok(node)}
@@ -67,10 +84,10 @@ impl<'a> Parser<'a> {
             if let Some(tok) = self.look_ahead() {
                 /* choice "=" assign or None */
                 match tok.val {
-                    Opr(Lt) => node = new_node!(self.next_token(),node,self.add()?),
-                    Opr(Leq) => node = new_node!(self.next_token(),node,self.add()?),
-                    Opr(Gt) => node = new_node!(self.next_token(),self.add()?,node),
-                    Opr(Geq) => node = new_node!(self.next_token(),self.add()?,node),
+                    Opr(Lt) => node = node!(self,NdLt,node,self.add()?),
+                    Opr(Leq) => node = node!(self,NdLeq,node,self.add()?),
+                    Opr(Gt) => node = node!(self,NdLt,self.add()?,node),
+                    Opr(Geq) => node = node!(self,NdLeq,self.add()?,node),
                     _ => break Ok(node),
                 }
             }else{ break Ok(node); }
@@ -84,8 +101,8 @@ impl<'a> Parser<'a> {
             if let Some(tok) = self.look_ahead(){
                 /* choice "=" assign or None */
                 match tok.val {
-                    Opr(Add) => node = new_node!(self.next_token(),node,self.mul()?),
-                    Opr(Sub) => node = new_node!(self.next_token(),node,self.mul()?),
+                    Opr(Add) => node = node!(self,NdAdd,node,self.mul()?),
+                    Opr(Sub) => node = node!(self,NdSub,node,self.mul()?),
                     _ => break Ok(node),
                 }
             }else{ break Ok(node); }
@@ -97,8 +114,8 @@ impl<'a> Parser<'a> {
         self.unary().and_then(|mut node|loop { 
             if let Some(tok) = self.look_ahead(){
                 match tok.val {
-                    Opr(Mul) => node=new_node!(self.next_token(),node,self.unary()?),
-                    Opr(Div) => node=new_node!(self.next_token(),node,self.unary()?),
+                    Opr(Mul) => node=node!(self,NdMul,node,self.unary()?),
+                    Opr(Div) => node=node!(self,NdDiv,node,self.unary()?),
                     _ => break Ok(node), 
                 }
             }else{ break Ok(node); }
@@ -110,10 +127,10 @@ impl<'a> Parser<'a> {
         if let Some(tok) = self.look_ahead() {
             match tok.val {
                 Opr(Add) => {
-                    self.next_token();
+                    self.consume();
                     self.primary()
                 },
-                Opr(Sub) => Ok(new_node!(self.next_token(),NdNum(0),self.primary()?)),
+                Opr(Sub) => Ok(node!(self,NdSub,NdNum(0),self.primary()?)),
                 _ => self.primary(),
             }
         }else{self.primary()}
@@ -123,7 +140,7 @@ impl<'a> Parser<'a> {
     pub(super) fn primary(&self) -> Result<Node,ParseError> {
         self.look_ahead().ok_or(self.make_error(LackExpr)).and_then(|tok|match tok.val {
             Delim(Rc) => {
-                self.next_token();
+                self.consume();
                 let node = self.expr()?;
                 self.look_ahead().ok_or(self.make_error(Eof)).and_then(|tok|match tok.val{
                         Delim(Lc) => Ok(node),
@@ -132,7 +149,7 @@ impl<'a> Parser<'a> {
                 )
             },
             Id(name) => {
-                self.next_token();
+                self.consume();
                 let result = self.symbol_table.borrow().get(&name).cloned();
 
                 if let Some(lvar) = result {
@@ -143,10 +160,11 @@ impl<'a> Parser<'a> {
                 }
             },
             Num(n) => {
-                self.next_token();
+                self.consume();
                 Ok(NdNum(n))
             }
             _ => self.raise_error(UnexpectedToken,tok.pos),
         })
    }
 }
+

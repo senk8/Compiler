@@ -26,7 +26,7 @@ impl<'a> Parser<'a> {
         /* choice expr or return */
         let node = match self.look_ahead().map(|tok|tok.val){
             Some(Key(Return)) => {
-                self.next_token();
+                self.consume();
                 Ok(NdReturn(Box::new(self.expr()?)))
             },
             Some(_) => self.expr(),
@@ -34,7 +34,7 @@ impl<'a> Parser<'a> {
         }?;
 
         /* try consume ";" */
-        if let Some(tok) = self.next_token() {
+        if let Some(tok) = self.consume() {
             match tok.val{
                 Delim(Semicolon) => Ok(node),
                 _ => self.raise_error(UnexpectedToken,tok.pos),

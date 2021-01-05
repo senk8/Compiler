@@ -1,5 +1,4 @@
 use super::annotation::Pos;
-use std::fmt;
 use thiserror::Error;
 
 #[derive(Debug,Eq,PartialEq,Ord,PartialOrd,Clone,Hash)]
@@ -15,12 +14,6 @@ pub enum ParseErrorKind {
    Eof,
 }
 
-
-impl fmt::Display for Pos{
-    fn fmt(&self,f:&mut fmt::Formatter<'_>) -> fmt::Result{
-        write!(f,"line:{} column:{}",self.0,self.1)
-    }
-}
 
 //#[derive(Error,Debug)]
 #[derive(Error,Debug)]
@@ -40,11 +33,11 @@ pub enum ParseError{
     #[error("Unexpected! :{0}\n{1}")]
     ExpectedNumericError(Pos,String),
 
-    #[error("Unexpected! :{0}\n{1}")]
-    LackExprError(Pos,String),
+    #[error("expected an experession, but found other. : {0}\n{1}\n Suggestion : It may be missing some expression. Add some expression here. ")]
+    MissingExpressionError(Pos,String),
 
-    #[error("Lack Some Semicolon !. Your input lack a delimitor. : {0}\n{1}")]
-    LackSemicolonError(Pos,String),
+    #[error("expected \";\" , but found other. : {0}\n{1}\n Suggestion : It may be missing \";\".  Add \";\" here. ")]
+    MissingSemicolonError(Pos,String),
 
     #[error("Parsing process reached EOF. Your input may lack a delimitor. :{0}\n{1}")]
     EofError(Pos,String),

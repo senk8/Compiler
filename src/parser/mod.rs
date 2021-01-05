@@ -32,6 +32,7 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
+    
     pub fn new(lexer: Lexer<'a>) -> Parser<'a> {
         let input = lexer.get_txt();
         let ll_1_lexer = lexer.peekable();
@@ -54,7 +55,7 @@ impl<'a> Parser<'a> {
         self.lexer.borrow_mut().peek().cloned()
     }
 
-    pub fn next_token(&self) -> Option<Token> {
+    pub fn consume(&self) -> Option<Token> {
         self.lexer.borrow_mut().next()
     }
 
@@ -75,8 +76,8 @@ impl<'a> Parser<'a> {
             UnexpectedKeyword => UnexpectedKeywordError(pos,message),
             UnexpectedDelimitor => UnexpectedDelimitorError(pos,message),
             Eof => EofError(pos,message),
-            LackSemicolon => LackSemicolonError(pos,message),
-            LackExpr => LackExprError(pos,message),
+            LackSemicolon => MissingExpressionError(pos,message),
+            LackExpr => MissingSemicolonError(pos,message),
             _ => SegmentationFault(pos,message),
         })
     }
@@ -93,18 +94,18 @@ impl<'a> Parser<'a> {
             UnexpectedKeyword => UnexpectedKeywordError(pos,message),
             UnexpectedDelimitor => UnexpectedDelimitorError(pos,message),
             Eof => EofError(pos,message),
-            LackSemicolon => LackSemicolonError(pos,message),
-            LackExpr => LackExprError(pos,message),
+            LackSemicolon => MissingSemicolonError(pos,message),
+            LackExpr => MissingExpressionError(pos,message),
             _ => SegmentationFault(pos,message),
         }
     }
-   
+  
     /*
     fn new_opr(&self,lhs:Node,rhs:Node)->Result<Node,ParseError>{
         use crate::types::token::TokenKind::*;
         use crate::types::token::OperatorKind::*;
 
-        let x = Ok(match self.next_token()?.val {
+        Ok(match self.consume().unwrap().val {
             Opr(Add) => NdAdd(Box::new(lhs), Box::new(rhs)),
             Opr(Sub) => NdSub(Box::new(lhs), Box::new(rhs)),
             Opr(Mul) => NdMul(Box::new(lhs), Box::new(rhs)),
@@ -116,20 +117,24 @@ impl<'a> Parser<'a> {
             Opr(Geq) => NdLeq(Box::new(lhs), Box::new(rhs)),
             Opr(Eq) => NdEq(Box::new(lhs), Box::new(rhs)),
             Opr(Neq) => NdNeq(Box::new(lhs), Box::new(rhs)),
-            x => panic!("{:?}",x),
-        });
-        x
+            _ => unreachable!(),
+        })
+        
     }
     */
 }
 
 mod tests{
+    #[allow(unused_imports)]
     use super::*;
 
-    #[allow(dead_code)]
-    macro_rules! new_node {
+    #[allow(unused_macros)]
+    macro_rules! node {
         ($f:ident,$lhs:expr,$rhs:expr) => {
             $f(Box::new($lhs),Box::new($rhs))
+        };
+        ($f:ident,$lhs:expr) => {
+            $f(Box::new($lhs))
         };
     }
 
@@ -142,20 +147,21 @@ mod tests{
 
         let result = parser.parse()?;
 
-        println!("{:?}",new_node!(NdAdd,NdNum(2),NdNum(1)));
+        println!("{:?}",node!(NdAdd,NdNum(2),NdNum(1)));
+        println!("{:?}",node!(NdAdd,NdNum(2),NdNum(1)));
 
         let answer = vec![
 
-            new_node!(NdAdd,NdNum(2),NdNum(1)),
-            new_node!(NdSub,NdNum(2),NdNum(1)),
-            new_node!(NdMul,NdNum(2),NdNum(1)),
-            new_node!(NdDiv,NdNum(2),NdNum(1)),
+            node!(NdAdd,NdNum(2),NdNum(1)),
+            node!(NdSub,NdNum(2),NdNum(1)),
+            node!(NdMul,NdNum(2),NdNum(1)),
+            node!(NdDiv,NdNum(2),NdNum(1)),
 
-            new_node!(NdSub,
-                new_node!(NdAdd,
+            node!(NdSub,
+                node!(NdAdd,
                     NdNum(2),
-                    new_node!(NdDiv,
-                        new_node!(NdMul,
+                    node!(NdDiv,
+                        node!(NdMul,
                             NdNum(3),
                             NdNum(3)
                         ),
@@ -182,22 +188,12 @@ mod tests{
         let result = parser.parse()?;
 
         let answer = vec![
-            NdLt(Box::new(NdNum(2)),Box::new(NdNum(3))),
-            NdLt(Box::new(NdNum(3)),Box::new(NdNum(2))),
-            NdLeq(Box::new(NdNum(2)),Box::new(NdNum(3))),
-            NdLeq(Box::new(NdNum(3)),Box::new(NdNum(2))),
-            NdEq(Box::new(NdNum(2)),Box::new(NdNum(3))),
-            NdNeq(Box::new(NdNum(2)),Box::new(NdNum(3))),
-            /*
-            NdEq(
-                Box::new(NdLeq(Box::new(NdNum(2)),
-                            Box::new(NdNum(3)))
-                ),
-                Box::new(NdLeq(Box::new(NdNum(2)),
-                            Box::new(NdNum(3))),
-                )
-            )
-            */
+            node!(NdLt,NdNum(2),NdNum(3)),
+            node!(NdLt,NdNum(3),NdNum(2)),
+            node!(NdLeq,NdNum(2),NdNum(3)),
+            node!(NdLeq,NdNum(3),NdNum(2)),
+            node!(NdEq,NdNum(2),NdNum(3)),
+            node!(NdNeq,NdNum(2),NdNum(3)),
         ];
 
         for (tree,ans) in result.into_iter().zip(answer.into_iter()){
@@ -216,9 +212,9 @@ mod tests{
         let result = parser.parse()?;
 
         let answer = vec![
-            NdAssign(Box::new(NdLVar(8)),Box::new(NdNum(2))),
-            NdAssign(Box::new(NdLVar(16)),Box::new(NdNum(3))),
-            NdMul(Box::new(NdLVar(8)),Box::new(NdLVar(16))),
+            node!(NdAssign,NdLVar(8),NdNum(2)),
+            node!(NdAssign,NdLVar(16),NdNum(3)),
+            node!(NdMul,NdLVar(8),NdLVar(16)),
         ];
 
         for (tree,ans) in result.into_iter().zip(answer.into_iter()){
@@ -237,8 +233,8 @@ mod tests{
         let result = parser.parse()?;
 
         let answer = vec![
-            NdReturn(Box::new(NdMul(Box::new(NdNum(2)),Box::new(NdNum(2))))),
-            NdReturn(Box::new(NdEq(Box::new(NdNum(2)),Box::new(NdNum(2)))))
+            node!(NdReturn,node!(NdMul,NdNum(2),NdNum(2))),
+            node!(NdReturn,node!(NdEq,NdNum(2),NdNum(2))),
         ];
 
         for (tree,ans) in result.into_iter().zip(answer.into_iter()){
