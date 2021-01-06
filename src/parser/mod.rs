@@ -107,7 +107,7 @@ impl<'a> Parser<'a> {
         self.look_ahead()
             .ok_or(self.make_error(Eof))
             .and_then(|tok| {
-                if tok.val == kind {
+                if tok.0 == kind {
                     self.consume();
                     Ok(())
                 } else {

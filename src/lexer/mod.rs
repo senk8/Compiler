@@ -39,7 +39,7 @@ impl<'a> Lexer<'a> {
     fn lex_token(&mut self, val: TokenKind, len: usize) -> Option<Token> {
         let pos = Pos(self.pos, self.pos + len);
         self.consume(len)?;
-        Some(Token { val, pos })
+        Some((val, pos))
     }
 
     //文字列を数字である限り消費する。
@@ -58,7 +58,7 @@ impl<'a> Lexer<'a> {
             .unwrap()
             .unwrap());
 
-        Some(Token { val, pos })
+        Some((val, pos))
     }
 
     //文字列をアルファベットである限り消費する。
@@ -76,7 +76,7 @@ impl<'a> Lexer<'a> {
             .map(|s| String::from(s))
             .unwrap());
 
-        Some(Token { val, pos })
+        Some((val, pos))
     }
 }
 

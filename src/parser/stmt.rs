@@ -41,7 +41,7 @@ impl<'a> Parser<'a> {
     /// | "for" "(" expr? ";" expr? ";" expr? ")" stmt
     pub(super) fn stmt(&self) -> Result<Node, ParseError> {
         /* choice expr or return */
-        let node = match self.look_ahead().map(|tok| tok.val) {
+        let node = match self.look_ahead().map(|tok| tok.0) {
             Some(Key(Return)) => {
                 self.consume();
                 Ok(NdReturn(Box::new(self.expr()?)))

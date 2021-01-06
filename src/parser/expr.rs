@@ -50,7 +50,7 @@ impl<'a> Parser<'a> {
     pub(super) fn assign(&self) -> Result<Node, ParseError> {
         self.equality().and_then(|node|
                 /* choice "=" assign or Epsilon */
-                match self.look_ahead().map(|tk|tk.val){
+                match self.look_ahead().map(|tk|tk.0){
                         Some(Opr(Assign)) => Ok(node!(self,NdAssign,node,self.assign()?)),
                         _ => Ok(node), // Parser infer what it is consumed by other non-teminal .
                 })
@@ -60,7 +60,7 @@ impl<'a> Parser<'a> {
     pub(super) fn equality(&self) -> Result<Node, ParseError> {
         self.relational().and_then(|mut node| loop {
             /* choice "=" assign or epsilon */
-            match self.look_ahead().map(|tk|tk.val) {
+            match self.look_ahead().map(|tk|tk.0) {
                 Some(Opr(Eq)) => node = node!(self, NdEq, node, self.relational()?),
                 Some(Opr(Neq)) => node = node!(self, NdNeq, node, self.relational()?),
                 _ => break Ok(node),
@@ -71,7 +71,7 @@ impl<'a> Parser<'a> {
     //relational = add ("<" add | "<=" add | ">" add| ">=" add) *
     pub(super) fn relational(&self) -> Result<Node, ParseError> {
         self.add().and_then(|mut node| loop {
-            match self.look_ahead().map(|tk|tk.val) {
+            match self.look_ahead().map(|tk|tk.0) {
                 /* choice "=" assign or None */
                 Some(Opr(Lt)) => node = node!(self, NdLt, node, self.add()?),
                 Some(Opr(Leq)) => node = node!(self, NdLeq, node, self.add()?),
@@ -85,7 +85,7 @@ impl<'a> Parser<'a> {
     // add    = mul ("+" mul | "-" mul)*
     pub(super) fn add(&self) -> Result<Node, ParseError> {
         self.mul().and_then(|mut node| loop {
-            match self.look_ahead().map(|tk|tk.val) {
+            match self.look_ahead().map(|tk|tk.0) {
                 /* choice "=" assign or None */
                 Some(Opr(Add)) => node = node!(self, NdAdd, node, self.mul()?),
                 Some(Opr(Sub)) => node = node!(self, NdSub, node, self.mul()?),
@@ -97,7 +97,7 @@ impl<'a> Parser<'a> {
     // mul     = unary ("*" unary | "/" unary)*
     pub(super) fn mul(&self) -> Result<Node, ParseError> {
         self.unary().and_then(|mut node| loop {
-            match self.look_ahead().map(|tk|tk.val) {
+            match self.look_ahead().map(|tk|tk.0) {
                 Some(Opr(Mul)) => node = node!(self, NdMul, node, self.unary()?),
                 Some(Opr(Div)) => node = node!(self, NdDiv, node, self.unary()?),
                  _ => break Ok(node),
@@ -107,7 +107,7 @@ impl<'a> Parser<'a> {
 
     // unary    = ("+" | "-")?  primary
     pub(super) fn unary(&self) -> Result<Node, ParseError> {
-        match self.look_ahead().map(|tk|tk.val) {
+        match self.look_ahead().map(|tk|tk.0) {
             Some(Opr(Add)) => {
                 self.consume();
                 self.primary()
@@ -121,7 +121,7 @@ impl<'a> Parser<'a> {
     pub(super) fn primary(&self) -> Result<Node, ParseError> {
         self.look_ahead()
             .ok_or(self.make_error(LackExpr))
-            .and_then(|tok| match tok.val {
+            .and_then(|tok| match tok.0 {
                 Num(n) => {
                     self.consume();
                     Ok(NdNum(n))
@@ -142,12 +142,12 @@ impl<'a> Parser<'a> {
                     let node = self.expr()?;
                     self.look_ahead()
                         .ok_or(self.make_error(Eof))
-                        .and_then(|tok| match tok.val {
+                        .and_then(|tok| match tok.0 {
                             Delim(Lc) => Ok(node),
-                            _ => self.raise_error(UnclosedDelimitor, tok.pos),
+                            _ => self.raise_error(UnclosedDelimitor, tok.1),
                         })
                 },
-                _ => self.raise_error(UnexpectedToken, tok.pos),
+                _ => self.raise_error(UnexpectedToken, tok.1),
             })
     }
 }
