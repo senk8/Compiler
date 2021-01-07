@@ -6,28 +6,17 @@ use crate::types::token::OperatorKind::*;
 use crate::types::token::TokenKind::*;
 
 use crate::types::error::ParseError;
-use crate::types::error::ParseErrorKind::*;
 
-/*
-macro_rules! new_node {
-    ($nx:expr,$lhs:expr,$rhs:expr) => {
-        match $nx.unwrap().val{
-            Opr(Add) => NdAdd(Box::new($lhs), Box::new($rhs)),
-            Opr(Sub) => NdSub(Box::new($lhs), Box::new($rhs)),
-            Opr(Mul) => NdMul(Box::new($lhs), Box::new($rhs)),
-            Opr(Div) => NdDiv(Box::new($lhs), Box::new($rhs)),
-            Opr(Assign) => NdAssign(Box::new($lhs), Box::new($rhs)),
-            Opr(Lt) => NdLt(Box::new($lhs), Box::new($rhs)),
-            Opr(Gt) => NdLt(Box::new($lhs), Box::new($rhs)),
-            Opr(Leq) => NdLeq(Box::new($lhs), Box::new($rhs)),
-            Opr(Geq) => NdLeq(Box::new($lhs), Box::new($rhs)),
-            Opr(Eq) => NdEq(Box::new($lhs), Box::new($rhs)),
-            Opr(Neq) => NdNeq(Box::new($lhs), Box::new($rhs)),
-            _ => unreachable!(),
-        }
-    };
+macro_rules! raise {
+    ($error:ident,$pos:expr,$input:expr) => {{
+        let pos = Pos($pos - 1, $pos);
+        let mut message = std::str::from_utf8($input)
+            .map(|s| String::from(s))
+            .unwrap();
+        message.push_str(&format!("\n{:>width$}\n", "^", width = pos.0 + 1));
+        $error(pos, message)
+    }};
 }
-*/
 
 macro_rules! node {
     ($parser:expr,$f:ident,$lhs:expr,$rhs:expr) => {{
@@ -60,7 +49,7 @@ impl<'a> Parser<'a> {
     pub(super) fn equality(&self) -> Result<Node, ParseError> {
         self.relational().and_then(|mut node| loop {
             /* choice "=" assign or epsilon */
-            match self.look_ahead().map(|tk|tk.0) {
+            match self.look_ahead().map(|tk| tk.0) {
                 Some(Opr(Eq)) => node = node!(self, NdEq, node, self.relational()?),
                 Some(Opr(Neq)) => node = node!(self, NdNeq, node, self.relational()?),
                 _ => break Ok(node),
@@ -71,7 +60,7 @@ impl<'a> Parser<'a> {
     //relational = add ("<" add | "<=" add | ">" add| ">=" add) *
     pub(super) fn relational(&self) -> Result<Node, ParseError> {
         self.add().and_then(|mut node| loop {
-            match self.look_ahead().map(|tk|tk.0) {
+            match self.look_ahead().map(|tk| tk.0) {
                 /* choice "=" assign or None */
                 Some(Opr(Lt)) => node = node!(self, NdLt, node, self.add()?),
                 Some(Opr(Leq)) => node = node!(self, NdLeq, node, self.add()?),
@@ -85,7 +74,7 @@ impl<'a> Parser<'a> {
     // add    = mul ("+" mul | "-" mul)*
     pub(super) fn add(&self) -> Result<Node, ParseError> {
         self.mul().and_then(|mut node| loop {
-            match self.look_ahead().map(|tk|tk.0) {
+            match self.look_ahead().map(|tk| tk.0) {
                 /* choice "=" assign or None */
                 Some(Opr(Add)) => node = node!(self, NdAdd, node, self.mul()?),
                 Some(Opr(Sub)) => node = node!(self, NdSub, node, self.mul()?),
@@ -97,17 +86,17 @@ impl<'a> Parser<'a> {
     // mul     = unary ("*" unary | "/" unary)*
     pub(super) fn mul(&self) -> Result<Node, ParseError> {
         self.unary().and_then(|mut node| loop {
-            match self.look_ahead().map(|tk|tk.0) {
+            match self.look_ahead().map(|tk| tk.0) {
                 Some(Opr(Mul)) => node = node!(self, NdMul, node, self.unary()?),
                 Some(Opr(Div)) => node = node!(self, NdDiv, node, self.unary()?),
-                 _ => break Ok(node),
+                _ => break Ok(node),
             }
         })
     }
 
     // unary    = ("+" | "-")?  primary
     pub(super) fn unary(&self) -> Result<Node, ParseError> {
-        match self.look_ahead().map(|tk|tk.0) {
+        match self.look_ahead().map(|tk| tk.0) {
             Some(Opr(Add)) => {
                 self.consume();
                 self.primary()
@@ -119,13 +108,14 @@ impl<'a> Parser<'a> {
 
     // primary = num | ident | "(" expr ")"
     pub(super) fn primary(&self) -> Result<Node, ParseError> {
+        use crate::types::error::ParseError::*;
         self.look_ahead()
-            .ok_or(self.make_error(LackExpr))
+            .ok_or(raise!(Eof, self.input.len(), self.input))
             .and_then(|tok| match tok.0 {
                 Num(n) => {
                     self.consume();
                     Ok(NdNum(n))
-                },
+                }
                 Id(name) => {
                     self.consume();
                     let result = self.symbol_table.borrow().get(&name).cloned();
@@ -136,18 +126,18 @@ impl<'a> Parser<'a> {
                         self.set_var(name);
                         Ok(NdLVar(self.offset.get()))
                     }
-                },
+                }
                 Delim(Rc) => {
                     self.consume();
                     let node = self.expr()?;
                     self.look_ahead()
-                        .ok_or(self.make_error(Eof))
+                        .ok_or(raise!(Eof, self.input.len(), self.input))
                         .and_then(|tok| match tok.0 {
                             Delim(Lc) => Ok(node),
-                            _ => self.raise_error(UnclosedDelimitor, tok.1),
+                            _ => Err(raise!(UnexpectedDelimitor,tok.1.0,self.input)),
                         })
-                },
-                _ => self.raise_error(UnexpectedToken, tok.1),
+                }
+                _ => Err(raise!(UnexpectedToken,tok.1.0,self.input)),
             })
     }
 }

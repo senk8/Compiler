@@ -6,21 +6,6 @@ use crate::types::token::KeywordKind::*;
 use crate::types::token::TokenKind::*;
 
 use crate::types::error::ParseError;
-use crate::types::error::ParseErrorKind::*;
-
-/*
-macro_rules! choice {
-    ($x:expr,$($p:pat),*) => {
-        {
-            match x {
-                $(
-                    $pat =>
-                )*
-            }
-        }
-    };
-}
-*/
 
 impl<'a> Parser<'a> {
     // program = stmt *
