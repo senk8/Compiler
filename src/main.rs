@@ -10,6 +10,14 @@ use std::env;
 
 use crate::types::error::ParseError;
 
+
+/*
+use once_cell::sync::Lazy;
+static INPUT:Lazy<[u8; 10000]> = Lazy::new(||
+    *(env::args().nth(1).unwrap().as_bytes())
+);
+*/
+
 fn main() -> Result<(), ParseError> {
     let arg = env::args().nth(1).unwrap();
 

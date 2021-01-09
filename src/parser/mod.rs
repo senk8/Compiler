@@ -3,7 +3,6 @@ pub mod stmt;
 
 use crate::lexer::*;
 use core::iter::Peekable;
-use lazy_static::lazy_static;
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 

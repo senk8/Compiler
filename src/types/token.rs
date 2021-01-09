@@ -44,6 +44,7 @@ pub enum DelimitorKind {
 pub enum KeywordKind {
     /* statement */
     If,
+    Else,
     While,
     For,
     Return,

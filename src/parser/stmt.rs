@@ -7,6 +7,17 @@ use crate::types::token::TokenKind::*;
 
 use crate::types::error::ParseError;
 
+macro_rules! raise {
+    ($error:ident,$pos:expr,$input:expr) => {{
+        let pos = Pos($pos - 1, $pos);
+        let mut message = std::str::from_utf8($input)
+            .map(|s| String::from(s))
+            .unwrap();
+        message.push_str(&format!("\n{:>width$}\n", "^", width = pos.0 + 1));
+        $error(pos, message)
+    }};
+}
+
 impl<'a> Parser<'a> {
     // program = stmt *
     pub(super) fn program(&self) -> Result<Vec<Node>, ParseError> {
@@ -26,33 +37,58 @@ impl<'a> Parser<'a> {
     /// | "for" "(" expr? ";" expr? ";" expr? ")" stmt
     pub(super) fn stmt(&self) -> Result<Node, ParseError> {
         /* choice expr or return */
-        let node = match self.look_ahead().map(|tok| tok.0) {
+        match self.look_ahead().map(|tok| tok.0) {
             Some(Key(Return)) => {
                 self.consume();
-                Ok(NdReturn(Box::new(self.expr()?)))
+                let node = Ok(NdReturn(Box::new(self.expr()?)));
+                self.expect_tk(Delim(Semicolon))?;
+                node
             }
-            /*
             Some(Key(If)) => {
-                self.consume()
-                    .expect(Delim(Lc))
-                    .expr()
-                    .expect(Rc)
-                    .stmt()
-                    .option()
+                self.consume();
+                self.expect_tk(Delim(Lc))?;
+                let first = self.expr()?;
+                self.expect_tk(Delim(Rc))?;
+                let second = self.stmt()?;
 
                 /* ? */
-                let node = self.expr()?;
-                self.look_ahead().ok_or(self.make_error(Eof)).and_then(|tok|match tok.val{
-                        Delim(Lc) => Ok(node),
-                        _ => self.raise_error(UnclosedDelimitor,tok.pos),
+                match self.look_ahead().map(|tok|tok.0){
+                    Some(Key(Else)) => {
+                        self.consume();
+                        let third = self.stmt()?;
+                        Ok(NdIfElse(Box::new(first),Box::new(second),Box::new(third)))
+                    },
+                    _ => Ok(NdIf(Box::new(first),Box::new(second))),
                 }
-            },*/
-            _ => self.expr(),
-        }?;
+            },
+            Some(Key(While)) => {
+                self.consume();
+                self.expect_tk(Delim(Lc))?;
+                let first = self.expr()?;
+                self.expect_tk(Delim(Rc))?;
+                let second = self.stmt()?;
+                Ok(NdWhile(Box::new(first),Box::new(second)))
+            },
+            Some(Key(For)) => {
+                self.consume();
+                self.expect_tk(Delim(Lc))?;
+                let first = self.expr()?;
+                self.expect_tk(Delim(Semicolon))?;
+                let second = self.expr()?;
+                self.expect_tk(Delim(Semicolon))?;
+                let third = self.expr()?;
+                self.expect_tk(Delim(Rc))?;
+                let fourth = self.stmt()?;
+                Ok(NdFor(Box::new(first),Box::new(second),Box::new(third),Box::new(fourth)))
+            },
+            _ => {
+                let node = self.expr();
+                self.expect_tk(Delim(Semicolon))?;
+                node
+            }
+        }
 
         /* try consume ";" */
-        self.expect_tk(Delim(Semicolon))?;
 
-        Ok(node)
     }
 }
