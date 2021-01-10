@@ -14,6 +14,7 @@ pub enum Node {
     NdWhile(Box<Node>, Box<Node>),
     NdFor(Box<Node>, Box<Node>, Box<Node>, Box<Node>),
     NdReturn(Box<Node>),
+    NdBlock(Vec<Box<Node>>),
     NdLVar(usize),
     NdNum(usize),
 }

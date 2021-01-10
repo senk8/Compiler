@@ -31,6 +31,7 @@ impl<'a> Parser<'a> {
     }
 
     /// stmt = expr ";"
+    /// | "{" stmt* "}""
     /// | "return" expr ";"
     /// | "if" "(" expr ")" stmt ("else" stmt)?
     /// | "while" "(" expr ")" stmt
@@ -43,7 +44,16 @@ impl<'a> Parser<'a> {
                 let node = Ok(NdReturn(Box::new(self.expr()?)));
                 self.expect_tk(Delim(Semicolon))?;
                 node
-            }
+            },
+            Some(Delim(LCurl)) => {
+                self.consume();
+                let mut nodes = Vec::new();
+                while let Ok(node) = self.stmt() {
+                    nodes.push(Box::new(node));
+                }
+                self.expect_tk(Delim(RCurl))?;
+                Ok(NdBlock(nodes))
+            },
             Some(Key(If)) => {
                 self.consume();
                 self.expect_tk(Delim(Lc))?;

@@ -110,6 +110,12 @@ pub fn gen(node: &Node) -> () {
             println!("  jmp .LbeginXXX");
             println!(".LendXXX:");
         }
+        NdBlock(nodes) => {
+            for node in nodes.into_iter(){
+                gen(node);
+            }
+            println!("  pop rax");
+        }
     };
     return;
 }

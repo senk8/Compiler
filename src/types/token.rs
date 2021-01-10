@@ -38,6 +38,8 @@ pub enum DelimitorKind {
     Lc,
     Rc,
     Semicolon,
+    LCurl,
+    RCurl,
 }
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Hash)]

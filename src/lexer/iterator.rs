@@ -33,6 +33,8 @@ impl<'a> Iterator for Lexer<'a> {
             [b';', ..] => self.lex_token(Delim(Semicolon), 1),
             [b'(', ..] => self.lex_token(Delim(Lc), 1),
             [b')', ..] => self.lex_token(Delim(Rc), 1),
+            [b'{', ..] => self.lex_token(Delim(LCurl), 1),
+            [b'}', ..] => self.lex_token(Delim(RCurl), 1),
             [b'0'..=b'9', ..] => self.lex_num(),
             [b'a'..=b'z', ..] => self.lex_ident(),
             _ => panic!(self.error_at("unexpected token")),

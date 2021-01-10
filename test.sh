@@ -30,5 +30,10 @@ assert 36 "abc=3;bc=12;abc*bc;"
 assert 29 "hoge=3;bar=26;hoge+bar;"
 assert 29 "return 29;"
 assert 29 "hoge=3;bar=26;return hoge+bar;"
+assert 15 "if(1<2)3+12;"
+assert 15 "if(2<1)3+11; else 15;"
+assert 5 "k=1;while(k<5)k=k+1;k;"
+assert 5 "for(k=1;k<5;k=k+1)1+2;k;"
+assert 3 "{return 2+2;}{return 2+1;}"
 
 echo OK
