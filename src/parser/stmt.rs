@@ -7,17 +7,6 @@ use crate::types::token::TokenKind::*;
 
 use crate::types::error::ParseError;
 
-macro_rules! raise {
-    ($error:ident,$pos:expr,$input:expr) => {{
-        let pos = Pos($pos - 1, $pos);
-        let mut message = std::str::from_utf8($input)
-            .map(|s| String::from(s))
-            .unwrap();
-        message.push_str(&format!("\n{:>width$}\n", "^", width = pos.0 + 1));
-        $error(pos, message)
-    }};
-}
-
 impl<'a> Parser<'a> {
     // program = stmt *
     pub(super) fn program(&self) -> Result<Vec<Node>, ParseError> {
@@ -45,11 +34,12 @@ impl<'a> Parser<'a> {
                 self.expect_tk(Delim(Semicolon))?;
                 node
             },
+            // Parse "{" stmt* "}""
             Some(Delim(LCurl)) => {
                 self.consume();
                 let mut nodes = Vec::new();
                 while let Ok(node) = self.stmt() {
-                    nodes.push(Box::new(node));
+                    nodes.push(node);
                 }
                 self.expect_tk(Delim(RCurl))?;
                 Ok(NdBlock(nodes))

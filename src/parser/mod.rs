@@ -200,18 +200,17 @@ mod tests {
     }
 
 
-    /*
     #[test]
     fn test_parse_block() -> Result<(), ParseError> {
-        let input = "{return 2};{2==2};";
+        let input = "{return 2;}{2==2;}";
         let lexer = Lexer::new(input);
         let parser = Parser::new(lexer);
 
         let result = parser.parse()?;
 
         let answer = vec![
-            //NdBlock(vec![NdReturn(Box::new(NdNum(2)))]),
-            NdBlock(vec![node!(NdEq, NdNum(2), NdNum(2))]),
+            NdBlock(vec![node!(NdReturn,NdNum(2))]),
+            NdBlock(vec![node!(NdEq,NdNum(2),NdNum(2))]),
         ];
 
         for (tree, ans) in result.into_iter().zip(answer.into_iter()) {
@@ -220,7 +219,6 @@ mod tests {
 
         Ok(())
     }
-    */
 }
 
 /*

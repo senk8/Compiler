@@ -1,22 +1,6 @@
 use super::annotation::Pos;
 use thiserror::Error;
 
-/*
-#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Hash)]
-pub enum ParseErrorKind {
-    UnexpectedToken,
-    UnexpectedKeyword,
-    UnexpectedDelimitor,
-    UnclosedDelimitor,
-    ExpectedNumeric,
-    ExpectedIdentifier,
-    LackSemicolon,
-    LackExpr,
-    Eof,
-}
-*/
-
-//#[derive(Error,Debug)]
 #[derive(Error, Debug)]
 pub enum ParseError {
     #[error("Unexpected! :{0}\n{1}")]

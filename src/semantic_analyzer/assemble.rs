@@ -1,6 +1,14 @@
 use crate::types::node::Node;
 use crate::types::node::Node::*;
 
+
+pub fn gen_stmt(asts: &Vec<Node>) -> (){
+    for ast in asts.iter() {
+        gen(ast);
+        println!("  pop rax");
+    }
+}
+
 pub fn gen(node: &Node) -> () {
     match node {
         NdNum(n) => {
@@ -111,10 +119,7 @@ pub fn gen(node: &Node) -> () {
             println!(".LendXXX:");
         }
         NdBlock(nodes) => {
-            for node in nodes.into_iter(){
-                gen(node);
-            }
-            println!("  pop rax");
+            gen_stmt(nodes);
         }
     };
     return;
@@ -134,5 +139,6 @@ fn print_opration_epilogue(message: &str) -> () {
     println!("  pop rdi");
     println!("  pop rax");
     println!("{}", message);
+    // operation result on rsp;
     println!("  push rax");
 }
