@@ -32,9 +32,9 @@ fn main() -> Result<(), ParseError> {
     let lexer = Lexer::new(arg.as_str());
     let parser = Parser::new(lexer);
 
-    let asts = parser.parse().map_err(|m| {
-        eprintln!("{}", m);
-        m
+    let asts = parser.parse().map_err(|message| {
+        eprintln!("{}", message);
+        message
     })?;
 
     gen_stmt(&asts);
