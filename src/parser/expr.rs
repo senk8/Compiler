@@ -106,7 +106,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    // primary = num | ident | "(" expr ")"
+    // primary = num | ident | "(" expr ")" | ident ( "(" ")" )?
     pub(super) fn primary(&self) -> Result<Node, ParseError> {
         use crate::types::error::ParseError::*;
         self.look_ahead()
@@ -118,15 +118,31 @@ impl<'a> Parser<'a> {
                 }
                 Id(name) => {
                     self.consume();
-                    let result = self.symbol_table.borrow().get(&name).cloned();
+                    self.look_ahead()
+                        .ok_or(raise!(Eof,self.input.len(),self.input))
+                        .and_then(|tok| match tok.0{
+                            Delim(Rc) => {
+                                let result = self.symbol_table.borrow().get(&name).cloned();
 
-                    if let Some(lvar) = result {
-                        Ok(NdLVar(lvar.1))
-                    } else {
-                        self.set_var(name);
-                        Ok(NdLVar(self.offset.get()))
-                    }
-                }
+                                if let Some(lvar) = result {
+                                    Ok(NdLVar(lvar.1))
+                                } else {
+                                    self.set_var(name);
+                                    Ok(NdLVar(self.offset.get()))
+                                }
+                            },
+                            _ => {
+                                let result = self.symbol_table.borrow().get(&name).cloned();
+
+                                if let Some(lvar) = result {
+                                    Ok(NdLVar(lvar.1))
+                                } else {
+                                    self.set_var(name);
+                                    Ok(NdLVar(self.offset.get()))
+                                }
+                            }
+                       })
+               }
                 Delim(Rc) => {
                     self.consume();
                     let node = self.expr()?;
