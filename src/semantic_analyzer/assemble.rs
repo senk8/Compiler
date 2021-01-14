@@ -2,13 +2,6 @@ use crate::types::node::Node;
 use crate::types::node::Node::*;
 
 
-pub fn gen_stmt(asts: &Vec<Node>) -> (){
-    for ast in asts.iter() {
-        gen(ast);
-        println!("  pop rax");
-    }
-}
-
 pub fn gen(node: &Node) -> () {
     match node {
         NdNum(n) => {
@@ -84,6 +77,7 @@ pub fn gen(node: &Node) -> () {
             println!("  je  .LendXXX");
             gen(rhs);
             println!(".LendXXX:");
+            //label+=1;
         }
         NdIfElse(first, second, third) => {
             gen(first);
@@ -95,6 +89,7 @@ pub fn gen(node: &Node) -> () {
             println!(".LelseXXX:");
             gen(third);
             println!(".LendXXX:");
+            //label+=1;
         }
         NdWhile(lhs, rhs) => {
             println!(".LbeginXXX:");
@@ -105,6 +100,7 @@ pub fn gen(node: &Node) -> () {
             gen(rhs);
             println!("  jmp .LbeginXXX");
             println!(".LendXXX:");
+            //label+=1;
         }
         NdFor(first, second, third, fourth) => {
             gen(first);
@@ -117,9 +113,16 @@ pub fn gen(node: &Node) -> () {
             gen(fourth);
             println!("  jmp .LbeginXXX");
             println!(".LendXXX:");
+            //label+=1;
         }
         NdBlock(nodes) => {
-            gen_stmt(nodes);
+            let len = nodes.len();
+            for i in 0..len {
+                gen(&nodes[i]);
+                if i<len-1 {
+                    println!("  pop rax")
+                };
+            }
         }
     };
     return;

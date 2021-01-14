@@ -5,7 +5,7 @@ pub mod types;
 
 use lexer::*;
 use parser::*;
-use semantic_analyzer::assemble::gen_stmt;
+use semantic_analyzer::assemble::gen;
 use std::env;
 
 use crate::types::error::ParseError;
@@ -37,7 +37,11 @@ fn main() -> Result<(), ParseError> {
         message
     })?;
 
-    gen_stmt(&asts);
+
+    for ast in asts.iter() {
+        gen(&ast);
+        println!("  pop rax");
+    }
 
     println!("  mov rsp, rbp");
     println!("  pop rbp");
