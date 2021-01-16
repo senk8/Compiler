@@ -1,6 +1,20 @@
 use super::annotation::Pos;
-use thiserror::Error;
 
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Hash)]
+pub enum ParseError {
+    UnexpectedToken(Pos),
+    UnexpectedKeyword(Pos),
+    UnexpectedDelimitor(Pos),
+    UnclosedDelimitor(Pos),
+    ExpectedNumeric(Pos),
+    MissingExpression(Pos),
+    MissingSemicolon(Pos),
+    Eof(Pos),
+    SegmentationFault(Pos),
+}
+
+/*
+use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum ParseError {
     #[error("Unexpected! :{0}\n{1}")]
@@ -30,3 +44,4 @@ pub enum ParseError {
     #[error("Segmentation Fault :{0}\n{1}")]
     SegmentationFault(Pos, String),
 }
+*/

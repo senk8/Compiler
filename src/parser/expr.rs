@@ -7,17 +7,6 @@ use crate::types::token::TokenKind::*;
 
 use crate::types::error::ParseError;
 
-macro_rules! raise {
-    ($error:ident,$pos:expr,$input:expr) => {{
-        let pos = Pos($pos - 1, $pos);
-        let mut message = std::str::from_utf8($input)
-            .map(|s| String::from(s))
-            .unwrap();
-        message.push_str(&format!("\n{:>width$}\n", "^", width = pos.0 + 1));
-        $error(pos, message)
-    }};
-}
-
 macro_rules! node {
     ($parser:expr,$f:ident,$lhs:expr,$rhs:expr) => {{
         let _ = $parser.consume();
@@ -110,7 +99,7 @@ impl<'a> Parser<'a> {
     pub(super) fn primary(&self) -> Result<Node, ParseError> {
         use crate::types::error::ParseError::*;
         self.look_ahead()
-            .ok_or(raise!(Eof, self.input.len(), self.input))
+            .ok_or(Eof(Pos(0,0)))
             .and_then(|tok| match tok.0 {
                 Num(n) => {
                     self.consume();
@@ -119,7 +108,7 @@ impl<'a> Parser<'a> {
                 Id(name) => {
                     self.consume();
                     self.look_ahead()
-                        .ok_or(raise!(Eof,self.input.len(),self.input))
+                        .ok_or(Eof(Pos(0,0)))
                         .and_then(|tok| match tok.0{
                             Delim(Rc) => {
                                 let result = self.symbol_table.borrow().get(&name).cloned();
@@ -147,13 +136,13 @@ impl<'a> Parser<'a> {
                     self.consume();
                     let node = self.expr()?;
                     self.look_ahead()
-                        .ok_or(raise!(Eof, self.input.len(), self.input))
+                        .ok_or(Eof(Pos(0,0)))
                         .and_then(|tok| match tok.0 {
                             Delim(Lc) => Ok(node),
-                            _ => Err(raise!(UnexpectedDelimitor,tok.1.0,self.input)),
+                            _ => Err(UnexpectedDelimitor(tok.1)),
                         })
                 }
-                _ => Err(raise!(UnexpectedToken,tok.1.0,self.input)),
+                _ => Err(UnexpectedToken(tok.1)),
             })
     }
 }

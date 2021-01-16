@@ -15,18 +15,6 @@ use crate::types::annotation::Pos;
 use crate::types::error::ParseError;
 use crate::types::error::ParseError::*;
 
-#[macro_export]
-macro_rules! raise {
-    ($error:ident,$pos:expr,$input:expr) => {{
-        let pos = Pos($pos - 1, $pos);
-        let mut message = std::str::from_utf8($input)
-            .map(|s| String::from(s))
-            .unwrap();
-        message.push_str(&format!("\n{:>width$}\n", "^", width = pos.0 + 1));
-        $error(pos, message)
-    }};
-}
-
 #[derive(Debug, PartialEq, Clone)]
 pub struct LVar(pub usize, pub usize);
 
@@ -37,19 +25,16 @@ pub struct Parser<'a> {
 
     /* mutable field for tokenizer */
     lexer: RefCell<Peekable<Lexer<'a>>>,
-    input: &'a [u8],
 }
 
 impl<'a> Parser<'a> {
     pub fn new(lexer: Lexer<'a>) -> Parser<'a> {
-        let input = lexer.get_txt();
         let ll_1_lexer = lexer.peekable();
 
         Parser {
             lexer: RefCell::new(ll_1_lexer),
             symbol_table: RefCell::new(HashMap::new()),
             offset: Cell::new(0),
-            input: input,
         }
     }
     pub fn set_var(&self, name: String) -> () {
@@ -74,17 +59,27 @@ impl<'a> Parser<'a> {
 
     pub(super) fn expect_tk(&self, kind: TokenKind) -> Result<(), ParseError> {
         self.look_ahead()
-            .ok_or(raise!(Eof, self.input.len(), self.input))
+            .ok_or(Eof(Pos(0,0)))
             .and_then(|tok| {
                 if tok.0 == kind {
                     self.consume();
                     Ok(())
                 } else {
-                    Err(raise!(UnexpectedToken, self.input.len(), self.input))
+                    Err(UnexpectedToken(tok.1))
                 }
             })
     }
 }
+
+
+/*
+impl FromStr for Parser {
+    type Err = ParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    }
+}
+*/
 
 mod tests {
     #[allow(unused_imports)]
