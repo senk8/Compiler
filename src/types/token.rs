@@ -1,6 +1,4 @@
 use super::annotation::*;
-
-//pub type Token = Annot<TokenKind>;
 pub type Token = (TokenKind, Pos);
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Hash)]

@@ -23,7 +23,7 @@ fn show_message(error:&ParseError,input:&[u8])->(){
             let code = &input[pos.0..pos.1];
             eprintln!("Unexpected! :{}",pos);
             eprintln!("{}\n", String::from_utf8(code.to_vec()).unwrap());
-            eprintln!("{}", "^");
+            eprintln!("{:>width$}", "^", width = pos.1 + 1);
         },
         UnexpectedKeyword(pos) => {
             let code = &input[pos.0..pos.1];

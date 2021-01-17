@@ -99,7 +99,7 @@ impl<'a> Parser<'a> {
     pub(super) fn primary(&self) -> Result<Node, ParseError> {
         use crate::types::error::ParseError::*;
         self.look_ahead()
-            .ok_or(Eof(Pos(0,0)))
+            .ok_or(Eof(Default::default()))
             .and_then(|tok| match tok.0 {
                 Num(n) => {
                     self.consume();
@@ -108,7 +108,7 @@ impl<'a> Parser<'a> {
                 Id(name) => {
                     self.consume();
                     self.look_ahead()
-                        .ok_or(Eof(Pos(0,0)))
+                        .ok_or(Eof(Default::default()))
                         .and_then(|tok| match tok.0{
                             Delim(Rc) => {
                                 let result = self.symbol_table.borrow().get(&name).cloned();
@@ -136,7 +136,7 @@ impl<'a> Parser<'a> {
                     self.consume();
                     let node = self.expr()?;
                     self.look_ahead()
-                        .ok_or(Eof(Pos(0,0)))
+                        .ok_or(Eof(Default::default()))
                         .and_then(|tok| match tok.0 {
                             Delim(Lc) => Ok(node),
                             _ => Err(UnexpectedDelimitor(tok.1)),

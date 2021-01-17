@@ -10,8 +10,6 @@ use crate::types::node::Node::*;
 use crate::types::node::*;
 use crate::types::token::*;
 
-use crate::types::annotation::Pos;
-
 use crate::types::error::ParseError;
 use crate::types::error::ParseError::*;
 
@@ -59,7 +57,7 @@ impl<'a> Parser<'a> {
 
     pub(super) fn expect_tk(&self, kind: TokenKind) -> Result<(), ParseError> {
         self.look_ahead()
-            .ok_or(Eof(Pos(0,0)))
+            .ok_or(Eof(Default::default()))
             .and_then(|tok| {
                 if tok.0 == kind {
                     self.consume();

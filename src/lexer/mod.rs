@@ -89,10 +89,6 @@ impl<'a> Lexer<'a> {
         return message;
     }
 
-    pub fn get_txt(&self) -> &'a [u8] {
-        self.txt
-    }
-
     /*
     fn expect_non_idx(&self,idx:usize)->bool{
         match self.txt.get(idx) {

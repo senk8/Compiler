@@ -87,8 +87,5 @@ impl<'a> Parser<'a> {
                 node
             }
         }
-
-        /* try consume ";" */
-
     }
 }
