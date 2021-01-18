@@ -2,49 +2,49 @@ use crate::types::node::Node;
 use crate::types::node::Node::*;
 
 
-pub fn gen(node: &Node) -> () {
+pub fn gen(node: &Node, n:&mut usize) -> () {
     match node {
         NdNum(n) => {
             println!("  push {}", n);
         }
         NdAdd(lhs, rhs) => {
-            gen(lhs);
-            gen(rhs);
+            gen(lhs,n);
+            gen(rhs,n);
             print_opration_epilogue("  add rax, rdi");
         }
         NdSub(lhs, rhs) => {
-            gen(lhs);
-            gen(rhs);
+            gen(lhs,n);
+            gen(rhs,n);
             print_opration_epilogue("  sub rax, rdi");
         }
         NdMul(lhs, rhs) => {
-            gen(lhs);
-            gen(rhs);
-            print_opration_epilogue("  imul rax, rdi");
+             gen(lhs,n);
+             gen(rhs,n);
+             print_opration_epilogue("  imul rax, rdi");
         }
         NdDiv(lhs, rhs) => {
-            gen(lhs);
-            gen(rhs);
+            gen(lhs,n);
+            gen(rhs,n);
             print_opration_epilogue("  cqo\n  idiv rdi");
         }
         NdNeq(lhs, rhs) => {
-            gen(lhs);
-            gen(rhs);
+            gen(lhs,n);
+            gen(rhs,n);
             print_opration_epilogue("  cmp rax, rdi\n  setne al\n  movzb rax, al");
         }
         NdEq(lhs, rhs) => {
-            gen(lhs);
-            gen(rhs);
+            gen(lhs,n);
+            gen(rhs,n);
             print_opration_epilogue("  cmp rax, rdi\n  sete al\n  movzb rax, al");
         }
         NdLt(lhs, rhs) => {
-            gen(lhs);
-            gen(rhs);
+            gen(lhs,n);
+            gen(rhs,n);
             print_opration_epilogue("  cmp rax, rdi\n  setl al\n  movzb rax, al");
         }
         NdLeq(lhs, rhs) => {
-            gen(lhs);
-            gen(rhs);
+            gen(lhs,n);
+            gen(rhs,n);
             print_opration_epilogue("  cmp rax, rdi\n  setle al\n  movzb rax, al");
         }
         NdLVar(_) => {
@@ -56,7 +56,7 @@ pub fn gen(node: &Node) -> () {
         }
         NdAssign(lhs, rhs) => {
             gen_lval(lhs);
-            gen(rhs);
+            gen(rhs,n);
 
             println!("  pop rdi");
             println!("  pop rax");
@@ -64,61 +64,65 @@ pub fn gen(node: &Node) -> () {
             println!("  push rdi");
         }
         NdReturn(lhs) => {
-            gen(lhs);
+            gen(lhs,n);
             println!("  pop rax");
             println!("  mov rsp, rbp");
             println!("  pop rbp");
             println!("  ret");
         }
         NdIf(lhs, rhs) => {
-            gen(lhs);
+            let label=*n;
+            *n+=1;
+            gen(lhs,n);
             println!("  pop rax");
             println!("  cmp rax, 0");
-            println!("  je  .LendXXX");
-            gen(rhs);
-            println!(".LendXXX:");
-            //label+=1;
+            println!("  je  .Lend{}",label);
+            gen(rhs,n);
+            println!(".Lend{}:",label);
         }
         NdIfElse(first, second, third) => {
-            gen(first);
+            let label=*n;
+            *n+=1;
+            gen(first,n);
             println!("  pop rax");
             println!("  cmp rax, 0");
-            println!("  je  .LelseXXX");
-            gen(second);
-            println!("  jmp  .LendXXX");
-            println!(".LelseXXX:");
-            gen(third);
-            println!(".LendXXX:");
-            //label+=1;
+            println!("  je  .Lelse{}",label);
+            gen(second,n);
+            println!("  jmp  .Lend{}",label);
+            println!(".Lelse{}:",label);
+            gen(third,n);
+            println!(".Lend{}:",label);
         }
         NdWhile(lhs, rhs) => {
-            println!(".LbeginXXX:");
-            gen(lhs);
+            let label=*n;
+            *n+=1;
+            println!(".Lbegin{}:",label);
+            gen(lhs,n);
             println!("  pop rax");
             println!("  cmp rax, 0");
-            println!("  je  .LendXXX");
-            gen(rhs);
-            println!("  jmp .LbeginXXX");
-            println!(".LendXXX:");
-            //label+=1;
+            println!("  je  .Lend{}",label);
+            gen(rhs,n);
+            println!("  jmp .Lbegin{}",label);
+            println!(".Lend{}:",label);
         }
         NdFor(first, second, third, fourth) => {
-            gen(first);
-            println!(".LbeginXXX:");
-            gen(second);
+            let label=*n;
+            *n+=1;
+            gen(first,n);
+            println!(".Lbegin{}:",label);
+            gen(second,n);
             println!("  pop rax");
             println!("  cmp rax, 0");
-            println!("  je  .LendXXX");
-            gen(third);
-            gen(fourth);
-            println!("  jmp .LbeginXXX");
-            println!(".LendXXX:");
-            //label+=1;
+            println!("  je  .Lend{}",label);
+            gen(third,n);
+            gen(fourth,n);
+            println!("  jmp .Lbegin{}",label);
+            println!(".Lend{}:",label);
         }
         NdBlock(nodes) => {
             let len = nodes.len();
             for i in 0..len {
-                gen(&nodes[i]);
+                gen(&nodes[i],n);
                 if i<len-1 {
                     println!("  pop rax")
                 };

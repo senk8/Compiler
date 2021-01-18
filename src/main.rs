@@ -94,7 +94,7 @@ fn main() -> Result<(), ParseError> {
     })?;
  
     for ast in asts.iter() {
-        gen(&ast);
+        gen(&ast,&mut 0);
         println!("  pop rax");
     }
 

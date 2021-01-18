@@ -34,6 +34,22 @@ assert 15 "if(1<2)3+12;"
 assert 15 "if(2<1)3+11; else 15;"
 assert 5 "k=1;while(k<5)k=k+1;k;"
 assert 5 "for(k=1;k<5;k=k+1)1+2;k;"
-assert 2 "{2*2;2+2;return 2;}"
+assert 2 "
+          {
+            2*2;
+            2+2;
+            return 2;
+          }
+         "
+assert 5 "
+          if(1==1){
+            x = 2;
+            if(2*2==4){
+              if(x==2)x = x + 3; 
+              else return 2;
+            }
+            return x;
+          }
+       " 
 
 echo OK
