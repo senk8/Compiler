@@ -6,16 +6,19 @@ pub mod types;
 use lexer::*;
 use parser::*;
 use semantic_analyzer::assemble::gen;
-use std::env;
-
 use crate::types::error::ParseError;
 use crate::types::error::ParseError::*;
 
-#[cfg(test)]
-fn type_of<T>(_: T) -> String{
-    let a = std::any::type_name::<T>();
-    return a.to_string();
-}
+use std::env;
+use std::fs::File;
+use std::io::prelude::*;
+
+//use anyhow::{bail, ensure, Context, Result};
+//use clap::Clap;
+
+use std::path::PathBuf;
+use std::io::{stdin,BufRead,BufReader};
+
 
 fn show_message(error:&ParseError,input:&[u8])->(){
     match error {
@@ -70,10 +73,21 @@ fn show_message(error:&ParseError,input:&[u8])->(){
             eprintln!("{}", "Suggestion: ");
         }
     }
-
 }
 
+
+struct Opts{}
+
 fn main() -> Result<(), ParseError> {
+    let filename = "test.c";
+
+    let mut buf = String::new();
+    let mut f = File::open(filename).expect("file not found");
+    f.read_to_string(&mut buf)
+     .expect("something went wrong reading the file");
+
+    println!("{}",&buf);
+
     let arg = env::args().nth(1).unwrap();
     let input = arg.as_bytes();
 
@@ -103,4 +117,12 @@ fn main() -> Result<(), ParseError> {
     println!("  ret");
 
     return Ok(());
+}
+
+mod tests{
+    #[cfg(test)]
+    fn type_of<T>(_: T) -> String{
+        let a = std::any::type_name::<T>();
+        return a.to_string();
+    }
 }
