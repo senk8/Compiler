@@ -18,8 +18,8 @@ pub struct Lexer<'a> {
 }
 
 impl<'a> Lexer<'a> {
-    pub fn new(input: &'a str) -> Lexer<'a> {
-        let txt = input.as_bytes();
+    pub fn new(input: &'a [u8]) -> Lexer<'a> {
+        let txt = input;
         let pos = 0;
         Lexer { txt, pos }
     }

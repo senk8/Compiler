@@ -2,94 +2,59 @@ pub mod lexer;
 pub mod parser;
 pub mod semantic_analyzer;
 pub mod types;
+pub mod util;
 
 use lexer::*;
 use parser::*;
 use semantic_analyzer::assemble::gen;
-use crate::types::error::ParseError;
-use crate::types::error::ParseError::*;
+use types::error::ParseError;
+use util::message::show_message;
 
-use std::env;
 use std::fs::File;
 use std::io::prelude::*;
 
+use clap::{App, Arg, ArgGroup};
+
 //use anyhow::{bail, ensure, Context, Result};
-//use clap::Clap;
-
-use std::path::PathBuf;
-use std::io::{stdin,BufRead,BufReader};
-
-
-fn show_message(error:&ParseError,input:&[u8])->(){
-    match error {
-        UnexpectedToken(pos) => {
-            let code = &input[pos.0..pos.1];
-            eprintln!("Unexpected! :{}",pos);
-            eprintln!("{}\n", String::from_utf8(code.to_vec()).unwrap());
-            eprintln!("{:>width$}", "^", width = pos.1 + 1);
-        },
-        UnexpectedKeyword(pos) => {
-            let code = &input[pos.0..pos.1];
-            eprintln!("Unexpected! :{}",pos);
-            eprintln!("{}\n", String::from_utf8(code.to_vec()).unwrap());
-        },
-        UnexpectedDelimitor(pos) => {
-            let code = &input[pos.0..pos.1];
-            eprintln!("Unexpected! :{}",pos);
-            eprintln!("{}\n", String::from_utf8(code.to_vec()).unwrap());
-        },
-        UnclosedDelimitor(pos) => {
-            let code = &input[pos.0..pos.1];
-            eprintln!("Unexpected! :{}",pos);
-            eprintln!("{}\n", String::from_utf8(code.to_vec()).unwrap());
-        },
-        ExpectedNumeric(pos) => {
-            let code = &input[pos.0..pos.1];
-            eprintln!("Unexpected! :{}",pos);
-            eprintln!("{}\n", String::from_utf8(code.to_vec()).unwrap());
-        },
-        MissingExpression(pos) => {
-            let code = &input[pos.0..pos.1];
-            eprintln!("expected an experession, but found other. : {}",pos);
-            eprintln!("{}\n", String::from_utf8(code.to_vec()).unwrap());
-            eprintln!("Suggestion : It may be missing some expression. Add some expression here. ");
-        },
-        MissingSemicolon(pos) => {
-            let code = &input[pos.0..pos.1];
-            eprintln!("expected \";\" , but found other. :{}",pos);
-            eprintln!("{}\n", String::from_utf8(code.to_vec()).unwrap());
-            eprintln!("Suggestion : It may be missing \";\".  Add \";\" here.");
-        },
-        Eof(pos) => {
-            let code = input.last().unwrap();
-            eprintln!("Parsing process reached EOF. Your input may lack a delimitor. :{}",pos);
-            eprintln!("{}\n", *code as char);
-            eprintln!("{}", "Suggestion: ");
-        },
-        SegmentationFault(pos) => {
-            let code = input.last().unwrap();
-            eprintln!("Segmentation Fault:{}",pos);
-            eprintln!("{}\n", *code as char);
-            eprintln!("{}", "Suggestion: ");
-        }
-    }
-}
-
-
-struct Opts{}
 
 fn main() -> Result<(), ParseError> {
-    let filename = "test.c";
 
+    let app = App::new("Compiler")
+        .version("1.0,0")
+        .author("SenK")
+        .about("C Complier implementation for Rust")
+        .arg(
+            Arg::from_usage("-c --compile <SOURCE> 'source_string'")
+                .required(false),
+        )
+        .arg(
+            Arg::from_usage("<FILE> 'source_file'")
+                .required(false),
+        )
+        .group(ArgGroup::with_name("input") 
+                .args(&["compile", "FILE"]) 
+        );
+        
+    let matches = app.get_matches();
     let mut buf = String::new();
-    let mut f = File::open(filename).expect("file not found");
-    f.read_to_string(&mut buf)
-     .expect("something went wrong reading the file");
 
-    println!("{}",&buf);
+    /* input processing section */
 
-    let arg = env::args().nth(1).unwrap();
-    let input = arg.as_bytes();
+    let input = if let Some(path) = &matches.value_of("FILE") {
+        println!("{}",path);
+        let mut f = File::open(path).expect("file not found");
+        f.read_to_string(&mut buf)
+        .expect("something went wrong reading the file");
+        println!("{}",&buf);
+
+        buf.as_bytes()
+    }else if let Some(source) = &matches.value_of("compile") {
+        source.as_bytes()
+    }else {
+        unimplemented!();
+    };
+
+    /* start assemble prologue*/
 
     println!(".intel_syntax noprefix");
     println!(".globl main");
@@ -99,7 +64,7 @@ fn main() -> Result<(), ParseError> {
     println!("  mov rbp, rsp");
     println!("  sub rsp, 208");
 
-    let lexer = Lexer::new(arg.as_str());
+    let lexer = Lexer::new(input);
     let parser = Parser::new(lexer);
 
     let asts = parser.parse().map_err(|error| {
@@ -111,6 +76,9 @@ fn main() -> Result<(), ParseError> {
         gen(&ast,&mut 0);
         println!("  pop rax");
     }
+
+
+    /* start assemble epilogue*/
 
     println!("  mov rsp, rbp");
     println!("  pop rbp");

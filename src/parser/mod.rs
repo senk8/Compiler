@@ -96,7 +96,7 @@ mod tests {
     #[test]
     fn test_parse_arithmetic() -> Result<(), ParseError> {
         let input = "2+1;2-1;2*1;2/1;2+3*3/3-1;";
-        let lexer = Lexer::new(input);
+        let lexer = Lexer::new(input.as_bytes());
         let parser = Parser::new(lexer);
 
         let result = parser.parse()?;
@@ -130,7 +130,7 @@ mod tests {
     #[test]
     fn test_parse_relatinonal() -> Result<(), ParseError> {
         let input = "2<3;2>3;2<=3;2>=3;2==3;2!=3;";
-        let lexer = Lexer::new(input);
+        let lexer = Lexer::new(input.as_bytes());
         let parser = Parser::new(lexer);
 
         let result = parser.parse()?;
@@ -154,7 +154,7 @@ mod tests {
     #[test]
     fn test_parse_variable() -> Result<(), ParseError> {
         let input = "a=2;b=3;a*b;";
-        let lexer = Lexer::new(input);
+        let lexer = Lexer::new(input.as_bytes());
         let parser = Parser::new(lexer);
 
         let result = parser.parse()?;
@@ -175,7 +175,7 @@ mod tests {
     #[test]
     fn test_parse_keyword() -> Result<(), ParseError> {
         let input = "return 2*2;return 2==2;";
-        let lexer = Lexer::new(input);
+        let lexer = Lexer::new(input.as_bytes());
         let parser = Parser::new(lexer);
 
         let result = parser.parse()?;
@@ -196,7 +196,7 @@ mod tests {
     #[test]
     fn test_parse_block() -> Result<(), ParseError> {
         let input = "{return 2;}{2==2;}";
-        let lexer = Lexer::new(input);
+        let lexer = Lexer::new(input.as_bytes());
         let parser = Parser::new(lexer);
 
         let result = parser.parse()?;
