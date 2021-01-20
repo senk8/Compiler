@@ -9,6 +9,7 @@ pub enum ParseError {
     ExpectedNumeric(Pos),
     MissingExpression(Pos),
     MissingSemicolon(Pos),
+    MissingDelimitor(Pos),
     Eof(Pos),
     SegmentationFault(Pos),
 }

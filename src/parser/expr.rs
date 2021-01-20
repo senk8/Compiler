@@ -99,7 +99,7 @@ impl<'a> Parser<'a> {
     pub(super) fn primary(&self) -> Result<Node, ParseError> {
         use crate::types::error::ParseError::*;
         self.look_ahead()
-            .ok_or(Eof(Default::default()))
+            .ok_or(MissingExpression(Default::default()))
             .and_then(|tok| match tok.0 {
                 Num(n) => {
                     self.consume();
@@ -107,36 +107,34 @@ impl<'a> Parser<'a> {
                 }
                 Id(name) => {
                     self.consume();
-                    self.look_ahead()
-                        .ok_or(Eof(Default::default()))
-                        .and_then(|tok| match tok.0{
-                            Delim(Rc) => {
-                                let result = self.symbol_table.borrow().get(&name).cloned();
+                    match self.look_ahead().map(|tok|tok.0){
+                        Some(Delim(Rc)) => {
+                            let result = self.symbol_table.borrow().get(&name).cloned();
 
-                                if let Some(lvar) = result {
-                                    Ok(NdLVar(lvar.1))
-                                } else {
-                                    self.set_var(name);
-                                    Ok(NdLVar(self.offset.get()))
-                                }
-                            },
-                            _ => {
-                                let result = self.symbol_table.borrow().get(&name).cloned();
-
-                                if let Some(lvar) = result {
-                                    Ok(NdLVar(lvar.1))
-                                } else {
-                                    self.set_var(name);
-                                    Ok(NdLVar(self.offset.get()))
-                                }
+                            if let Some(lvar) = result {
+                                Ok(NdLVar(lvar.1))
+                            } else {
+                                self.set_var(name);
+                                Ok(NdLVar(self.offset.get()))
                             }
-                       })
+                        },
+                        _ => {
+                            let result = self.symbol_table.borrow().get(&name).cloned();
+
+                            if let Some(lvar) = result {
+                                Ok(NdLVar(lvar.1))
+                            } else {
+                                self.set_var(name);
+                                Ok(NdLVar(self.offset.get()))
+                            }
+                        }
+                   }
                }
                 Delim(Rc) => {
                     self.consume();
                     let node = self.expr()?;
                     self.look_ahead()
-                        .ok_or(Eof(Default::default()))
+                        .ok_or(MissingDelimitor(Default::default()))
                         .and_then(|tok| match tok.0 {
                             Delim(Lc) => Ok(node),
                             _ => Err(UnexpectedDelimitor(tok.1)),

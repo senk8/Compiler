@@ -27,6 +27,7 @@ impl<'a> Parser<'a> {
     /// | "for" "(" expr? ";" expr? ";" expr? ")" stmt
     pub(super) fn stmt(&self) -> Result<Node, ParseError> {
         /* choice expr or return */
+
         match self.look_ahead().map(|tok| tok.0) {
             Some(Key(Return)) => {
                 self.consume();
@@ -62,6 +63,7 @@ impl<'a> Parser<'a> {
                 }
             },
             Some(Key(While)) => {
+
                 self.consume();
                 self.expect_tk(Delim(Lc))?;
                 let first = self.expr()?;
@@ -70,6 +72,7 @@ impl<'a> Parser<'a> {
                 Ok(NdWhile(Box::new(first),Box::new(second)))
             },
             Some(Key(For)) => {
+
                 self.consume();
                 self.expect_tk(Delim(Lc))?;
                 let first = self.expr()?;
@@ -82,9 +85,9 @@ impl<'a> Parser<'a> {
                 Ok(NdFor(Box::new(first),Box::new(second),Box::new(third),Box::new(fourth)))
             },
             _ => {
-                let node = self.expr();
+                let node = self.expr()?;
                 self.expect_tk(Delim(Semicolon))?;
-                node
+                Ok(node)
             }
         }
     }
