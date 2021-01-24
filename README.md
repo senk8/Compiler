@@ -15,6 +15,6 @@ $ cargo run -- test.c
 3. You can also use the following command.
 
 ```
-$ cargo run -- -c $2+5;$
+$ cargo run -- -c "2+5;"
 ```
 
