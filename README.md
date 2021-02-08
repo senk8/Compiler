@@ -1,6 +1,15 @@
 # Compiler
+
 C Compiler implemantation by Rust .
 
+# Features
+
+- This is compiler which contains Rust.
+- The input format is as a file or as a row program text.
+
+# Requirements
+
+- rustc 1.49.0
 
 # Usage
 
@@ -12,7 +21,7 @@ C Compiler implemantation by Rust .
 $ cargo run -- test.c
 ```
 
-3. You can also use the following command.
+and You can also use the following command.
 
 ```
 $ cargo run -- -c "2+5;"
