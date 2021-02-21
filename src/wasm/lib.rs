@@ -13,6 +13,18 @@ use crate::types::token::*;
 
 use wasm_bindgen::prelude::*;
 
+/*
+#[wasm_bindgen]
+fn compile(input:&str)->()
+{
+    let lexer = Lexer::new(input);
+    let parser = Parser::new(lexer);
+
+    // alertをつかってwatファイルを得る？
+    alert()?
+}
+*/
+
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Default, Hash)]
 #[wasm_bindgen]
 pub struct Lexer<'a> {
