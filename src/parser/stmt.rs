@@ -34,7 +34,7 @@ impl<'a> Parser<'a> {
                 let node = Ok(NdReturn(Box::new(self.expr()?)));
                 self.expect_tk(Delim(Semicolon))?;
                 node
-            },
+            }
             // Parse "{" stmt* "}""
             Some(Delim(LCurl)) => {
                 self.consume();
@@ -44,7 +44,7 @@ impl<'a> Parser<'a> {
                 }
                 self.expect_tk(Delim(RCurl))?;
                 Ok(NdBlock(nodes))
-            },
+            }
             Some(Key(If)) => {
                 self.consume();
                 self.expect_tk(Delim(Lc))?;
@@ -53,26 +53,24 @@ impl<'a> Parser<'a> {
                 let second = self.stmt()?;
 
                 /* ? */
-                match self.look_ahead().map(|tok|tok.0){
+                match self.look_ahead().map(|tok| tok.0) {
                     Some(Key(Else)) => {
                         self.consume();
                         let third = self.stmt()?;
-                        Ok(NdIfElse(Box::new(first),Box::new(second),Box::new(third)))
-                    },
-                    _ => Ok(NdIf(Box::new(first),Box::new(second))),
+                        Ok(NdIfElse(Box::new(first), Box::new(second), Box::new(third)))
+                    }
+                    _ => Ok(NdIf(Box::new(first), Box::new(second))),
                 }
-            },
+            }
             Some(Key(While)) => {
-
                 self.consume();
                 self.expect_tk(Delim(Lc))?;
                 let first = self.expr()?;
                 self.expect_tk(Delim(Rc))?;
                 let second = self.stmt()?;
-                Ok(NdWhile(Box::new(first),Box::new(second)))
-            },
+                Ok(NdWhile(Box::new(first), Box::new(second)))
+            }
             Some(Key(For)) => {
-
                 self.consume();
                 self.expect_tk(Delim(Lc))?;
                 let first = self.expr()?;
@@ -82,8 +80,13 @@ impl<'a> Parser<'a> {
                 let third = self.expr()?;
                 self.expect_tk(Delim(Rc))?;
                 let fourth = self.stmt()?;
-                Ok(NdFor(Box::new(first),Box::new(second),Box::new(third),Box::new(fourth)))
-            },
+                Ok(NdFor(
+                    Box::new(first),
+                    Box::new(second),
+                    Box::new(third),
+                    Box::new(fourth),
+                ))
+            }
             _ => {
                 let node = self.expr()?;
                 self.expect_tk(Delim(Semicolon))?;

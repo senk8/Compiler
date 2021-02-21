@@ -107,27 +107,28 @@ impl<'a> Parser<'a> {
                 }
                 Id(name) => {
                     self.consume();
-                    match self.look_ahead().map(|tok|tok.0){
-                        /*
+                    match self.look_ahead().map(|tok| tok.0) {
                         Some(Delim(Lc)) => {
                             self.consume();
                             let result = self.symbol_table.borrow().get(&name).cloned();
 
                             let node = if let Some(func) = result {
-                                NdFn(func.1)
+                                NdFunc(name.to_string(),func.1)
                             } else {
-                                self.set_fn(name);
-                                NdFn(self.offset.get())
-                            }
+                                self.set_var(name.clone());
+                                NdFunc(name.to_string(),self.offset.get())
+                            };
 
                             self.look_ahead()
-                            .ok_or(MissingDelimitor(Default::default()))
-                            .and_then(|tok| match tok.0 {
-                                Delim(Rc) => Ok(node),
-                                _ => Err(UnexpectedDelimitor(tok.1)),
-                            })
-                        },
-                        */
+                                .ok_or(MissingDelimitor(Default::default()))
+                                .and_then(|tok| match tok.0 {
+                                    Delim(Rc) => {
+                                        self.consume();
+                                        Ok(node)
+                                    }
+                                    _ => Err(UnexpectedDelimitor(tok.1)),
+                                })
+                        }
                         _ => {
                             let result = self.symbol_table.borrow().get(&name).cloned();
 
@@ -138,8 +139,8 @@ impl<'a> Parser<'a> {
                                 Ok(NdLVar(self.offset.get()))
                             }
                         }
-                   }
-               }
+                    }
+                }
                 Delim(Lc) => {
                     self.consume();
                     let node = self.expr()?;

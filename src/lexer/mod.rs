@@ -37,7 +37,7 @@ impl<'a> Lexer<'a> {
 
 impl<'a> Lexer<'a> {
     fn lex_token(&mut self, val: TokenKind, len: usize) -> Option<Token> {
-        let pos = Pos(1,self.pos);
+        let pos = Pos(1, self.pos);
         self.consume(len)?;
         Some((val, pos))
     }

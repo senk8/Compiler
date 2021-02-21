@@ -42,6 +42,16 @@ impl<'a> Parser<'a> {
             .insert(name.clone(), LVar(name.len(), self.offset.get()));
     }
 
+    /*
+
+    pub fn set_fn(&self, name: String) -> () {
+        self.offset.set(self.offset.get() + 8);
+        self.symbol_table
+            .borrow_mut()
+            .insert(name.clone(), Fn(name.len(), self.offset.get()));
+    }
+    */ 
+
     pub fn look_ahead(&self) -> Option<Token> {
         //TODO : check it out. Whether we implement Deref trait for Token.
         self.lexer.borrow_mut().peek().cloned()
