@@ -18,6 +18,17 @@ macro_rules! node {
     }};
 }
 
+/*
+macro_rules! goption {
+    ($opt:pat,$f:ident)=>{
+        match Parser::look_ahead().map(|tk|tk.0){
+            Some($opt) => Ok(node!($f,node,assign()?)),
+            _ => Ok(node), // Parser infer what it is consumed by other non-teminal .
+        })
+    }
+}
+*/
+
 impl<'a> Parser<'a> {
     //expr = assign
     pub(super) fn expr(&self) -> Result<Node, ParseError> {
@@ -95,7 +106,24 @@ impl<'a> Parser<'a> {
         }
     }
 
-    // primary = num | ident | "(" expr ")" | ident ( "(" ")" )?
+    /*
+    // args    = (expr ",") *
+    pub(super) fn args(&self) -> Result<Node, ParseError> {
+        let mut args = vec![];
+        while let Ok(node) = self.expr() {
+                match self.look_ahead().map(|tok|tok.0) {
+                    Some(Delim(Comma)) => {
+                        self.consume();
+                        args.push(node);
+                    },
+                    _ => return Err(MissingDelimitor(tk.1,_)),
+                }
+        }
+        NdArg(args)
+    }
+    */
+
+    // primary = num | ident | "(" expr ")" | ident ( "("  ( expr "," )*  ")" )?
     pub(super) fn primary(&self) -> Result<Node, ParseError> {
         use crate::types::error::ParseError::*;
         self.look_ahead()
@@ -110,14 +138,12 @@ impl<'a> Parser<'a> {
                     match self.look_ahead().map(|tok| tok.0) {
                         Some(Delim(Lc)) => {
                             self.consume();
-                            let result = self.symbol_table.borrow().get(&name).cloned();
 
-                            let node = if let Some(func) = result {
-                                NdFunc(name.to_string(),func.1)
-                            } else {
-                                self.set_var(name.clone());
-                                NdFunc(name.to_string(),self.offset.get())
-                            };
+                            /*
+                            self.expr()
+                            */
+
+                            let node = NdFunc(name.to_string(),vec![1,1]);
 
                             self.look_ahead()
                                 .ok_or(MissingDelimitor(Default::default()))

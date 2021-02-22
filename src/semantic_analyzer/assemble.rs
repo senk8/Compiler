@@ -1,6 +1,8 @@
 use crate::types::node::Node;
 use crate::types::node::Node::*;
 
+const ARG_REGS: [&str; 6] = ["rdi","rsi","rdx","rcx","r8","r9"];
+
 pub fn gen(node: &Node, n: &mut usize) -> () {
     match node {
         NdNum(n) => {
@@ -53,7 +55,10 @@ pub fn gen(node: &Node, n: &mut usize) -> () {
             println!("  mov rax, [rax]");
             println!("  push rax");
         }
-        NdFunc(name,_) => {
+        NdFunc(name,args) => {
+            for i in 0..args.len() {
+                println!("  mov {}, {}",ARG_REGS[i],args[i]);
+            }
             println!("  call {}",name);
         }
         NdAssign(lhs, rhs) => {
