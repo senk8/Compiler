@@ -35,6 +35,7 @@ pub enum DelimitorKind {
     /* delimitor */
     Lc,
     Rc,
+    Comma,
     Semicolon,
     LCurl,
     RCurl,

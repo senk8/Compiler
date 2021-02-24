@@ -34,6 +34,7 @@ impl<'a> Iterator for Lexer<'a> {
             [b'>', ..] => self.lex_token(Opr(Gt), 1),
             [b'=', ..] => self.lex_token(Opr(Assign), 1),
             [b';', ..] => self.lex_token(Delim(Semicolon), 1),
+            [b',', ..] => self.lex_token(Delim(Comma), 1),
             [b'(', ..] => self.lex_token(Delim(Lc), 1),
             [b')', ..] => self.lex_token(Delim(Rc), 1),
             [b'{', ..] => self.lex_token(Delim(LCurl), 1),

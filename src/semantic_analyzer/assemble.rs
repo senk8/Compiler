@@ -55,9 +55,10 @@ pub fn gen(node: &Node, n: &mut usize) -> () {
             println!("  mov rax, [rax]");
             println!("  push rax");
         }
-        NdFunc(name,args) => {
+        NdCall(name,args) => {
             for i in 0..args.len() {
-                println!("  mov {}, {}",ARG_REGS[i],args[i]);
+                gen(&args[i],n);
+                println!("  pop {}",ARG_REGS[i]);
             }
             println!("  call {}",name);
         }

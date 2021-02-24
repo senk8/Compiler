@@ -139,21 +139,22 @@ impl<'a> Parser<'a> {
                         Some(Delim(Lc)) => {
                             self.consume();
 
-                            /*
-                            self.expr()
-                            */
+                            let mut args = vec![];
 
-                            let node = NdFunc(name.to_string(),vec![1,1]);
+                            if let Some((Delim(Rc),_)) = self.look_ahead() {
+                                self.consume();
+                            }else{
+                                args.push(self.expr()?);
 
-                            self.look_ahead()
-                                .ok_or(MissingDelimitor(Default::default()))
-                                .and_then(|tok| match tok.0 {
-                                    Delim(Rc) => {
-                                        self.consume();
-                                        Ok(node)
-                                    }
-                                    _ => Err(UnexpectedDelimitor(tok.1)),
-                                })
+                                while let Some((Delim(Comma),_))= self.look_ahead(){
+                                    self.consume();
+                                    args.push(self.expr()?);
+                                }
+                        
+                                self.expect_tk(Delim(Rc))?;
+                            }
+
+                            Ok(NdCall(name.to_string(),args))
                         }
                         _ => {
                             let result = self.symbol_table.borrow().get(&name).cloned();
