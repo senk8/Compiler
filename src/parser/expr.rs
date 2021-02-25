@@ -7,46 +7,70 @@ use crate::types::token::TokenKind::*;
 
 use crate::types::error::ParseError;
 
-macro_rules! node {
-    ($parser:expr,$f:ident,$lhs:expr,$rhs:expr) => {{
-        let _ = $parser.consume();
-        $f(Box::new($lhs), Box::new($rhs))
-    }};
-    ($parser:expr,$f:ident,$lhs:expr) => {{
-        let _ = parser.consume();
-        $f(Box::new($lhs))
-    }};
-}
-
 /*
-macro_rules! goption {
-    ($opt:pat,$f:ident)=>{
-        match Parser::look_ahead().map(|tk|tk.0){
-            Some($opt) => Ok(node!($f,node,assign()?)),
-            _ => Ok(node), // Parser infer what it is consumed by other non-teminal .
-        })
+macro_rules! option {
+    ($kind:expr,$do:expr)=>{
+        if self.choice($kind) {
+            $do
+        }else{
+            Ok(node)
+        }
     }
 }
-*/
+
+macro_rules! star {
+    ($kind:expr,$do:expr)=>{
+        loop {
+            else{
+                Ok(node)
+            }
+        }
+    }
+}
+ */
 
 impl<'a> Parser<'a> {
     //expr = assign
-    pub(super) fn expr(&self) -> Result<Node, ParseError> {
+    pub(super) fn expr(&mut self) -> Result<Node, ParseError> {
         self.assign()
     }
 
     //assign = equality ( "=" assign )?
-    pub(super) fn assign(&self) -> Result<Node, ParseError> {
+    pub(super) fn assign(&mut self) -> Result<Node, ParseError> {
+        let node = self.equality()?;
+
+        if self.choice(Opr(Assign)) {
+            Ok(NdAssign(Box::new(node), Box::new(self.assign()?)))
+        } else {
+            Ok(node)
+        }
+
+        /*
         self.equality().and_then(|node|
                 /* choice "=" assign or Epsilon */
                 match self.look_ahead().map(|tk|tk.0){
                         Some(Opr(Assign)) => Ok(node!(self,NdAssign,node,self.assign()?)),
                         _ => Ok(node), // Parser infer what it is consumed by other non-teminal .
                 })
+
+        */
     }
 
     // equality = relational ("==" relational | "!=" relational)*
-    pub(super) fn equality(&self) -> Result<Node, ParseError> {
+    pub(super) fn equality(&mut self) -> Result<Node, ParseError> {
+        let mut node = self.relational()?;
+
+        loop {
+            if self.choice(Opr(Eq)) {
+                node = NdEq(Box::new(node), Box::new(self.relational()?));
+            } else if self.choice(Opr(Neq)) {
+                node = NdNeq(Box::new(node), Box::new(self.relational()?));
+            } else {
+                break Ok(node);
+            }
+        }
+
+        /*
         self.relational().and_then(|mut node| loop {
             /* choice "=" assign or epsilon */
             match self.look_ahead().map(|tk| tk.0) {
@@ -55,10 +79,28 @@ impl<'a> Parser<'a> {
                 _ => break Ok(node),
             }
         })
+        */
     }
 
     //relational = add ("<" add | "<=" add | ">" add| ">=" add) *
-    pub(super) fn relational(&self) -> Result<Node, ParseError> {
+    pub(super) fn relational(&mut self) -> Result<Node, ParseError> {
+        let mut node = self.add()?;
+
+        loop {
+            if self.choice(Opr(Lt)) {
+                node = NdLt(Box::new(node), Box::new(self.add()?));
+            } else if self.choice(Opr(Leq)) {
+                node = NdLeq(Box::new(node), Box::new(self.add()?));
+            } else if self.choice(Opr(Gt)) {
+                node = NdLt(Box::new(self.add()?), Box::new(node));
+            } else if self.choice(Opr(Geq)) {
+                node = NdLeq(Box::new(self.add()?), Box::new(node));
+            } else {
+                break Ok(node);
+            }
+        }
+
+        /*
         self.add().and_then(|mut node| loop {
             match self.look_ahead().map(|tk| tk.0) {
                 /* choice "=" assign or None */
@@ -69,10 +111,24 @@ impl<'a> Parser<'a> {
                 _ => break Ok(node),
             }
         })
+        */
     }
 
     // add    = mul ("+" mul | "-" mul)*
-    pub(super) fn add(&self) -> Result<Node, ParseError> {
+    pub(super) fn add(&mut self) -> Result<Node, ParseError> {
+        let mut node = self.mul()?;
+
+        loop {
+            if self.choice(Opr(Add)) {
+                node = NdAdd(Box::new(node), Box::new(self.mul()?));
+            } else if self.choice(Opr(Sub)) {
+                node = NdSub(Box::new(node), Box::new(self.mul()?));
+            } else {
+                break Ok(node);
+            }
+        }
+
+        /*
         self.mul().and_then(|mut node| loop {
             match self.look_ahead().map(|tk| tk.0) {
                 /* choice "=" assign or None */
@@ -81,10 +137,24 @@ impl<'a> Parser<'a> {
                 _ => break Ok(node),
             }
         })
+        */
     }
 
     // mul     = unary ("*" unary | "/" unary)*
-    pub(super) fn mul(&self) -> Result<Node, ParseError> {
+    pub(super) fn mul(&mut self) -> Result<Node, ParseError> {
+        let mut node = self.unary()?;
+
+        loop {
+            if self.choice(Opr(Mul)) {
+                node = NdMul(Box::new(node), Box::new(self.unary()?));
+            } else if self.choice(Opr(Div)) {
+                node = NdDiv(Box::new(node), Box::new(self.unary()?));
+            } else {
+                break Ok(node);
+            }
+        }
+
+        /*
         self.unary().and_then(|mut node| loop {
             match self.look_ahead().map(|tk| tk.0) {
                 Some(Opr(Mul)) => node = node!(self, NdMul, node, self.unary()?),
@@ -92,10 +162,20 @@ impl<'a> Parser<'a> {
                 _ => break Ok(node),
             }
         })
+        */
     }
 
     // unary    = ("+" | "-")?  primary
-    pub(super) fn unary(&self) -> Result<Node, ParseError> {
+    pub(super) fn unary(&mut self) -> Result<Node, ParseError> {
+        if self.choice(Opr(Add)) {
+            self.primary()
+        } else if self.choice(Opr(Sub)) {
+            Ok(NdSub(Box::new(NdNum(0)), Box::new(self.primary()?)))
+        } else {
+            self.primary()
+        }
+
+        /*
         match self.look_ahead().map(|tk| tk.0) {
             Some(Opr(Add)) => {
                 self.consume();
@@ -104,28 +184,52 @@ impl<'a> Parser<'a> {
             Some(Opr(Sub)) => Ok(node!(self, NdSub, NdNum(0), self.primary()?)),
             _ => self.primary(),
         }
+        */
     }
-
-    /*
-    // args    = (expr ",") *
-    pub(super) fn args(&self) -> Result<Node, ParseError> {
-        let mut args = vec![];
-        while let Ok(node) = self.expr() {
-                match self.look_ahead().map(|tok|tok.0) {
-                    Some(Delim(Comma)) => {
-                        self.consume();
-                        args.push(node);
-                    },
-                    _ => return Err(MissingDelimitor(tk.1,_)),
-                }
-        }
-        NdArg(args)
-    }
-    */
 
     // primary = num | ident | "(" expr ")" | ident ( "("  ( expr "," )*  ")" )?
-    pub(super) fn primary(&self) -> Result<Node, ParseError> {
+    pub(super) fn primary(&mut self) -> Result<Node, ParseError> {
         use crate::types::error::ParseError::*;
+
+        /*
+        if self.choice(Num(n)){
+            Ok(NdNum(n))
+        }else if self.choice(Ident(name)){
+            if self.choice(Delim(Lc)){
+                let mut args = vec![];
+
+                if let Some((Delim(Rc),_)) = self.look_ahead() {
+                    self.consume();
+                }else{
+                    args.push(self.expr()?);
+
+                    while let Some((Delim(Comma),_))= self.look_ahead(){
+                        self.consume();
+                        args.push(self.expr()?);
+                    }
+
+                    self.expect_tk(Delim(Rc))?;
+                }
+
+                Ok(NdCall(name.to_string(),args))
+            }else{
+                let result = self.symbol_table.get(&name).cloned();
+
+                if let Some(lvar) = result {
+                    Ok(NdLVar(lvar.1))
+                } else {
+                    self.set_var(name);
+                    Ok(NdLVar(self.offset))
+                }
+            }
+        }else if self.choice(Delim(Lc)){
+            let node = self.expr()?;
+            self.expect(Delim(Rc))?;
+            node
+        }else{
+            Err(UnexpectedToken(tok.1))
+        }
+        */
         self.look_ahead()
             .ok_or(MissingExpression(Default::default()))
             .and_then(|tok| match tok.0 {
@@ -141,29 +245,43 @@ impl<'a> Parser<'a> {
 
                             let mut args = vec![];
 
-                            if let Some((Delim(Rc),_)) = self.look_ahead() {
+                            if let Some((Delim(Rc), _)) = self.look_ahead() {
                                 self.consume();
-                            }else{
+                            } else {
                                 args.push(self.expr()?);
 
-                                while let Some((Delim(Comma),_))= self.look_ahead(){
+                                while let Some((Delim(Comma), _)) = self.look_ahead() {
                                     self.consume();
                                     args.push(self.expr()?);
                                 }
-                        
-                                self.expect_tk(Delim(Rc))?;
+
+                                self.expect(Delim(Rc))?;
                             }
 
-                            Ok(NdCall(name.to_string(),args))
+                            Ok(NdCall(name.to_string(), args))
+
+                            /*
+                            if self.choice(Rc) {
+
+                            }else{
+                                while let Ok(node) = self.expr() { nodes.push(node);
+
+                                    self.expect_tk(Delim(Comma))?;
+                                    if self.consume(Rc) {
+                                        break;
+                                    }
+                                }
+                            }
+                            */
                         }
                         _ => {
-                            let result = self.symbol_table.borrow().get(&name).cloned();
+                            let result = self.symbol_table.get(&name).cloned();
 
                             if let Some(lvar) = result {
                                 Ok(NdLVar(lvar.1))
                             } else {
                                 self.set_var(name);
-                                Ok(NdLVar(self.offset.get()))
+                                Ok(NdLVar(self.offset))
                             }
                         }
                     }

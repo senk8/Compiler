@@ -55,8 +55,8 @@ fn main() -> Result<(), ParseError> {
     println!("  mov rbp, rsp");
     println!("  sub rsp, 208");
 
-    let lexer = Lexer::new(input);
-    let parser = Parser::new(lexer);
+    let mut lexer = Lexer::new(input);
+    let mut parser = Parser::new(lexer);
 
     let asts = parser.parse().map_err(|error| {
         show_message(&error, input);

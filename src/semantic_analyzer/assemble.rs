@@ -1,7 +1,7 @@
 use crate::types::node::Node;
 use crate::types::node::Node::*;
 
-const ARG_REGS: [&str; 6] = ["rdi","rsi","rdx","rcx","r8","r9"];
+const ARG_REGS: [&str; 6] = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"];
 
 pub fn gen(node: &Node, n: &mut usize) -> () {
     match node {
@@ -55,12 +55,24 @@ pub fn gen(node: &Node, n: &mut usize) -> () {
             println!("  mov rax, [rax]");
             println!("  push rax");
         }
-        NdCall(name,args) => {
+        /*
+        NdDecl(name,args,body) => {
+            println!("{}:",name);
+            /* 引数名のローカル変数を確保する */
             for i in 0..args.len() {
-                gen(&args[i],n);
-                println!("  pop {}",ARG_REGS[i]);
+                gen_lval(&args[i]); /* オフセットを渡す.*/
+                println!("  pop rax");
+                println!("  mov [rax], ARG_REGS[i]");
             }
-            println!("  call {}",name);
+            gen(body);//NdBlock
+        }
+        */
+        NdCall(name, args) => {
+            for i in 0..args.len() {
+                gen(&args[i], n);
+                println!("  pop {}", ARG_REGS[i]);
+            }
+            println!("  call {}", name);
         }
         NdAssign(lhs, rhs) => {
             gen_lval(lhs);

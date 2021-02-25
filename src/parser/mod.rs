@@ -18,11 +18,11 @@ pub struct LVar(pub usize, pub usize);
 
 pub struct Parser<'a> {
     /* mutable field for symbol table */
-    symbol_table: RefCell<HashMap<String, LVar>>,
-    offset: Cell<usize>,
+    symbol_table: HashMap<String, LVar>,
+    offset: usize,
 
     /* mutable field for tokenizer */
-    lexer: RefCell<Peekable<Lexer<'a>>>,
+    lexer: Peekable<Lexer<'a>>,
 }
 
 impl<'a> Parser<'a> {
@@ -30,16 +30,15 @@ impl<'a> Parser<'a> {
         let ll_1_lexer = lexer.peekable();
 
         Parser {
-            lexer: RefCell::new(ll_1_lexer),
-            symbol_table: RefCell::new(HashMap::new()),
-            offset: Cell::new(0),
+            lexer: ll_1_lexer,
+            symbol_table: HashMap::new(),
+            offset: 0,
         }
     }
-    pub fn set_var(&self, name: String) -> () {
-        self.offset.set(self.offset.get() + 8);
+    pub fn set_var(&mut self, name: String) -> () {
+        self.offset += 8;
         self.symbol_table
-            .borrow_mut()
-            .insert(name.clone(), LVar(name.len(), self.offset.get()));
+            .insert(name.clone(), LVar(name.len(), self.offset));
     }
 
     /*
@@ -50,22 +49,24 @@ impl<'a> Parser<'a> {
             .borrow_mut()
             .insert(name.clone(), Fn(name.len(), self.offset.get()));
     }
-    */ 
+    */
 
-    pub fn look_ahead(&self) -> Option<Token> {
+    pub fn look_ahead(&mut self) -> Option<Token> {
         //TODO : check it out. Whether we implement Deref trait for Token.
-        self.lexer.borrow_mut().peek().cloned()
+        self.lexer.peek().cloned()
+        //self.lexer.borrow_mut().peek().cloned()
     }
 
-    pub fn consume(&self) -> Option<Token> {
-        self.lexer.borrow_mut().next()
+    pub fn consume(&mut self) -> Option<Token> {
+        self.lexer.next()
+        //self.lexer.borrow_mut().next()
     }
 
-    pub fn parse(&self) -> Result<Vec<Node>, ParseError> {
+    pub fn parse(&mut self) -> Result<Vec<Node>, ParseError> {
         self.program()
     }
 
-    pub(super) fn expect_tk(&self, kind: TokenKind) -> Result<(), ParseError> {
+    pub(super) fn expect(&mut self, kind: TokenKind) -> Result<(), ParseError> {
         self.look_ahead()
             .ok_or(Eof(Default::default()))
             .and_then(|tok| {
@@ -77,8 +78,31 @@ impl<'a> Parser<'a> {
                 }
             })
     }
-}
 
+    /*
+    macro_rules! choice {
+        ($parser:expr,$kind:pat) =>{
+            match $parser.look_ahead().map(|tk|tk.0){
+                Some($kind) => {
+                    $parser.lexer.next();
+                    true
+                },
+                _ => false
+            }
+        }
+    }
+    */
+
+    pub(super) fn choice(&mut self, kind: TokenKind) -> bool {
+        match self.look_ahead().map(|tk| tk.0) {
+            Some(k) if k == kind => {
+                self.lexer.next();
+                true
+            }
+            _ => false,
+        }
+    }
+}
 
 /*
 impl FromStr for Parser {
@@ -106,8 +130,8 @@ mod tests {
     #[test]
     fn test_parse_arithmetic() -> Result<(), ParseError> {
         let input = "2+1;2-1;2*1;2/1;2+3*3/3-1;";
-        let lexer = Lexer::new(input.as_bytes());
-        let parser = Parser::new(lexer);
+        let mut lexer = Lexer::new(input.as_bytes());
+        let mut parser = Parser::new(lexer);
 
         let result = parser.parse()?;
 
@@ -140,8 +164,8 @@ mod tests {
     #[test]
     fn test_parse_relatinonal() -> Result<(), ParseError> {
         let input = "2<3;2>3;2<=3;2>=3;2==3;2!=3;";
-        let lexer = Lexer::new(input.as_bytes());
-        let parser = Parser::new(lexer);
+        let mut lexer = Lexer::new(input.as_bytes());
+        let mut parser = Parser::new(lexer);
 
         let result = parser.parse()?;
 
@@ -164,8 +188,8 @@ mod tests {
     #[test]
     fn test_parse_variable() -> Result<(), ParseError> {
         let input = "a=2;b=3;a*b;";
-        let lexer = Lexer::new(input.as_bytes());
-        let parser = Parser::new(lexer);
+        let mut lexer = Lexer::new(input.as_bytes());
+        let mut parser = Parser::new(lexer);
 
         let result = parser.parse()?;
 
@@ -185,8 +209,8 @@ mod tests {
     #[test]
     fn test_parse_keyword() -> Result<(), ParseError> {
         let input = "return 2*2;return 2==2;";
-        let lexer = Lexer::new(input.as_bytes());
-        let parser = Parser::new(lexer);
+        let mut lexer = Lexer::new(input.as_bytes());
+        let mut parser = Parser::new(lexer);
 
         let result = parser.parse()?;
 
@@ -202,18 +226,17 @@ mod tests {
         Ok(())
     }
 
-
     #[test]
     fn test_parse_block() -> Result<(), ParseError> {
         let input = "{return 2;}{2==2;}";
-        let lexer = Lexer::new(input.as_bytes());
-        let parser = Parser::new(lexer);
+        let mut lexer = Lexer::new(input.as_bytes());
+        let mut parser = Parser::new(lexer);
 
         let result = parser.parse()?;
 
         let answer = vec![
-            NdBlock(vec![node!(NdReturn,NdNum(2))]),
-            NdBlock(vec![node!(NdEq,NdNum(2),NdNum(2))]),
+            NdBlock(vec![node!(NdReturn, NdNum(2))]),
+            NdBlock(vec![node!(NdEq, NdNum(2), NdNum(2))]),
         ];
 
         for (tree, ans) in result.into_iter().zip(answer.into_iter()) {
