@@ -24,52 +24,40 @@ impl<'a> Parser<'a> {
     /*
     // decl = ident ( (ident "," )* ) "{" stmt * "}"
     pub(super) fn decl(&mut self) -> Result<Vec<Node>, ParseError> {
+        /* 引数コンパイルしたら同時にローカル変数の定義を行う。*/
 
-        引数コンパイルしたら同時にローカル変数の定義を行う。
+        if let Some(Id(name)) = self.take_id() {
+            self.expect_tk(Delim(Lc))?;
 
-        match self.look_ahead().map(|tk|tk.0) {
-            Some(Id(name)) =>  name,
-        };
+            let mut args = vec![];
+            if !self.choice(Delim(Rc)) {
+                while {
+                    let arg = self.expect_ident()?;
+                    self.set_var(arg);
+                    args.push(NdLVar(self.offset));
 
-        self.expect_tk(Delim(Lc))?;
+                    self.choice(Delim(Comma))
+                } {}
 
-        let mut args = vec![];
+                self.expect(Delim(Rc))?;
+            };
 
-        if let Some((Delim(Rc),_)) = self.look_ahead() {
-            self.consume();
-        }else{
-            let ident = self.expect_ident()?;
-            self.set_var(ident);
+            self.expect(Delim(LCurl));
 
-            args.push(NdLVar(self.offset.get()))
-
-            while let Some((Delim(Comma),_))= self.look_ahead(){
-                self.consume();
-
-                let ident = self.expect_ident()?;
-                self.set_var(ident);
-                args.push(NdLVar(self.offset.get()));
+            let mut nodes = Vec::new();
+            while let Ok(node) = self.stmt() {
+                nodes.push(node);
             }
 
-            self.expect_tk(Delim(Rc))?;
-        }
+            self.expect(Delim(RCurl));
 
-        match self.look_ahead().map(|tok| tok.0) {
-            // Parse "{" stmt* "}""
-            Some(Delim(LCurl)) => {
-                self.consume();
-                let mut nodes = Vec::new();
-                while let Ok(node) = self.stmt() {
-                    nodes.push(node);
-                }
-                self.expect_tk(Delim(RCurl))?;
-                Ok(NdBlock(nodes))
-            }
-            _ => Err()
+            Ok(NdDecl(name, args, NdBlock(nodes)))
+        } else {
+            Err(UnexpectedToken(self.look_ahead().unwrap().1))
         }
     }
     */
-    
+
     /// stmt = expr ";"
     /// | "{" stmt* "}""
     /// | "return" expr ";"
@@ -103,16 +91,6 @@ impl<'a> Parser<'a> {
                 Ok(NdIf(Box::new(first), Box::new(second)))
             }
 
-        /*
-        match self.look_ahead().map(|tok| tok.0) {
-            Some(Key(Else)) => {
-                self.consume();
-                let third = self.stmt()?;
-                Ok(NdIfElse(Box::new(first), Box::new(second), Box::new(third)))
-            }
-            _ => Ok(NdIf(Box::new(first), Box::new(second))),
-        }
-        */
         } else if self.choice(Key(While)) {
             self.expect(Delim(Lc))?;
             let first = self.expr()?;
@@ -139,74 +117,5 @@ impl<'a> Parser<'a> {
             self.expect(Delim(Semicolon))?;
             Ok(node)
         }
-
-        /*
-        match self.look_ahead().map(|tok| tok.0) {
-            Some(Key(Return)) => {
-                self.consume();
-                let node = Ok(NdReturn(Box::new(self.expr()?)));
-                self.expect(Delim(Semicolon))?;
-                node
-            }
-            // Parse "{" stmt* "}""
-            Some(Delim(LCurl)) => {
-                self.consume();
-                let mut nodes = Vec::new();
-                while let Ok(node) = self.stmt() {
-                    nodes.push(node);
-                }
-                self.expect(Delim(RCurl))?;
-                Ok(NdBlock(nodes))
-            }
-            Some(Key(If)) => {
-                self.consume();
-                self.expect(Delim(Lc))?;
-                let first = self.expr()?;
-                self.expect(Delim(Rc))?;
-                let second = self.stmt()?;
-
-                /* ? */
-                match self.look_ahead().map(|tok| tok.0) {
-                    Some(Key(Else)) => {
-                        self.consume();
-                        let third = self.stmt()?;
-                        Ok(NdIfElse(Box::new(first), Box::new(second), Box::new(third)))
-                    }
-                    _ => Ok(NdIf(Box::new(first), Box::new(second))),
-                }
-            }
-            Some(Key(While)) => {
-                self.consume();
-                self.expect(Delim(Lc))?;
-                let first = self.expr()?;
-                self.expect(Delim(Rc))?;
-                let second = self.stmt()?;
-                Ok(NdWhile(Box::new(first), Box::new(second)))
-            }
-            Some(Key(For)) => {
-                self.consume();
-                self.expect(Delim(Lc))?;
-                let first = self.expr()?;
-                self.expect(Delim(Semicolon))?;
-                let second = self.expr()?;
-                self.expect(Delim(Semicolon))?;
-                let third = self.expr()?;
-                self.expect(Delim(Rc))?;
-                let fourth = self.stmt()?;
-                Ok(NdFor(
-                    Box::new(first),
-                    Box::new(second),
-                    Box::new(third),
-                    Box::new(fourth),
-                ))
-            }
-            _ => {
-                let node = self.expr()?;
-                self.expect(Delim(Semicolon))?;
-                Ok(node)
-            }
-        }
-        */
-        
     }
 }

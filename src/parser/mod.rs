@@ -8,6 +8,7 @@ use std::collections::HashMap;
 
 use crate::types::node::Node::*;
 use crate::types::node::*;
+use crate::types::token::TokenKind::*;
 use crate::types::token::*;
 
 use crate::types::error::ParseError;
@@ -41,57 +42,41 @@ impl<'a> Parser<'a> {
             .insert(name.clone(), LVar(name.len(), self.offset));
     }
 
-    /*
-
-    pub fn set_fn(&self, name: String) -> () {
-        self.offset.set(self.offset.get() + 8);
-        self.symbol_table
-            .borrow_mut()
-            .insert(name.clone(), Fn(name.len(), self.offset.get()));
+    pub fn parse(&mut self) -> Result<Vec<Node>, ParseError> {
+        self.program()
     }
-    */
 
     pub fn look_ahead(&mut self) -> Option<Token> {
         //TODO : check it out. Whether we implement Deref trait for Token.
         self.lexer.peek().cloned()
-        //self.lexer.borrow_mut().peek().cloned()
-    }
-
-    pub fn consume(&mut self) -> Option<Token> {
-        self.lexer.next()
-        //self.lexer.borrow_mut().next()
-    }
-
-    pub fn parse(&mut self) -> Result<Vec<Node>, ParseError> {
-        self.program()
     }
 
     pub(super) fn expect(&mut self, kind: TokenKind) -> Result<(), ParseError> {
         self.look_ahead()
             .ok_or(Eof(Default::default()))
-            .and_then(|tok| {
-                if tok.0 == kind {
-                    self.consume();
+            .and_then(|tk| {
+                if tk.0 == kind {
+                    self.lexer.next();
                     Ok(())
                 } else {
-                    Err(UnexpectedToken(tok.1))
+                    Err(UnexpectedDelimitor(tk.1))
                 }
             })
     }
 
-    /*
-    macro_rules! choice {
-        ($parser:expr,$kind:pat) =>{
-            match $parser.look_ahead().map(|tk|tk.0){
-                Some($kind) => {
-                    $parser.lexer.next();
-                    true
-                },
-                _ => false
-            }
+    pub(super) fn take_id(&mut self) -> Option<TokenKind> {
+        match self.look_ahead().map(|tk| tk.0) {
+            Some(Id(n)) => self.lexer.next().map(|tk| tk.0),
+            _ => None,
         }
     }
-    */
+
+    pub(super) fn take_num(&mut self) -> Option<TokenKind> {
+        match self.look_ahead().map(|tk| tk.0) {
+            Some(Num(n)) => self.lexer.next().map(|tk| tk.0),
+            _ => None,
+        }
+    }
 
     pub(super) fn choice(&mut self, kind: TokenKind) -> bool {
         match self.look_ahead().map(|tk| tk.0) {
@@ -248,6 +233,19 @@ mod tests {
 }
 
 /*
+    macro_rules! choice {
+        ($parser:expr,$kind:pat) =>{
+            match $parser.look_ahead().map(|tk|tk.0){
+                Some($kind) => {
+                    $parser.lexer.next();
+                    true
+                },
+                _ => false
+            }
+        }
+    }
+
+
 impl<'a> Parser<'a>{
     pub fn raise_error(&self, kind: ParseErrorKind, pos: Pos) -> Result<Node, ParseError> {
         use crate::types::error::ParseErrorKind::*;

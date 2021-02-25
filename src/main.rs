@@ -32,11 +32,9 @@ fn main() -> Result<(), ParseError> {
     /* input processing section */
 
     let input = if let Some(path) = &matches.value_of("FILE") {
-        println!("{}", path);
         let mut f = File::open(path).expect("file not found");
         f.read_to_string(&mut buf)
             .expect("something went wrong reading the file");
-        println!("{}", &buf);
 
         buf.as_bytes()
     } else if let Some(source) = &matches.value_of("compile") {

@@ -24,6 +24,12 @@ impl<'a> Lexer<'a> {
         Lexer { txt, pos }
     }
 
+    pub fn cur(&self) -> Pos {
+        Pos(1, self.pos)
+    }
+}
+
+impl<'a> Lexer<'a> {
     //文字列の最初を取り除く
     fn consume(&mut self, n: usize) -> Option<()> {
         if self.pos + n <= self.txt.len() {
@@ -33,9 +39,7 @@ impl<'a> Lexer<'a> {
             None
         }
     }
-}
 
-impl<'a> Lexer<'a> {
     fn lex_token(&mut self, val: TokenKind, len: usize) -> Option<Token> {
         let pos = Pos(1, self.pos);
         self.consume(len)?;
@@ -78,9 +82,7 @@ impl<'a> Lexer<'a> {
 
         Some((val, pos))
     }
-}
 
-impl<'a> Lexer<'a> {
     fn error_at(&self, description: &str) -> String {
         let pos = self.pos;
         let mut message = format!("\n{}\n", from_utf8(self.txt).unwrap());
@@ -88,13 +90,4 @@ impl<'a> Lexer<'a> {
         message.push_str(&format!("\n{}", description));
         return message;
     }
-
-    /*
-    fn expect_non_idx(&self,idx:usize)->bool{
-        match self.txt.get(idx) {
-            Some(c) if !(c.is_ascii_alphanumeric() || *c == b'_') => true,
-            _ => false,
-        }
-    }
-    */
 }
