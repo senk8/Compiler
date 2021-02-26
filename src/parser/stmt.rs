@@ -18,40 +18,53 @@ impl<'a> Parser<'a> {
             trees.push(self.stmt()?);
         }
 
+        /*
+        let mut trees = vec![];
+
+        while let Some(_) = self.look_ahead() {
+            trees.push(self.decl()?);
+        }
+        */
+
         Ok(trees)
     }
 
     /*
     // decl = ident ( (ident "," )* ) "{" stmt * "}"
-    pub(super) fn decl(&mut self) -> Result<Vec<Node>, ParseError> {
+    pub(super) fn decl(&mut self) -> Result<Node, ParseError> {
         /* 引数コンパイルしたら同時にローカル変数の定義を行う。*/
 
         if let Some(Id(name)) = self.take_id() {
-            self.expect_tk(Delim(Lc))?;
+            self.expect(Delim(Lc))?;
 
             let mut args = vec![];
             if !self.choice(Delim(Rc)) {
-                while {
-                    let arg = self.expect_ident()?;
-                    self.set_var(arg);
+                loop {
+
+                    let var = match self.take_id() {
+                        Some(Id(name)) => name,
+                        _ => panic!("unexpect!"),
+                    };
+
+                    self.set_var(var);
                     args.push(NdLVar(self.offset));
-
-                    self.choice(Delim(Comma))
-                } {}
-
-                self.expect(Delim(Rc))?;
+                    if !self.choice(Delim(Comma)) {
+                        self.expect(Delim(Rc))?;
+                        break;
+                    }
+                }
             };
 
-            self.expect(Delim(LCurl));
+            self.expect(Delim(LCurl))?;
 
             let mut nodes = Vec::new();
             while let Ok(node) = self.stmt() {
                 nodes.push(node);
             }
 
-            self.expect(Delim(RCurl));
+            self.expect(Delim(RCurl))?;
 
-            Ok(NdDecl(name, args, NdBlock(nodes)))
+            Ok(NdDecl(name, args, Box::new(NdBlock(nodes))))
         } else {
             Err(UnexpectedToken(self.look_ahead().unwrap().1))
         }
@@ -90,7 +103,6 @@ impl<'a> Parser<'a> {
             } else {
                 Ok(NdIf(Box::new(first), Box::new(second)))
             }
-
         } else if self.choice(Key(While)) {
             self.expect(Delim(Lc))?;
             let first = self.expr()?;

@@ -3,7 +3,30 @@ use crate::types::node::Node::*;
 
 const ARG_REGS: [&str; 6] = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"];
 
-pub fn gen(node: &Node, n: &mut usize) -> () {
+pub fn gen_inst_x86_64(asts: Vec<Node>) -> () {
+    /* start assemble prologue*/
+
+    println!(".intel_syntax noprefix");
+    println!(".globl main");
+    println!("main:");
+
+    println!("  push rbp");
+    println!("  mov rbp, rsp");
+    println!("  sub rsp, 208");
+
+    for ast in asts.iter() {
+        gen(&ast, &mut 0);
+        println!("  pop rax");
+    }
+
+    /* start assemble epilogue*/
+
+    println!("  mov rsp, rbp");
+    println!("  pop rbp");
+    println!("  ret");
+}
+
+fn gen(node: &Node, n: &mut usize) -> () {
     match node {
         NdNum(n) => {
             println!("  push {}", n);
@@ -58,13 +81,20 @@ pub fn gen(node: &Node, n: &mut usize) -> () {
         /*
         NdDecl(name,args,body) => {
             println!("{}:",name);
+
+            if name == "main" {
+                println!("  push rbp");
+                println!("  mov rbp, rsp");
+                println!("  sub rsp, 208");
+            };
+
             /* 引数名のローカル変数を確保する */
             for i in 0..args.len() {
                 gen_lval(&args[i]); /* オフセットを渡す.*/
                 println!("  pop rax");
-                println!("  mov [rax], ARG_REGS[i]");
+                println!("  mov [rax], {}",ARG_REGS[i]);
             }
-            gen(body);//NdBlock
+            gen(body,n);//NdBlock
         }
         */
         NdCall(name, args) => {
@@ -72,6 +102,18 @@ pub fn gen(node: &Node, n: &mut usize) -> () {
                 gen(&args[i], n);
                 println!("  pop {}", ARG_REGS[i]);
             }
+            /*
+            println!("  mov rdx, 0");
+            println!("  mov rax, 16");
+            println!("  mov rbx, rsp");
+            println!("  div rbx");
+            println!("  cmp rax, 0");
+            println!("  je not16");
+            println!("  call {}", name);
+            println!("not16:");
+            println!("  sub rsp, 8");
+             */
+
             println!("  call {}", name);
         }
         NdAssign(lhs, rhs) => {
@@ -166,6 +208,5 @@ fn print_opration_epilogue(message: &str) -> () {
     println!("  pop rdi");
     println!("  pop rax");
     println!("{}", message);
-    // operation result on rsp;
     println!("  push rax");
 }

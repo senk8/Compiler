@@ -6,7 +6,7 @@ pub mod util;
 
 use lexer::*;
 use parser::*;
-use semantic_analyzer::assemble::gen;
+use semantic_analyzer::assemble::gen_inst_x86_64;
 use types::error::ParseError;
 use util::message::show_message;
 
@@ -43,15 +43,7 @@ fn main() -> Result<(), ParseError> {
         unimplemented!();
     };
 
-    /* start assemble prologue*/
-
-    println!(".intel_syntax noprefix");
-    println!(".globl main");
-    println!("main:");
-
-    println!("  push rbp");
-    println!("  mov rbp, rsp");
-    println!("  sub rsp, 208");
+    /* tokenize and parse */
 
     let mut lexer = Lexer::new(input);
     let mut parser = Parser::new(lexer);
@@ -61,16 +53,7 @@ fn main() -> Result<(), ParseError> {
         error
     })?;
 
-    for ast in asts.iter() {
-        gen(&ast, &mut 0);
-        println!("  pop rax");
-    }
-
-    /* start assemble epilogue*/
-
-    println!("  mov rsp, rbp");
-    println!("  pop rbp");
-    println!("  ret");
+    gen_inst_x86_64(asts);
 
     return Ok(());
 }

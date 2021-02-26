@@ -122,7 +122,7 @@ impl<'a> Parser<'a> {
     }
 
     // primary = num | ident | "(" expr ")" | ident ( "(" argument ")" )?
-    // argument = (expr ( "," expr )* ) ? 
+    // argument = (expr ( "," expr )* ) ?
     pub(super) fn primary(&mut self) -> Result<Node, ParseError> {
         use crate::types::error::ParseError::*;
 
@@ -130,8 +130,6 @@ impl<'a> Parser<'a> {
             Ok(NdNum(n))
         } else if let Some(Id(name)) = self.take_id() {
             if self.choice(Delim(Lc)) {
-
-
                 let mut args = vec![];
 
                 /* exprにマッチすることを先読みできないので、")"がないかどうかを選択肢にしている。 */
@@ -140,34 +138,34 @@ impl<'a> Parser<'a> {
                     loop {
                         if self.choice(Delim(Comma)) {
                             args.push(self.expr()?);
-                        }else{
+                        } else {
                             break;
                         };
-                    };
-                    self.expect(Delim(Rc))?;
-                }
-
-                Ok(NdCall(name.to_string(), args))
-
-                /*
-
-                let mut args = vec![];
-
-                if let Some((Delim(Rc), _)) = self.look_ahead() {
-                    self.lexer.next();
-                } else {
-                    args.push(self.expr()?);
-
-                    while let Some((Delim(Comma), _)) = self.look_ahead() {
-                        self.lexer.next();
-                        args.push(self.expr()?);
                     }
-
                     self.expect(Delim(Rc))?;
                 }
 
                 Ok(NdCall(name.to_string(), args))
-                */
+
+            /*
+
+            let mut args = vec![];
+
+            if let Some((Delim(Rc), _)) = self.look_ahead() {
+                self.lexer.next();
+            } else {
+                args.push(self.expr()?);
+
+                while let Some((Delim(Comma), _)) = self.look_ahead() {
+                    self.lexer.next();
+                    args.push(self.expr()?);
+                }
+
+                self.expect(Delim(Rc))?;
+            }
+
+            Ok(NdCall(name.to_string(), args))
+            */
             } else {
                 let result = self.symbol_table.get(&name).cloned();
 
@@ -186,7 +184,6 @@ impl<'a> Parser<'a> {
             Err(UnexpectedToken(self.look_ahead().unwrap().1))
         }
     }
-
 
     /*
     fn argument(&mut self)->Result<Vec<Node>,ParseError>{
