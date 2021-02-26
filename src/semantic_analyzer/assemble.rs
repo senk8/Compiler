@@ -8,22 +8,26 @@ pub fn gen_inst_x86_64(asts: Vec<Node>) -> () {
 
     println!(".intel_syntax noprefix");
     println!(".globl main");
+    
+    /*
     println!("main:");
 
     println!("  push rbp");
     println!("  mov rbp, rsp");
     println!("  sub rsp, 208");
+    */
 
     for ast in asts.iter() {
         gen(&ast, &mut 0);
-        println!("  pop rax");
     }
 
     /* start assemble epilogue*/
 
+    /*
     println!("  mov rsp, rbp");
     println!("  pop rbp");
     println!("  ret");
+    */
 }
 
 fn gen(node: &Node, n: &mut usize) -> () {
@@ -78,15 +82,12 @@ fn gen(node: &Node, n: &mut usize) -> () {
             println!("  mov rax, [rax]");
             println!("  push rax");
         }
-        /*
         NdDecl(name,args,body) => {
             println!("{}:",name);
 
-            if name == "main" {
-                println!("  push rbp");
-                println!("  mov rbp, rsp");
-                println!("  sub rsp, 208");
-            };
+            println!("  push rbp");
+            println!("  mov rbp, rsp");
+            println!("  sub rsp, 208");
 
             /* 引数名のローカル変数を確保する */
             for i in 0..args.len() {
@@ -96,25 +97,27 @@ fn gen(node: &Node, n: &mut usize) -> () {
             }
             gen(body,n);//NdBlock
         }
-        */
         NdCall(name, args) => {
             for i in 0..args.len() {
                 gen(&args[i], n);
                 println!("  pop {}", ARG_REGS[i]);
             }
+
             /*
+            let label = *n;
+            *n += 1;
             println!("  mov rdx, 0");
             println!("  mov rax, 16");
             println!("  mov rbx, rsp");
             println!("  div rbx");
-            println!("  cmp rax, 0");
-            println!("  je not16");
-            println!("  call {}", name);
-            println!("not16:");
+            println!("  cmp rdx, 0");
+            println!("  je  .Lend{}", label);
             println!("  sub rsp, 8");
-             */
+            println!(".Lend{}:", label);
+            */
 
             println!("  call {}", name);
+            println!("  push rax");
         }
         NdAssign(lhs, rhs) => {
             gen_lval(lhs);

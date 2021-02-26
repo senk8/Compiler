@@ -12,24 +12,24 @@ impl<'a> Parser<'a> {
 
     // program = decl *
     pub(super) fn program(&mut self) -> Result<Vec<Node>, ParseError> {
-        let mut trees = vec![];
-
-        while let Some(_) = self.look_ahead() {
-            trees.push(self.stmt()?);
-        }
 
         /*
         let mut trees = vec![];
 
         while let Some(_) = self.look_ahead() {
-            trees.push(self.decl()?);
+            trees.push(self.stmt()?);
         }
         */
+
+        let mut trees = vec![];
+
+        while let Some(_) = self.look_ahead() {
+            trees.push(self.decl()?);
+        }
 
         Ok(trees)
     }
 
-    /*
     // decl = ident ( (ident "," )* ) "{" stmt * "}"
     pub(super) fn decl(&mut self) -> Result<Node, ParseError> {
         /* 引数コンパイルしたら同時にローカル変数の定義を行う。*/
@@ -69,7 +69,6 @@ impl<'a> Parser<'a> {
             Err(UnexpectedToken(self.look_ahead().unwrap().1))
         }
     }
-    */
 
     /// stmt = expr ";"
     /// | "{" stmt* "}""
