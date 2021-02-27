@@ -12,7 +12,6 @@ impl<'a> Parser<'a> {
 
     // program = decl *
     pub(super) fn program(&mut self) -> Result<Vec<Node>, ParseError> {
-
         /*
         let mut trees = vec![];
 
@@ -40,7 +39,6 @@ impl<'a> Parser<'a> {
             let mut args = vec![];
             if !self.choice(Delim(Rc)) {
                 loop {
-
                     let var = match self.take_id() {
                         Some(Id(name)) => name,
                         _ => panic!("unexpect!"),

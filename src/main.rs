@@ -6,7 +6,7 @@ pub mod util;
 
 use lexer::*;
 use parser::*;
-use semantic_analyzer::assemble::gen_inst_x86_64;
+use semantic_analyzer::gen_instruction::gen_inst_x86_64;
 use types::error::ParseError;
 use util::message::show_message;
 
@@ -17,27 +17,34 @@ use clap::{App, Arg, ArgGroup};
 
 //use anyhow::{bail, ensure, Context, Result};
 
+/* 懸念点
+
+    1. Blockとstmtが同じ
+    2. rspを16の倍数にしていない(スタックに退避する方法でなんとかなる)
+
+*/
+
 fn main() -> Result<(), ParseError> {
     let app = App::new("Compiler")
         .version("1.0,0")
         .author("SenK")
         .about("C Complier implementation for Rust")
         .arg(Arg::from_usage("-c --compile <SOURCE> 'source_string'").required(false))
-        .arg(Arg::from_usage("<FILE> 'source_file'").required(false))
-        .group(ArgGroup::with_name("input").args(&["compile", "FILE"]));
+        .arg(Arg::from_usage("<SOURCE_FILE> 'source_file'").required(false))
+        .group(ArgGroup::with_name("input").args(&["compile", "SOURCE_FILE"]));
 
     let matches = app.get_matches();
     let mut buf = String::new();
 
     /* input processing section */
 
-    let input = if let Some(path) = &matches.value_of("FILE") {
+    let input = if let Some(path) = matches.value_of("SOURCE_FILE") {
         let mut f = File::open(path).expect("file not found");
         f.read_to_string(&mut buf)
             .expect("something went wrong reading the file");
 
         buf.as_bytes()
-    } else if let Some(source) = &matches.value_of("compile") {
+    } else if let Some(source) = matches.value_of("compile") {
         source.as_bytes()
     } else {
         unimplemented!();
@@ -53,7 +60,7 @@ fn main() -> Result<(), ParseError> {
         error
     })?;
 
-    gen_inst_x86_64(asts);
+    gen_inst_x86_64(asts, "foo.s").unwrap();
 
     return Ok(());
 }
