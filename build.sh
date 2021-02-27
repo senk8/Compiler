@@ -1,5 +1,5 @@
 #!/bin/bash
-cargo run -- foo.c > foo.s
+cargo run -- foo.c
 cc foo.s  -o main
 ./main
 echo $?
