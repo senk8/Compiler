@@ -3,7 +3,6 @@ pub mod stmt;
 
 use crate::lexer::*;
 use core::iter::Peekable;
-use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 
 use crate::types::node::Node::*;
@@ -66,14 +65,14 @@ impl<'a> Parser<'a> {
 
     pub(super) fn take_id(&mut self) -> Option<TokenKind> {
         match self.look_ahead().map(|tk| tk.0) {
-            Some(Id(n)) => self.lexer.next().map(|tk| tk.0),
+            Some(Id(_)) => self.lexer.next().map(|tk| tk.0),
             _ => None,
         }
     }
 
     pub(super) fn take_num(&mut self) -> Option<TokenKind> {
         match self.look_ahead().map(|tk| tk.0) {
-            Some(Num(n)) => self.lexer.next().map(|tk| tk.0),
+            Some(Num(_)) => self.lexer.next().map(|tk| tk.0),
             _ => None,
         }
     }

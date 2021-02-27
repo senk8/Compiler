@@ -60,7 +60,7 @@ fn main() -> Result<(), ParseError> {
         error
     })?;
 
-    gen_inst_x86_64(asts, "foo.s").unwrap();
+    gen_inst_x86_64(asts, "out.s").unwrap();
 
     return Ok(());
 }
