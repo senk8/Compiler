@@ -1,5 +1,5 @@
 #!/bin/bash
 cargo run -- foo.c
-cc foo.s  -o main
+cc out.s  -o main
 ./main
 echo $?
