@@ -15,7 +15,7 @@ pub enum OperatorKind {
     /* arithmetic operator */
     Add,
     Sub,
-    Mul,
+    Star,
     Div,
 
     /* rerational operator */
@@ -27,6 +27,7 @@ pub enum OperatorKind {
     Gt,
 
     /* others */
+    Amp,
     Assign,
 }
 

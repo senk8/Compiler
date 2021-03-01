@@ -100,7 +100,7 @@ impl<'a> Parser<'a> {
         let mut node = self.unary()?;
 
         loop {
-            if self.choice(Opr(Mul)) {
+            if self.choice(Opr(Star)) {
                 node = NdMul(Box::new(node), Box::new(self.unary()?));
             } else if self.choice(Opr(Div)) {
                 node = NdDiv(Box::new(node), Box::new(self.unary()?));
@@ -110,12 +110,22 @@ impl<'a> Parser<'a> {
         }
     }
 
-    // unary    = ("+" | "-")?  primary
+    /*
+    unary    = "+" primary 
+            |  "-" primary
+            |  "*" primary
+            |  "&" primary
+            |  primary
+    */
     pub(super) fn unary(&mut self) -> Result<Node, ParseError> {
         if self.choice(Opr(Add)) {
             self.primary()
         } else if self.choice(Opr(Sub)) {
             Ok(NdSub(Box::new(NdNum(0)), Box::new(self.primary()?)))
+        } else if self.choice(Opr(Star)) {
+            Ok(NdDeref(Box::new(self.primary()?)))
+        } else if self.choice(Opr(Amp)) {
+            Ok(NdRef(Box::new(self.primary()?)))
         } else {
             self.primary()
         }
@@ -146,26 +156,6 @@ impl<'a> Parser<'a> {
                 }
 
                 Ok(NdCall(name.to_string(), args))
-
-            /*
-
-            let mut args = vec![];
-
-            if let Some((Delim(Rc), _)) = self.look_ahead() {
-                self.lexer.next();
-            } else {
-                args.push(self.expr()?);
-
-                while let Some((Delim(Comma), _)) = self.look_ahead() {
-                    self.lexer.next();
-                    args.push(self.expr()?);
-                }
-
-                self.expect(Delim(Rc))?;
-            }
-
-            Ok(NdCall(name.to_string(), args))
-            */
             } else {
                 let result = self.symbol_table.get(&name).cloned();
 
@@ -184,25 +174,4 @@ impl<'a> Parser<'a> {
             Err(UnexpectedToken(self.look_ahead().unwrap().1))
         }
     }
-
-    /*
-    fn argument(&mut self)->Result<Vec<Node>,ParseError>{
-        let mut args = vec![];
-
-        if let Some(Delim(Rc)) = self.look_ahead() {
-            args.push(self.expr()?);
-            loop {
-                if self.choice(Delim(Comma)) {
-                    args.push(self.expr()?);
-                }else{
-                    break;
-                };
-            };
-
-            self.expect(Delim(Rc))?;
-        }
-
-        Ok(args)
-    }
-    */
 }

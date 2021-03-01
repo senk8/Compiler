@@ -53,6 +53,15 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> std::io::Res
             gen(stream, rhs, n)?;
             print_opration_epilogue(stream, "  cqo\n  idiv rdi")?;
         }
+        NdRef(operand) => {
+            alloc_lval(stream, operand)?;
+        }
+        NdDeref(operand) => {
+            gen(stream, operand, n)?;
+            writeln!(stream,"  pop rax")?;
+            writeln!(stream,"  mov rax, [rax]")?;
+            writeln!(stream,"  push rax")?;
+        }
         NdNeq(lhs, rhs) => {
             gen(stream, lhs, n)?;
             gen(stream, rhs, n)?;
@@ -74,7 +83,7 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> std::io::Res
             print_opration_epilogue(stream, "  cmp rax, rdi\n  setle al\n  movzb rax, al")?;
         }
         NdLVar(_) => {
-            gen_lval(stream, node)?;
+            alloc_lval(stream, node)?;
 
             writeln!(stream, "  pop rax")?;
             writeln!(stream, "  mov rax, [rax]")?;
@@ -89,7 +98,7 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> std::io::Res
 
             /* 引数名のローカル変数を確保する */
             for i in 0..args.len() {
-                gen_lval(stream, &args[i])?; /* オフセットを渡す.*/
+                alloc_lval(stream, &args[i])?; /* オフセットを渡す.*/
                 writeln!(stream, "  pop rax")?;
                 writeln!(stream, "  mov [rax], {}", ARG_REGS[i])?;
             }
@@ -119,7 +128,7 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> std::io::Res
             writeln!(stream, "  push rax")?;
         }
         NdAssign(lhs, rhs) => {
-            gen_lval(stream, lhs)?;
+            alloc_lval(stream, lhs)?;
             gen(stream, rhs, n)?;
 
             writeln!(stream, "  pop rdi")?;
@@ -203,7 +212,7 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> std::io::Res
     return Ok(());
 }
 
-fn gen_lval(stream: &mut BufWriter<File>, node: &Node) -> std::io::Result<()> {
+fn alloc_lval(stream: &mut BufWriter<File>, node: &Node) -> std::io::Result<()> {
     if let NdLVar(offset) = *node {
         writeln!(stream, "  mov rax, rbp")?;
         writeln!(stream, "  sub rax, {}", offset)?;
