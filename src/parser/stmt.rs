@@ -39,6 +39,8 @@ impl<'a> Parser<'a> {
             let mut args = vec![];
             if !self.choice(Delim(Rc)) {
                 loop {
+                    /* self.expect(Key(Int))?; */
+
                     let var = match self.take_id() {
                         Some(Id(name)) => name,
                         _ => panic!("unexpect!"),

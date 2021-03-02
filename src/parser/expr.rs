@@ -30,10 +30,26 @@ macro_rules! star {
  */
 
 impl<'a> Parser<'a> {
-    //expr = assign
+    //expr = assign | vdecl
     pub(super) fn expr(&mut self) -> Result<Node, ParseError> {
         self.assign()
     }
+
+    /*
+    //vdecl = type ident
+    pub(super) fn vdecl(&mut self) -> Result<Node,ParseError>{
+        if self.choice(Key(Int)) {
+            match self.take_id() {
+                Some(Id(name)) => {
+                    self.set_var(name);
+                    Ok(NdLVar(self.offset))
+                }
+            }
+        }else{
+            Err(UnexpectedToken)
+        }
+    }
+    */
 
     //assign = equality ( "=" assign )?
     pub(super) fn assign(&mut self) -> Result<Node, ParseError> {
@@ -162,6 +178,8 @@ impl<'a> Parser<'a> {
                 if let Some(lvar) = result {
                     Ok(NdLVar(lvar.1))
                 } else {
+                    //Err(UndefinedSymbol())
+
                     self.set_var(name);
                     Ok(NdLVar(self.offset))
                 }

@@ -50,4 +50,5 @@ pub enum KeywordKind {
     While,
     For,
     Return,
+    Int,
 }
