@@ -10,6 +10,7 @@ pub enum ParseError {
     MissingExpression(Pos),
     MissingSemicolon(Pos),
     MissingDelimitor(Pos),
+    UndefinedSymbol(Pos),
     Eof(Pos),
     SegmentationFault(Pos),
 }

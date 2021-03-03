@@ -77,6 +77,13 @@ impl<'a> Parser<'a> {
         }
     }
 
+    pub(super) fn take_token(&mut self) -> Option<Token> {
+        match self.look_ahead().map(|tk| tk.0) {
+            Some(_) => self.lexer.next(),
+            _ => None,
+        }
+    }
+
     pub(super) fn choice(&mut self, kind: TokenKind) -> bool {
         match self.look_ahead().map(|tk| tk.0) {
             Some(k) if k == kind => {
@@ -230,103 +237,3 @@ mod tests {
         Ok(())
     }
 }
-
-/*
-    macro_rules! choice {
-        ($parser:expr,$kind:pat) =>{
-            match $parser.look_ahead().map(|tk|tk.0){
-                Some($kind) => {
-                    $parser.lexer.next();
-                    true
-                },
-                _ => false
-            }
-        }
-    }
-
-
-impl<'a> Parser<'a>{
-    pub fn raise_error(&self, kind: ParseErrorKind, pos: Pos) -> Result<Node, ParseError> {
-        use crate::types::error::ParseErrorKind::*;
-
-        let begin = pos.0;
-        let mut message = std::str::from_utf8(self.input)
-            .map(|s| String::from(s))
-            .unwrap();
-        message.push_str(&format!("\n{:>width$}\n", "^", width = begin + 1));
-
-        Err(match kind {
-            UnexpectedToken => UnexpectedTokenError(pos, message),
-            UnclosedDelimitor => UnclosedDelimitorError(pos, message),
-            UnexpectedKeyword => UnexpectedKeywordError(pos, message),
-            UnexpectedDelimitor => UnexpectedDelimitorError(pos, message),
-            Eof => EofError(pos, message),
-            LackSemicolon => MissingExpressionError(pos, message),
-            LackExpr => MissingSemicolonError(pos, message),
-            _ => SegmentationFault(pos, message),
-        })
-    }
-
-    pub fn make_error(&self, kind: ParseErrorKind) -> ParseError {
-        use crate::types::error::ParseErrorKind::*;
-        let pos = Pos(self.input.len(), self.input.len());
-        let mut message = std::str::from_utf8(self.input)
-            .map(|s| String::from(s))
-            .unwrap();
-        message.push_str(&format!("\n{:>width$}\n", "^", width = pos.0 + 1));
-
-        match kind {
-            UnexpectedToken => UnexpectedTokenError(pos, message),
-            UnclosedDelimitor => UnclosedDelimitorError(pos, message),
-            UnexpectedKeyword => UnexpectedKeywordError(pos, message),
-            UnexpectedDelimitor => UnexpectedDelimitorError(pos, message),
-            Eof => EofError(pos, message),
-            LackSemicolon => MissingSemicolonError(pos, message),
-            LackExpr => MissingExpressionError(pos, message),
-            _ => SegmentationFault(pos, message),
-        }
-    }
-
-    fn new_opr(&self,lhs:Node,rhs:Node)->Result<Node,ParseError>{
-        use crate::types::token::TokenKind::*;
-        use crate::types::token::OperatorKind::*;
-
-        Ok(match self.consume().unwrap().val {
-            Opr(Add) => NdAdd(Box::new(lhs), Box::new(rhs)),
-            Opr(Sub) => NdSub(Box::new(lhs), Box::new(rhs)),
-            Opr(Mul) => NdMul(Box::new(lhs), Box::new(rhs)),
-            Opr(Div) => NdDiv(Box::new(lhs), Box::new(rhs)),
-            Opr(Assign) => NdAssign(Box::new(lhs), Box::new(rhs)),
-            Opr(Lt) => NdLt(Box::new(lhs), Box::new(rhs)),
-            Opr(Gt) => NdLt(Box::new(lhs), Box::new(rhs)),
-            Opr(Leq) => NdLeq(Box::new(lhs), Box::new(rhs)),
-            Opr(Geq) => NdLeq(Box::new(lhs), Box::new(rhs)),
-            Opr(Eq) => NdEq(Box::new(lhs), Box::new(rhs)),
-            Opr(Neq) => NdNeq(Box::new(lhs), Box::new(rhs)),
-            _ => unreachable!(),
-        })
-
-    }
-}
-
-
-macro_rules! new_node {
-    ($nx:expr,$lhs:expr,$rhs:expr) => {
-        match $nx.unwrap().val{
-            Opr(Add) => NdAdd(Box::new($lhs), Box::new($rhs)),
-            Opr(Sub) => NdSub(Box::new($lhs), Box::new($rhs)),
-            Opr(Mul) => NdMul(Box::new($lhs), Box::new($rhs)),
-            Opr(Div) => NdDiv(Box::new($lhs), Box::new($rhs)),
-            Opr(Assign) => NdAssign(Box::new($lhs), Box::new($rhs)),
-            Opr(Lt) => NdLt(Box::new($lhs), Box::new($rhs)),
-            Opr(Gt) => NdLt(Box::new($lhs), Box::new($rhs)),
-            Opr(Leq) => NdLeq(Box::new($lhs), Box::new($rhs)),
-            Opr(Geq) => NdLeq(Box::new($lhs), Box::new($rhs)),
-            Opr(Eq) => NdEq(Box::new($lhs), Box::new($rhs)),
-            Opr(Neq) => NdNeq(Box::new($lhs), Box::new($rhs)),
-            _ => unreachable!(),
-        }
-    };
-}
-
-*/

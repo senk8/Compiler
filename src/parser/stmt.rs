@@ -29,9 +29,11 @@ impl<'a> Parser<'a> {
         Ok(trees)
     }
 
-    // decl = ident ( (ident "," )* ) "{" stmt * "}"
+    // decl = type ident ( ( type ident "," )* ) "{" stmt * "}"
     pub(super) fn decl(&mut self) -> Result<Node, ParseError> {
         /* 引数コンパイルしたら同時にローカル変数の定義を行う。*/
+
+        self.expect(Key(Int))?;
 
         if let Some(Id(name)) = self.take_id() {
             self.expect(Delim(Lc))?;
@@ -39,7 +41,7 @@ impl<'a> Parser<'a> {
             let mut args = vec![];
             if !self.choice(Delim(Rc)) {
                 loop {
-                    /* self.expect(Key(Int))?; */
+                    self.expect(Key(Int))?;
 
                     let var = match self.take_id() {
                         Some(Id(name)) => name,

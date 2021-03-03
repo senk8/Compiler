@@ -64,6 +64,13 @@ pub fn show_message(error: &ParseError, input: &[u8]) -> () {
             eprintln!("{:>width$}", "^", width = input.len() + 1);
             eprintln!("{}", "Suggestion: ");
         }
+        UndefinedSymbol(pos) => {
+            let code = input.last().unwrap();
+            eprintln!("This variable is Undefined:{}", pos);
+            eprintln!("{}", *code as char);
+            eprintln!("{:>width$}", "^", width = pos.1 + 1);
+            eprintln!("{}", "Suggestion: ");
+        }
         SegmentationFault(pos) => {
             let code = input.last().unwrap();
             eprintln!("Segmentation Fault:{}", pos);

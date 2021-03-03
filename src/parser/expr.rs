@@ -4,6 +4,7 @@ use crate::types::node::*;
 use crate::types::token::DelimitorKind::*;
 use crate::types::token::OperatorKind::*;
 use crate::types::token::TokenKind::*;
+use crate::types::token::KeywordKind::*;
 
 use crate::types::error::ParseError;
 
@@ -30,26 +31,27 @@ macro_rules! star {
  */
 
 impl<'a> Parser<'a> {
-    //expr = assign | vdecl
+    //expr = assign | type ident
     pub(super) fn expr(&mut self) -> Result<Node, ParseError> {
-        self.assign()
-    }
 
-    /*
-    //vdecl = type ident
-    pub(super) fn vdecl(&mut self) -> Result<Node,ParseError>{
+        /*
+        self.assign()
+        */
+
         if self.choice(Key(Int)) {
-            match self.take_id() {
-                Some(Id(name)) => {
-                    self.set_var(name);
-                    Ok(NdLVar(self.offset))
-                }
+            let token= self.take_token().ok_or(Eof(Default::default()))?;
+
+            if let (Id(name),_) = token {
+                self.set_var(name);
+                Ok(NdVdecl(self.offset))
+            }else{
+                Err(UnexpectedToken(token.1))
             }
-        }else{
-            Err(UnexpectedToken)
+
+        } else {
+            self.assign()
         }
     }
-    */
 
     //assign = equality ( "=" assign )?
     pub(super) fn assign(&mut self) -> Result<Node, ParseError> {
@@ -178,10 +180,13 @@ impl<'a> Parser<'a> {
                 if let Some(lvar) = result {
                     Ok(NdLVar(lvar.1))
                 } else {
-                    //Err(UndefinedSymbol())
+                    use crate::types::annotation::Pos;
+                    Err(UndefinedSymbol(Pos(0,0)))
 
+                    /*
                     self.set_var(name);
                     Ok(NdLVar(self.offset))
+                    */
                 }
             }
         } else if self.choice(Delim(Lc)) {

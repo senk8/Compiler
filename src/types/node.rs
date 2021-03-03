@@ -19,6 +19,7 @@ pub enum Node {
     NdNum(usize),
     NdCall(String, Vec<Node>),
     NdDecl(String, Vec<Node>, Box<Node>),
+    NdVdecl(usize),
     NdRef(Box<Node>),
     NdDeref(Box<Node>),
 }
