@@ -24,6 +24,7 @@ impl<'a> Parser<'a> {
 
         while let Some(_) = self.look_ahead() {
             trees.push(self.decl()?);
+            self.symbol_table.clear();
         }
 
         Ok(trees)
@@ -33,7 +34,7 @@ impl<'a> Parser<'a> {
     pub(super) fn decl(&mut self) -> Result<Node, ParseError> {
         /* 引数コンパイルしたら同時にローカル変数の定義を行う。*/
 
-        self.expect(Key(Int))?;
+        self.expect_type()?;
 
         if let Some(Id(name)) = self.take_id() {
             self.expect(Delim(Lc))?;
@@ -41,7 +42,7 @@ impl<'a> Parser<'a> {
             let mut args = vec![];
             if !self.choice(Delim(Rc)) {
                 loop {
-                    self.expect(Key(Int))?;
+                    self.expect_type()?;
 
                     let var = match self.take_id() {
                         Some(Id(name)) => name,

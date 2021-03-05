@@ -63,6 +63,20 @@ impl<'a> Parser<'a> {
             })
     }
 
+    pub(super) fn expect_type(&mut self) -> Result<(), ParseError> {
+        use crate::types::token::KeywordKind::*;
+        self.look_ahead()
+            .ok_or(Eof(Default::default()))
+            .and_then(|tk| {
+                if tk.0 == Key(Int) {
+                    self.lexer.next();
+                    Ok(())
+                } else {
+                    Err(UnexpectedToken(tk.1))
+                }
+            })
+    }
+
     pub(super) fn take_id(&mut self) -> Option<TokenKind> {
         match self.look_ahead().map(|tk| tk.0) {
             Some(Id(_)) => self.lexer.next().map(|tk| tk.0),
