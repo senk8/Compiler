@@ -15,7 +15,7 @@ C Compiler implemantation by Rust .
 
 1. Go ahead and clone this repo. 
 
-2. You can compile `test.c`.
+2. You can compile `test.c` to `out.s`.
 
 ```
 $ cargo run -- test.c
