@@ -87,10 +87,9 @@ impl<'a> Parser<'a> {
             Ok(node)
         } else if self.choice(Delim(LCurl)) {
             let mut nodes = Vec::new();
-            while let Ok(node) = self.stmt() {
-                nodes.push(node);
+            while !self.choice(Delim(RCurl)){
+                nodes.push(self.stmt()?);
             }
-            self.expect(Delim(RCurl))?;
             Ok(NdBlock(nodes))
         } else if self.choice(Key(If)) {
             self.expect(Delim(Lc))?;

@@ -180,13 +180,7 @@ impl<'a> Parser<'a> {
                 if let Some(lvar) = result {
                     Ok(NdLVar(lvar.1))
                 } else {
-                    use crate::types::annotation::Pos;
-                    Err(UndefinedSymbol(Pos(0,0)))
-
-                    /*
-                    self.set_var(name);
-                    Ok(NdLVar(self.offset))
-                    */
+                    Err(UndefinedSymbol(self.lexer.next().unwrap().1))
                 }
             }
         } else if self.choice(Delim(Lc)) {
@@ -194,7 +188,7 @@ impl<'a> Parser<'a> {
             self.expect(Delim(Rc))?;
             Ok(node)
         } else {
-            Err(UnexpectedToken(self.look_ahead().unwrap().1))
+            Err(UnexpectedToken(self.lexer.next().unwrap().1))
         }
     }
 }
