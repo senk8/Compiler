@@ -61,11 +61,10 @@ impl<'a> Parser<'a> {
             self.expect(Delim(LCurl))?;
 
             let mut nodes = Vec::new();
-            while let Ok(node) = self.stmt() {
-                nodes.push(node);
-            }
 
-            self.expect(Delim(RCurl))?;
+            while !self.choice(Delim(RCurl)) {
+                nodes.push(self.stmt()?);
+            }
 
             Ok(NdDecl(name, args, Box::new(NdBlock(nodes))))
         } else {
