@@ -55,14 +55,16 @@ fn main() -> Result<(), ParseError> {
     let mut lexer = Lexer::new(input);
     let mut parser = Parser::new(lexer);
 
-    let asts = parser.parse().map_err(|error| {
-        show_message(&error, input);
-        error
-    })?;
-
-    gen_inst_x86_64(asts, "out.s").unwrap();
-
-    return Ok(());
+    match parser.parse() {
+        Ok(asts) =>{
+            gen_inst_x86_64(asts, "out.s").unwrap();
+            Ok(())
+        }
+        Err(kind) =>{
+            show_message(&kind, input);
+            Err(kind)
+        }
+    }
 }
 
 mod tests {
