@@ -4,6 +4,7 @@ use crate::types::token::DelimitorKind::*;
 use crate::types::token::KeywordKind::*;
 use crate::types::token::OperatorKind::*;
 use crate::types::token::TokenKind::*;
+use crate::types::token::TypeKind::*;
 use crate::types::token::*;
 
 impl<'a> Iterator for Lexer<'a> {
@@ -22,7 +23,7 @@ impl<'a> Iterator for Lexer<'a> {
             [b'w', b'h', b'i', b'l', b'e', b'(', ..] => self.lex_token(Key(While), 5),
             [b'e', b'l', b's', b'e', b' ', ..] => self.lex_token(Key(Else), 4),
             [b'f', b'o', b'r', b'(', ..] => self.lex_token(Key(For), 3),
-            [b'i', b'n', b't', ..] => self.lex_token(Key(Int), 3),
+            [b'i', b'n', b't', ..] => self.lex_token(Type(Int), 3),
             [b'<', b'=', ..] => self.lex_token(Opr(Leq), 2),
             [b'>', b'=', ..] => self.lex_token(Opr(Geq), 2),
             [b'=', b'=', ..] => self.lex_token(Opr(Eq), 2),

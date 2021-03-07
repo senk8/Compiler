@@ -1,4 +1,4 @@
-use super::annotation::Pos;
+use super::types::Pos;
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Hash)]
 pub enum ParseError {
@@ -11,8 +11,8 @@ pub enum ParseError {
     MissingSemicolon(Pos),
     MissingDelimitor(Pos),
     UndefinedSymbol(Pos),
-    Eof(Pos),
     SegmentationFault(Pos),
+    Eof(Pos),
 }
 
 /*

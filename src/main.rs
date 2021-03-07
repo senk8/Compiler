@@ -5,7 +5,7 @@ pub mod types;
 pub mod util;
 
 use lexer::*;
-use parser::*;
+use parser::parser::Parser;
 use semantic_analyzer::gen_instruction::gen_inst_x86_64;
 use types::error::ParseError;
 use util::message::show_message;
