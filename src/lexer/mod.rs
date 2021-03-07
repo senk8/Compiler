@@ -2,9 +2,9 @@ pub mod iterator;
 
 use std::str::from_utf8;
 
-use crate::types::types::*;
 use crate::types::token::TokenKind::*;
 use crate::types::token::*;
+use crate::types::types::*;
 
 //use crate::types::error::TokenizeError;
 

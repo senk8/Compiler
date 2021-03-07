@@ -1,19 +1,18 @@
 use super::parser::Parser;
-use crate::types::token::TokenKind::*;
-use crate::types::token::DelimitorKind::*;
-use crate::types::token::OperatorKind::*;
-use crate::types::token::KeywordKind::*;
-use crate::types::token::TypeKind::*;
-use crate::types::types::VarAnnot;
 use crate::types::error::ParseError;
 use crate::types::error::ParseError::*;
 use crate::types::node::Node;
 use crate::types::node::Node::*;
+use crate::types::token::DelimitorKind::*;
+use crate::types::token::KeywordKind::*;
+use crate::types::token::OperatorKind::*;
+use crate::types::token::TokenKind::*;
+use crate::types::token::TypeKind::*;
+use crate::types::types::VarAnnot;
 
 impl<'a> Parser<'a> {
     // program = decl *
     pub(super) fn program(&mut self) -> Result<Vec<Node>, ParseError> {
-
         let mut trees = vec![];
 
         while let Some(_) = self.look_ahead() {
@@ -25,16 +24,16 @@ impl<'a> Parser<'a> {
     }
 
     // decl = type ident ( ( type ident "," )* ) "{" stmt * "}"
-    pub(super) fn decl(&mut self) -> Result<Node, ParseError> {
+    fn decl(&mut self) -> Result<Node, ParseError> {
         /* 引数コンパイルしたら同時にローカル変数の定義を行う。*/
 
         self.expect(Type(Int))?;
 
         if let Some(Id(name)) = self.take_id() {
-            self.expect(Delim(Lc))?;
+            self.expect(Delim(Lparen))?;
 
             let mut args = vec![];
-            if !self.choice(Delim(Rc)) {
+            if !self.choice(Delim(Rparen)) {
                 loop {
                     /*
                     if let Some(Key(Int)) = self.take_type(){
@@ -55,30 +54,27 @@ impl<'a> Parser<'a> {
 
                     self.expect(Type(Int))?;
 
-                    let ty = VarAnnot {
-                        ty:Int,
-                        ptr:None,
-                    };
+                    let ty = VarAnnot { ty: Int, ptr: None };
 
                     let var = match self.take_id() {
                         Some(Id(name)) => name,
                         _ => panic!("unexpect!"),
                     };
 
-                    self.set_var(var,ty);
+                    self.set_var(var, ty);
                     args.push(NdLVar(self.offset));
                     if !self.choice(Delim(Comma)) {
-                        self.expect(Delim(Rc))?;
+                        self.expect(Delim(Rparen))?;
                         break;
                     }
                 }
             };
 
-            self.expect(Delim(LCurl))?;
+            self.expect(Delim(Lbrace))?;
 
             let mut nodes = Vec::new();
 
-            while !self.choice(Delim(RCurl)) {
+            while !self.choice(Delim(Rbrace)) {
                 nodes.push(self.stmt()?);
             }
 
@@ -94,23 +90,23 @@ impl<'a> Parser<'a> {
     /// | "if" "(" expr ")" stmt ("else" stmt)?
     /// | "while" "(" expr ")" stmt
     /// | "for" "(" expr? ";" expr? ";" expr? ")" stmt
-    pub(super) fn stmt(&mut self) -> Result<Node, ParseError> {
+    fn stmt(&mut self) -> Result<Node, ParseError> {
         /* choice expr or return */
 
         if self.choice(Key(Return)) {
             let node = NdReturn(Box::new(self.expr()?));
             self.expect(Delim(Semicolon))?;
             Ok(node)
-        } else if self.choice(Delim(LCurl)) {
+        } else if self.choice(Delim(Lbrace)) {
             let mut nodes = Vec::new();
-            while !self.choice(Delim(RCurl)){
+            while !self.choice(Delim(Rbrace)) {
                 nodes.push(self.stmt()?);
             }
             Ok(NdBlock(nodes))
         } else if self.choice(Key(If)) {
-            self.expect(Delim(Lc))?;
+            self.expect(Delim(Lparen))?;
             let first = self.expr()?;
-            self.expect(Delim(Rc))?;
+            self.expect(Delim(Rparen))?;
             let second = self.stmt()?;
 
             if self.choice(Key(Else)) {
@@ -120,19 +116,19 @@ impl<'a> Parser<'a> {
                 Ok(NdIf(Box::new(first), Box::new(second)))
             }
         } else if self.choice(Key(While)) {
-            self.expect(Delim(Lc))?;
+            self.expect(Delim(Lparen))?;
             let first = self.expr()?;
-            self.expect(Delim(Rc))?;
+            self.expect(Delim(Rparen))?;
             let second = self.stmt()?;
             Ok(NdWhile(Box::new(first), Box::new(second)))
         } else if self.choice(Key(For)) {
-            self.expect(Delim(Lc))?;
+            self.expect(Delim(Lparen))?;
             let first = self.expr()?;
             self.expect(Delim(Semicolon))?;
             let second = self.expr()?;
             self.expect(Delim(Semicolon))?;
             let third = self.expr()?;
-            self.expect(Delim(Rc))?;
+            self.expect(Delim(Rparen))?;
             let fourth = self.stmt()?;
             Ok(NdFor(
                 Box::new(first),
@@ -147,8 +143,6 @@ impl<'a> Parser<'a> {
         }
     }
 }
-
-
 
 impl<'a> Parser<'a> {
     //expr = assign | typeident ident
@@ -176,37 +170,32 @@ impl<'a> Parser<'a> {
     }
     */
 
-    pub(super) fn expr(&mut self) -> Result<Node, ParseError> {
-
+    fn expr(&mut self) -> Result<Node, ParseError> {
         if self.choice(Type(Int)) {
-            let token= self.take_token().ok_or(Eof(Default::default()))?;
+            let token = self.take_token().ok_or(Eof(Default::default()))?;
 
-            let mut ty = VarAnnot {
-                ty: Int,
-                ptr: None,
-            };
+            let mut ty = VarAnnot { ty: Int, ptr: None };
 
-            while self.choice(Opr(Star)){
+            while self.choice(Opr(Star)) {
                 ty = VarAnnot {
                     ty: Pointer,
-                    ptr:Some(Box::new(ty))
+                    ptr: Some(Box::new(ty)),
                 };
             }
 
-            if let (Id(name),_) = token {
-                self.set_var(name,ty);
+            if let (Id(name), _) = token {
+                self.set_var(name, ty);
                 Ok(NdVdecl(self.offset))
-            }else{
+            } else {
                 Err(UnexpectedToken(token.1))
             }
-
         } else {
             self.assign()
         }
     }
 
     //assign = equality ( "=" assign )?
-    pub(super) fn assign(&mut self) -> Result<Node, ParseError> {
+    fn assign(&mut self) -> Result<Node, ParseError> {
         let node = self.equality()?;
 
         if self.choice(Opr(Assign)) {
@@ -217,7 +206,7 @@ impl<'a> Parser<'a> {
     }
 
     // equality = relational ("==" relational | "!=" relational)*
-    pub(super) fn equality(&mut self) -> Result<Node, ParseError> {
+    fn equality(&mut self) -> Result<Node, ParseError> {
         let mut node = self.relational()?;
 
         loop {
@@ -232,7 +221,7 @@ impl<'a> Parser<'a> {
     }
 
     //relational = add ("<" add | "<=" add | ">" add| ">=" add) *
-    pub(super) fn relational(&mut self) -> Result<Node, ParseError> {
+    fn relational(&mut self) -> Result<Node, ParseError> {
         let mut node = self.add()?;
 
         loop {
@@ -251,7 +240,7 @@ impl<'a> Parser<'a> {
     }
 
     // add    = mul ("+" mul | "-" mul)*
-    pub(super) fn add(&mut self) -> Result<Node, ParseError> {
+    fn add(&mut self) -> Result<Node, ParseError> {
         let mut node = self.mul()?;
 
         loop {
@@ -266,7 +255,7 @@ impl<'a> Parser<'a> {
     }
 
     // mul     = unary ("*" unary | "/" unary)*
-    pub(super) fn mul(&mut self) -> Result<Node, ParseError> {
+    fn mul(&mut self) -> Result<Node, ParseError> {
         let mut node = self.unary()?;
 
         loop {
@@ -281,13 +270,13 @@ impl<'a> Parser<'a> {
     }
 
     /*
-    unary    = "+" primary 
+    unary    = "+" primary
             |  "-" primary
             |  "*" primary
             |  "&" primary
             |  primary
     */
-    pub(super) fn unary(&mut self) -> Result<Node, ParseError> {
+    fn unary(&mut self) -> Result<Node, ParseError> {
         if self.choice(Opr(Add)) {
             self.primary()
         } else if self.choice(Opr(Sub)) {
@@ -303,17 +292,15 @@ impl<'a> Parser<'a> {
 
     // primary = num | ident | "(" expr ")" | ident ( "(" argument ")" )?
     // argument = (expr ( "," expr )* ) ?
-    pub(super) fn primary(&mut self) -> Result<Node, ParseError> {
-        use crate::types::error::ParseError::*;
-
+    fn primary(&mut self) -> Result<Node, ParseError> {
         if let Some(Num(n)) = self.take_num() {
             Ok(NdNum(n))
         } else if let Some(Id(name)) = self.take_id() {
-            if self.choice(Delim(Lc)) {
+            if self.choice(Delim(Lparen)) {
                 let mut args = vec![];
 
                 /* exprにマッチすることを先読みできないので、")"がないかどうかを選択肢にしている。 */
-                if !self.choice(Delim(Rc)) {
+                if !self.choice(Delim(Rparen)) {
                     args.push(self.expr()?);
                     loop {
                         if self.choice(Delim(Comma)) {
@@ -322,7 +309,7 @@ impl<'a> Parser<'a> {
                             break;
                         };
                     }
-                    self.expect(Delim(Rc))?;
+                    self.expect(Delim(Rparen))?;
                 }
 
                 Ok(NdCall(name.to_string(), args))
@@ -335,9 +322,9 @@ impl<'a> Parser<'a> {
                     Err(UndefinedSymbol(self.lexer.next().unwrap().1))
                 }
             }
-        } else if self.choice(Delim(Lc)) {
+        } else if self.choice(Delim(Lparen)) {
             let node = self.expr()?;
-            self.expect(Delim(Rc))?;
+            self.expect(Delim(Rparen))?;
             Ok(node)
         } else {
             Err(UnexpectedToken(self.lexer.next().unwrap().1))

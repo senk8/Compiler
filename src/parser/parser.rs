@@ -3,16 +3,15 @@ use core::iter::Peekable;
 use std::collections::HashMap;
 
 use crate::types::node::Node;
-use crate::types::token::*;
 use crate::types::token::TokenKind::*;
 use crate::types::token::TypeKind::*;
+use crate::types::token::*;
 
 use crate::types::error::ParseError;
 use crate::types::error::ParseError::*;
 
 use crate::types::types::LVar;
 use crate::types::types::VarAnnot;
-
 
 pub struct Parser<'a> {
     /* mutable field for symbol table */
@@ -33,7 +32,7 @@ impl<'a> Parser<'a> {
             offset: 0,
         }
     }
-    pub fn set_var(&mut self, name: String,ty: VarAnnot) -> () {
+    pub fn set_var(&mut self, name: String, ty: VarAnnot) -> () {
         self.offset += 8;
         self.symbol_table
             .insert(name.clone(), LVar(self.offset, ty));
@@ -102,7 +101,6 @@ impl<'a> Parser<'a> {
         }
     }
 }
-
 
 mod tests {
     #[allow(unused_imports)]

@@ -1,5 +1,5 @@
-use std::fmt;
 use super::token::TypeKind;
+use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Hash, Default)]
 pub struct Pos(pub usize, pub usize);
@@ -21,7 +21,6 @@ pub struct LVar(pub usize, pub VarAnnot);
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct VarAnnot {
-    pub ty:TypeKind,
-    pub ptr:Option<Box<VarAnnot>>
+    pub ty: TypeKind,
+    pub ptr: Option<Box<VarAnnot>>,
 }
-

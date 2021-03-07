@@ -56,11 +56,11 @@ fn main() -> Result<(), ParseError> {
     let mut parser = Parser::new(lexer);
 
     match parser.parse() {
-        Ok(asts) =>{
+        Ok(asts) => {
             gen_inst_x86_64(asts, "out.s").unwrap();
             Ok(())
         }
-        Err(kind) =>{
+        Err(kind) => {
             show_message(&kind, input);
             Err(kind)
         }

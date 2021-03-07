@@ -35,12 +35,12 @@ pub enum OperatorKind {
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Hash)]
 pub enum DelimitorKind {
     /* delimitor */
-    Lc,
-    Rc,
+    Lparen,
+    Rparen,
+    Lbrace,
+    Rbrace,
     Comma,
     Semicolon,
-    LCurl,
-    RCurl,
 }
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Hash)]

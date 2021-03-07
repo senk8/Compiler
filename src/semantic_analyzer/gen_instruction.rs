@@ -58,9 +58,9 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> std::io::Res
         }
         NdDeref(operand) => {
             gen(stream, operand, n)?;
-            writeln!(stream,"  pop rax")?;
-            writeln!(stream,"  mov rax, [rax]")?;
-            writeln!(stream,"  push rax")?;
+            writeln!(stream, "  pop rax")?;
+            writeln!(stream, "  mov rax, [rax]")?;
+            writeln!(stream, "  push rax")?;
         }
         NdNeq(lhs, rhs) => {
             gen(stream, lhs, n)?;
