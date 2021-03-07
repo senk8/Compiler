@@ -10,8 +10,8 @@ use crate::types::token::*;
 use crate::types::error::ParseError;
 use crate::types::error::ParseError::*;
 
-use crate::types::types::LVar;
-use crate::types::types::VarAnnot;
+use crate::types::variable::LVar;
+use crate::types::variable::VarAnnot;
 
 pub struct Parser<'a> {
     /* mutable field for symbol table */
@@ -49,15 +49,15 @@ impl<'a> Parser<'a> {
 
     pub(super) fn expect(&mut self, kind: TokenKind) -> Result<(), ParseError> {
         self.look_ahead()
-            .ok_or(Eof(Default::default()))
+            .ok_or(Eof)
             .and_then(|tk| {
                 if tk.0 == kind {
                     self.lexer.next();
                     Ok(())
                 } else {
                     match tk.0 {
-                        Type(Int) => Err(UnexpectedToken(tk.1)),
-                        _ => Err(UnexpectedDelimitor(tk.1)),
+                        Type(Int) => Err(UnexpectedToken(tk)),
+                        _ => Err(UnexpectedDelimitor(tk)),
                     }
                 }
             })

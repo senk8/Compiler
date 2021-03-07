@@ -1,4 +1,6 @@
-use super::types::*;
+use super::variable::*;
+use std::fmt;
+
 pub type Token = (TokenKind, Pos);
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Hash)]
@@ -57,4 +59,13 @@ pub enum KeywordKind {
 pub enum TypeKind {
     Int,
     Pointer,
+}
+
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Hash, Default)]
+pub struct Pos(pub usize, pub usize);
+
+impl fmt::Display for Pos {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "line:{} Column:{}", self.0 + 1, self.1 + 1)
+    }
 }

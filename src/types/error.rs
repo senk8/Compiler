@@ -1,18 +1,18 @@
-use super::types::Pos;
+use super::token::Token;
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Hash)]
 pub enum ParseError {
-    UnexpectedToken(Pos),
-    UnexpectedKeyword(Pos),
-    UnexpectedDelimitor(Pos),
-    UnclosedDelimitor(Pos),
-    ExpectedNumeric(Pos),
-    MissingExpression(Pos),
-    MissingSemicolon(Pos),
-    MissingDelimitor(Pos),
-    UndefinedSymbol(Pos),
-    SegmentationFault(Pos),
-    Eof(Pos),
+    UnexpectedToken(Token),
+    UnexpectedKeyword(Token),
+    UnexpectedDelimitor(Token),
+    UnclosedDelimitor(Token),
+    ExpectedNumeric(Token),
+    MissingExpression(Token),
+    MissingSemicolon(Token),
+    MissingDelimitor(Token),
+    UndefinedSymbol(Token),
+    SegmentationFault(Token),
+    Eof,
 }
 
 /*

@@ -8,7 +8,7 @@ use crate::types::token::KeywordKind::*;
 use crate::types::token::OperatorKind::*;
 use crate::types::token::TokenKind::*;
 use crate::types::token::TypeKind::*;
-use crate::types::types::VarAnnot;
+use crate::types::variable::VarAnnot;
 
 impl<'a> Parser<'a> {
     // program = decl *
@@ -80,7 +80,7 @@ impl<'a> Parser<'a> {
 
             Ok(NdDecl(name, args, Box::new(NdBlock(nodes))))
         } else {
-            Err(UnexpectedToken(self.look_ahead().unwrap().1))
+            Err(UnexpectedToken(self.look_ahead().unwrap()))
         }
     }
 
@@ -172,7 +172,7 @@ impl<'a> Parser<'a> {
 
     fn expr(&mut self) -> Result<Node, ParseError> {
         if self.choice(Type(Int)) {
-            let token = self.take_token().ok_or(Eof(Default::default()))?;
+            let token = self.take_token().ok_or(Eof)?;
 
             let mut ty = VarAnnot { ty: Int, ptr: None };
 
@@ -187,7 +187,7 @@ impl<'a> Parser<'a> {
                 self.set_var(name, ty);
                 Ok(NdVdecl(self.offset))
             } else {
-                Err(UnexpectedToken(token.1))
+                Err(UnexpectedToken(token))
             }
         } else {
             self.assign()
@@ -319,7 +319,7 @@ impl<'a> Parser<'a> {
                 if let Some(lvar) = result {
                     Ok(NdLVar(lvar.0))
                 } else {
-                    Err(UndefinedSymbol(self.lexer.next().unwrap().1))
+                    Err(UndefinedSymbol(self.lexer.next().unwrap()))
                 }
             }
         } else if self.choice(Delim(Lparen)) {
@@ -327,7 +327,7 @@ impl<'a> Parser<'a> {
             self.expect(Delim(Rparen))?;
             Ok(node)
         } else {
-            Err(UnexpectedToken(self.lexer.next().unwrap().1))
+            Err(UnexpectedToken(self.lexer.next().unwrap()))
         }
     }
 }
