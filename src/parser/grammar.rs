@@ -1,4 +1,5 @@
-use super::parser::Parser;
+use super::Parser;
+
 use crate::types::error::ParseError;
 use crate::types::error::ParseError::*;
 use crate::types::node::Node;

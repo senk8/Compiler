@@ -1,7 +1,9 @@
-use crate::lexer::*;
+use super::Parser;
+
 use core::iter::Peekable;
 use std::collections::HashMap;
 
+use crate::lexer::Lexer;
 use crate::types::node::Node;
 use crate::types::token::TokenKind::*;
 use crate::types::token::TypeKind::*;
@@ -13,14 +15,7 @@ use crate::types::error::ParseError::*;
 use crate::types::variable::LVar;
 use crate::types::variable::VarAnnot;
 
-pub struct Parser<'a> {
-    /* mutable field for symbol table */
-    pub(super) symbol_table: HashMap<String, LVar>,
-    pub(super) offset: usize,
 
-    /* mutable field for tokenizer */
-    pub(super) lexer: Peekable<Lexer<'a>>,
-}
 
 impl<'a> Parser<'a> {
     pub fn new(lexer: Lexer<'a>) -> Parser<'a> {

@@ -1,6 +1,8 @@
 use super::token::Token;
+use std::fmt;
+use std::error::Error;
 
-#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Hash)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Hash )]
 pub enum ParseError {
     UnexpectedToken(Token),
     UnexpectedKeyword(Token),
@@ -14,6 +16,14 @@ pub enum ParseError {
     SegmentationFault(Token),
     Eof,
 }
+
+impl fmt::Display for ParseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Error!{:?}", self)
+    }
+}
+
+impl Error for ParseError{}
 
 /*
 use thiserror::Error;

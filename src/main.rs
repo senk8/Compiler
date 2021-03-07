@@ -3,18 +3,19 @@ pub mod parser;
 pub mod interpreter;
 pub mod types;
 
-use lexer::*;
-use parser::parser::Parser;
-use interpreter::gen_instruction::gen_inst_x86_64;
-use types::error::ParseError;
-use types::error::ParseError::*;
 
 use std::fs::File;
 use std::io::prelude::*;
 
 use clap::{App, Arg, ArgGroup};
 
-//use anyhow::{bail, ensure, Context, Result};
+use lexer::Lexer;
+use parser::Parser;
+use interpreter::gen_instruction::gen_inst_x86_64;
+
+use types::error::ParseError;
+use types::error::ParseError::*;
+
 
 /* 懸念点
 
