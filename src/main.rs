@@ -16,6 +16,7 @@ use interpreter::gen_instruction::gen_inst_x86_64;
 use types::error::ParseError;
 use types::error::ParseError::*;
 
+use anyhow::Result;
 
 /* 懸念点
 
@@ -24,7 +25,7 @@ use types::error::ParseError::*;
 
 */
 
-fn main() -> Result<(), ParseError> {
+fn main() -> Result<()> {
     let app = App::new("Compiler")
         .version("1.0,0")
         .author("SenK")
@@ -57,12 +58,12 @@ fn main() -> Result<(), ParseError> {
 
     match parser.parse() {
         Ok(asts) => {
-            gen_inst_x86_64(asts, "out.s").unwrap();
+            gen_inst_x86_64(asts, "out.s")?;
             Ok(())
         }
         Err(kind) => {
             print_error(&kind, input);
-            Err(kind)
+            Err(kind)?
         }
     }
 }

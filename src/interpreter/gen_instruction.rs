@@ -5,12 +5,14 @@ use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::Path;
 
+use anyhow::Result;
+
 const ARG_REGS: [&str; 6] = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"];
 
-pub fn gen_inst_x86_64(asts: Vec<Node>, path_name: &str) -> std::io::Result<()> {
+pub fn gen_inst_x86_64(asts: Vec<Node>, path_name: &str) -> Result<()> {
     let path = Path::new(path_name);
 
-    let file = File::create(path).unwrap();
+    let file = File::create(path)?;
     let mut stream = BufWriter::new(file);
 
     /* start assemble prologue*/
@@ -28,7 +30,7 @@ pub fn gen_inst_x86_64(asts: Vec<Node>, path_name: &str) -> std::io::Result<()> 
     Ok(())
 }
 
-fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> std::io::Result<()> {
+fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
     match node {
         NdNum(n) => {
             writeln!(stream, "  push {}", n)?;
@@ -215,7 +217,7 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> std::io::Res
     return Ok(());
 }
 
-fn get_addr_lval(stream: &mut BufWriter<File>, node: &Node) -> std::io::Result<()> {
+fn get_addr_lval(stream: &mut BufWriter<File>, node: &Node) -> Result<()> {
     if let NdLVar(offset) = *node {
         writeln!(stream, "  mov rax, rbp")?;
         writeln!(stream, "  sub rax, {}", offset)?;
@@ -226,7 +228,7 @@ fn get_addr_lval(stream: &mut BufWriter<File>, node: &Node) -> std::io::Result<(
     Ok(())
 }
 
-fn print_opration_epilogue(stream: &mut BufWriter<File>, message: &str) -> std::io::Result<()> {
+fn print_opration_epilogue(stream: &mut BufWriter<File>, message: &str) -> Result<()> {
     writeln!(stream, "  pop rdi")?;
     writeln!(stream, "  pop rax")?;
     writeln!(stream, "{}", message)?;
