@@ -7,7 +7,7 @@ C Compiler implemantation by Rust .
 - This is compiler which contains Rust.
 - The input format is as a file or as a row program text.
 
-# Structure
+# Design
 
 ![parser_struct](https://user-images.githubusercontent.com/44151180/110480341-ba0d2d00-8129-11eb-9551-0a033cdd84b8.png)
 
