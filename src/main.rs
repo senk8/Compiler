@@ -17,6 +17,7 @@ use types::error::ParseError;
 use types::error::ParseError::*;
 
 use anyhow::Result;
+use anyhow::Context;
 
 /* 懸念点
 
@@ -52,6 +53,8 @@ fn main() -> Result<()> {
     };
 
     /* tokenize and parse */
+
+    /*TODO ParseErrorをひとつにするかどうか */
 
     let mut lexer = Lexer::new(input);
     let mut parser = Parser::new(lexer);
@@ -149,6 +152,10 @@ fn print_error(error: &ParseError, input: &[u8]) -> () {
     }
 }
 
+fn type_of<T>(_: T) -> String {
+    let a = std::any::type_name::<T>();
+    return a.to_string();
+}
 
 
 mod tests {
