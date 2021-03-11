@@ -81,6 +81,7 @@ impl<'a> Parser<'a> {
 
             Ok(NdDecl(name, args, Box::new(NdBlock(nodes))))
         } else {
+            /* TODO: it will be unused look_ahead.unwrap() */ 
             Err(UnexpectedToken(self.look_ahead().unwrap()))
         }
     }

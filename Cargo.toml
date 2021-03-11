@@ -11,7 +11,7 @@ edition = "2018"
 
 [dependencies]
 once_cell = "1.5.2"
-anyhow = "1.0.34"
+anyhow = "1.0.38"
 clap = "2.33.3"
 
 # below crates are required at wasm.
