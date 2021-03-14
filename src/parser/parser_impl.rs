@@ -1,6 +1,5 @@
 use super::Parser;
 
-use core::iter::Peekable;
 use std::collections::HashMap;
 
 use crate::lexer::Lexer;
@@ -65,10 +64,29 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub(super) fn take_type(&mut self) -> Option<TokenKind> {
+    fn take_type_helper(&mut self) -> Option<TokenKind> {
         match self.look_ahead().map(|tk| tk.0) {
-            Some(Key(_)) => self.lexer.next().map(|tk| tk.0),
+            Some(Type(_)) => self.lexer.next().map(|tk| tk.0),
             _ => None,
+        }
+    }
+
+    //typeident = type '*' *
+    pub(super) fn take_type(&mut self)->Option<VarAnnot> {
+        if let Some(Type(t)) = self.take_type_helper(){
+
+            let mut ty = VarAnnot { ty: t, ptr: None };
+
+            while self.choice(Opr(OperatorKind::Star)) {
+                ty = VarAnnot {
+                    ty: Pointer,
+                    ptr: Some(Box::new(ty)),
+                };
+            }
+
+            Some(ty)
+        }else{
+            None
         }
     }
 
@@ -95,6 +113,7 @@ impl<'a> Parser<'a> {
             _ => false,
         }
     }
+
 }
 
 mod tests {

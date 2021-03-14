@@ -147,43 +147,10 @@ impl<'a> Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    //expr = assign | typeident ident
-    //typeident = type '*' *
-
-    /*
-    pub(super) fn typeident(&mut self) -> Result<Node,ParseError>{
-        if let self.take_type(){
-
-        }
-
-        let mut ty = Type {
-            ty: TypeKind::Int,
-            ptr: None,
-        };
-
-        while self.choice(Opr(Star)){
-            ty = Type {
-                ty: TypeKind::Pointer,
-                ptr:Some(Box::new(ty))
-            };
-        }
-
-        ty
-    }
-    */
-
+    //expr = assign | type ident
     fn expr(&mut self) -> Result<Node, ParseError> {
-        if self.choice(Type(Int)) {
+        if let Some(ty) = self.take_type(){
             let token = self.take_token().ok_or(Eof)?;
-
-            let mut ty = VarAnnot { ty: Int, ptr: None };
-
-            while self.choice(Opr(Star)) {
-                ty = VarAnnot {
-                    ty: Pointer,
-                    ptr: Some(Box::new(ty)),
-                };
-            }
 
             if let (Id(name), _) = token {
                 self.set_var(name, ty);
@@ -195,6 +162,23 @@ impl<'a> Parser<'a> {
             self.assign()
         }
     }
+
+/*
+        if self.choice(Type(Int)) {
+
+            let ty = self.type_helper();
+
+            dbg!("{:?}",&ty);
+
+            let token = self.take_token().ok_or(Eof)?;
+
+            if let (Id(name), _) = token {
+                self.set_var(name, ty);
+                Ok(NdVdecl(self.offset))
+            } else {
+                Err(UnexpectedToken(token))
+            }
+ */
 
     //assign = equality ( "=" assign )?
     fn assign(&mut self) -> Result<Node, ParseError> {
