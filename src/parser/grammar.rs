@@ -28,7 +28,11 @@ impl<'a> Parser<'a> {
     fn decl(&mut self) -> Result<Node, ParseError> {
         /* 引数コンパイルしたら同時にローカル変数の定義を行う。*/
 
-        self.expect(Type(Int))?;
+        if let Some(_) = self.take_type(){
+            ()
+        }else{
+            return Err(UnexpectedToken(self.lexer.next().unwrap()));
+        };
 
         if let Some(Id(name)) = self.take_id() {
             self.expect(Delim(Lparen))?;
@@ -36,22 +40,27 @@ impl<'a> Parser<'a> {
             let mut args = vec![];
             if !self.choice(Delim(Rparen)) {
                 loop {
-                    /*
-                    if let Some(Key(Int)) = self.take_type(){
 
-                        let var = match self.take_id() {
-                            Some(Id(name)) => name,
-                            _ => panic!("unexpect!"),
-                        };
+                    if let Some(ty) = self.take_type(){
 
-                        self.set_var(var,);
-                        args.push(NdLVar(self.offset));
-                        if !self.choice(Delim(Comma)) {
-                            self.expect(Delim(Rc))?;
-                            break;
+                        let token = self.take_token().ok_or(Eof)?;
+
+                        if let (Id(name), _) = token {
+                            self.set_var(name, ty);
+                            args.push(NdLVar(self.offset));
+
+                            if !self.choice(Delim(Comma)) {
+                                self.expect(Delim(Rparen))?;
+                                break;
+                            }
+
+                        } else {
+                            return Err(UnexpectedToken(token));
                         }
+                    }else{
+                        panic!("Expect Type fonund");
                     }
-                    */
+                    /*
 
                     self.expect(Type(Int))?;
 
@@ -68,6 +77,7 @@ impl<'a> Parser<'a> {
                         self.expect(Delim(Rparen))?;
                         break;
                     }
+                   */
                 }
             };
 
