@@ -28,11 +28,9 @@ impl<'a> Parser<'a> {
     fn decl(&mut self) -> Result<Node, ParseError> {
         /* 引数コンパイルしたら同時にローカル変数の定義を行う。*/
 
-        if let Some(_) = self.take_type(){
-            ()
-        }else{
-            return Err(UnexpectedToken(self.lexer.next().unwrap()));
-        };
+        let _ = self.take_type().ok_or_else(||
+            UnexpectedToken(self.lexer.next().unwrap())
+        )?;
 
         if let Some(Id(name)) = self.take_id() {
             self.expect(Delim(Lparen))?;
@@ -60,24 +58,6 @@ impl<'a> Parser<'a> {
                     }else{
                         panic!("Expect Type fonund");
                     }
-                    /*
-
-                    self.expect(Type(Int))?;
-
-                    let ty = VarAnnot { ty: Int, ptr: None };
-
-                    let var = match self.take_id() {
-                        Some(Id(name)) => name,
-                        _ => panic!("unexpect!"),
-                    };
-
-                    self.set_var(var, ty);
-                    args.push(NdLVar(self.offset));
-                    if !self.choice(Delim(Comma)) {
-                        self.expect(Delim(Rparen))?;
-                        break;
-                    }
-                   */
                 }
             };
 

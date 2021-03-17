@@ -1,5 +1,5 @@
 #!/bin/bash
-cargo run -- hoge.c
+cargo run -- foo.c
 cc out.s  -o main
 ./main
 echo $?

@@ -134,10 +134,8 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
         }
         NdAssign(lhs, rhs) => {
 
-            /* TODO アドレスをスタックに残す必要があるが、アドレスの指している値が残ってしまうため、セグフォする。 */
-            if let NdDeref(_)= *lhs.clone() {
-                dbg!(&lhs);
-                gen(stream, lhs, n)?;
+            if let NdDeref(ref node)= **lhs {
+                gen(stream, &node, n)?;
             }else{
                 get_addr_lval(stream, lhs)?;
             }
