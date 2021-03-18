@@ -250,6 +250,7 @@ impl<'a> Parser<'a> {
             |  "-" primary
             |  "*" primary
             |  "&" primary
+            |  "sizeof" primary
             |  primary
     */
     fn unary(&mut self) -> Result<Node, ParseError> {
@@ -261,6 +262,17 @@ impl<'a> Parser<'a> {
             Ok(NdDeref(Box::new(self.primary()?)))
         } else if self.choice(Opr(Amp)) {
             Ok(NdRef(Box::new(self.primary()?)))
+        /*
+        } else if self.choice(Opr(Sizeof)) {
+            let node = self.primary()?;
+
+            match node {
+                NdNum(_) => NdNum(4),
+                Nd(_) => NdNum(4),
+            }
+
+            Ok(NdSizeof())
+        */
         } else {
             self.primary()
         }

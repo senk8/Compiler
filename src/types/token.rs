@@ -32,6 +32,8 @@ pub enum OperatorKind {
     /* others */
     Amp,
     Assign,
+
+    Sizeof,
 }
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Hash)]
