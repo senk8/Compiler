@@ -1,4 +1,7 @@
+use std::iter::Peekable;
+
 use super::Parser;
+use super::Lexer;
 
 use crate::types::error::ParseError;
 use crate::types::error::ParseError::*;
@@ -11,13 +14,14 @@ use crate::types::token::TokenKind::*;
 use crate::types::token::TypeKind::*;
 use crate::types::variable::VarAnnot;
 
-impl<'a> Parser<'a> {
+
+impl Parser {
     // program = decl *
-    pub(super) fn program(&mut self) -> Result<Vec<Node>, ParseError> {
+    pub(super) fn program(&mut self,lexer:&mut Peekable<Lexer>) -> Result<Vec<Node>, ParseError> {
         let mut trees = vec![];
 
-        while let Some(_) = self.look_ahead() {
-            trees.push(self.decl()?);
+        while let Some(_) = self.look_ahead(lexer) {
+            trees.push(self.decl(lexer)?);
             self.symbol_table.clear();
         }
 
@@ -25,30 +29,30 @@ impl<'a> Parser<'a> {
     }
 
     // decl = type ident ( ( type ident "," )* ) "{" stmt * "}"
-    fn decl(&mut self) -> Result<Node, ParseError> {
+    fn decl(&mut self,lexer:&mut Peekable<Lexer>) -> Result<Node, ParseError> {
         /* 引数コンパイルしたら同時にローカル変数の定義を行う。*/
 
-        let _ = self.take_type().ok_or_else(||
-            UnexpectedToken(self.lexer.next().unwrap())
+        let _ = self.take_type(lexer).ok_or_else(||
+            UnexpectedToken(lexer.next().unwrap())
         )?;
 
-        if let Some(Id(name)) = self.take_id() {
-            self.expect(Delim(Lparen))?;
+        if let Some(Id(name)) = self.take_id(lexer) {
+            self.expect(lexer,Delim(Lparen))?;
 
             let mut args = vec![];
-            if !self.choice(Delim(Rparen)) {
+            if !self.choice(lexer,Delim(Rparen)) {
                 loop {
 
-                    if let Some(ty) = self.take_type(){
+                    if let Some(ty) = self.take_type(lexer){
 
-                        let token = self.take_token().ok_or(Eof)?;
+                        let token = self.take_token(lexer).ok_or(Eof)?;
 
                         if let (Id(name), _) = token {
                             self.set_var(name, ty);
                             args.push(NdLVar(self.offset));
 
-                            if !self.choice(Delim(Comma)) {
-                                self.expect(Delim(Rparen))?;
+                            if !self.choice(lexer,Delim(Comma)) {
+                                self.expect(lexer,Delim(Rparen))?;
                                 break;
                             }
 
@@ -61,18 +65,18 @@ impl<'a> Parser<'a> {
                 }
             };
 
-            self.expect(Delim(Lbrace))?;
+            self.expect(lexer,Delim(Lbrace))?;
 
             let mut nodes = Vec::new();
 
-            while !self.choice(Delim(Rbrace)) {
-                nodes.push(self.stmt()?);
+            while !self.choice(lexer,Delim(Rbrace)) {
+                nodes.push(self.stmt(lexer)?);
             }
 
             Ok(NdDecl(name, args, Box::new(NdBlock(nodes))))
         } else {
             /* TODO: it will be unused look_ahead.unwrap() */ 
-            Err(UnexpectedToken(self.look_ahead().unwrap()))
+            Err(UnexpectedToken(self.look_ahead(lexer).unwrap()))
         }
     }
 
@@ -82,46 +86,46 @@ impl<'a> Parser<'a> {
     /// | "if" "(" expr ")" stmt ("else" stmt)?
     /// | "while" "(" expr ")" stmt
     /// | "for" "(" expr? ";" expr? ";" expr? ")" stmt
-    fn stmt(&mut self) -> Result<Node, ParseError> {
+    fn stmt(&mut self,lexer:&mut Peekable<Lexer>) -> Result<Node, ParseError> {
         /* choice expr or return */
 
-        if self.choice(Key(Return)) {
-            let node = NdReturn(Box::new(self.expr()?));
-            self.expect(Delim(Semicolon))?;
+        if self.choice(lexer,Key(Return)) {
+            let node = NdReturn(Box::new(self.expr(lexer)?));
+            self.expect(lexer,Delim(Semicolon))?;
             Ok(node)
-        } else if self.choice(Delim(Lbrace)) {
+        } else if self.choice(lexer,Delim(Lbrace)) {
             let mut nodes = Vec::new();
-            while !self.choice(Delim(Rbrace)) {
-                nodes.push(self.stmt()?);
+            while !self.choice(lexer,Delim(Rbrace)) {
+                nodes.push(self.stmt(lexer)?);
             }
             Ok(NdBlock(nodes))
-        } else if self.choice(Key(If)) {
-            self.expect(Delim(Lparen))?;
-            let first = self.expr()?;
-            self.expect(Delim(Rparen))?;
-            let second = self.stmt()?;
+        } else if self.choice(lexer,Key(If)) {
+            self.expect(lexer,Delim(Lparen))?;
+            let first = self.expr(lexer)?;
+            self.expect(lexer,Delim(Rparen))?;
+            let second = self.stmt(lexer)?;
 
-            if self.choice(Key(Else)) {
-                let third = self.stmt()?;
+            if self.choice(lexer,Key(Else)) {
+                let third = self.stmt(lexer)?;
                 Ok(NdIfElse(Box::new(first), Box::new(second), Box::new(third)))
             } else {
                 Ok(NdIf(Box::new(first), Box::new(second)))
             }
-        } else if self.choice(Key(While)) {
-            self.expect(Delim(Lparen))?;
-            let first = self.expr()?;
-            self.expect(Delim(Rparen))?;
-            let second = self.stmt()?;
+        } else if self.choice(lexer,Key(While)) {
+            self.expect(lexer,Delim(Lparen))?;
+            let first = self.expr(lexer)?;
+            self.expect(lexer,Delim(Rparen))?;
+            let second = self.stmt(lexer)?;
             Ok(NdWhile(Box::new(first), Box::new(second)))
-        } else if self.choice(Key(For)) {
-            self.expect(Delim(Lparen))?;
-            let first = self.expr()?;
-            self.expect(Delim(Semicolon))?;
-            let second = self.expr()?;
-            self.expect(Delim(Semicolon))?;
-            let third = self.expr()?;
-            self.expect(Delim(Rparen))?;
-            let fourth = self.stmt()?;
+        } else if self.choice(lexer,Key(For)) {
+            self.expect(lexer,Delim(Lparen))?;
+            let first = self.expr(lexer)?;
+            self.expect(lexer,Delim(Semicolon))?;
+            let second = self.expr(lexer)?;
+            self.expect(lexer,Delim(Semicolon))?;
+            let third = self.expr(lexer)?;
+            self.expect(lexer,Delim(Rparen))?;
+            let fourth = self.stmt(lexer)?;
             Ok(NdFor(
                 Box::new(first),
                 Box::new(second),
@@ -129,18 +133,18 @@ impl<'a> Parser<'a> {
                 Box::new(fourth),
             ))
         } else {
-            let node = self.expr()?;
-            self.expect(Delim(Semicolon))?;
+            let node = self.expr(lexer)?;
+            self.expect(lexer,Delim(Semicolon))?;
             Ok(node)
         }
     }
 }
 
-impl<'a> Parser<'a> {
+impl Parser {
     //expr = assign | type ident
-    fn expr(&mut self) -> Result<Node, ParseError> {
-        if let Some(ty) = self.take_type(){
-            let token = self.take_token().ok_or(Eof)?;
+    fn expr(&mut self,lexer:&mut Peekable<Lexer>) -> Result<Node, ParseError> {
+        if let Some(ty) = self.take_type(lexer){
+            let token = self.take_token(lexer).ok_or(Eof)?;
 
             if let (Id(name), _) = token {
                 self.set_var(name, ty);
@@ -149,7 +153,7 @@ impl<'a> Parser<'a> {
                 Err(UnexpectedToken(token))
             }
         } else {
-            self.assign()
+            self.assign(lexer)
         }
     }
 
@@ -171,25 +175,25 @@ impl<'a> Parser<'a> {
  */
 
     //assign = equality ( "=" assign )?
-    fn assign(&mut self) -> Result<Node, ParseError> {
-        let node = self.equality()?;
+    fn assign(&mut self,lexer:&mut Peekable<Lexer>) -> Result<Node, ParseError> {
+        let node = self.equality(lexer)?;
 
-        if self.choice(Opr(Assign)) {
-            Ok(NdAssign(Box::new(node), Box::new(self.assign()?)))
+        if self.choice(lexer,Opr(Assign)) {
+            Ok(NdAssign(Box::new(node), Box::new(self.assign(lexer)?)))
         } else {
             Ok(node)
         }
     }
 
     // equality = relational ("==" relational | "!=" relational)*
-    fn equality(&mut self) -> Result<Node, ParseError> {
-        let mut node = self.relational()?;
+    fn equality(&mut self,lexer:&mut Peekable<Lexer>) -> Result<Node, ParseError> {
+        let mut node = self.relational(lexer)?;
 
         loop {
-            if self.choice(Opr(Eq)) {
-                node = NdEq(Box::new(node), Box::new(self.relational()?));
-            } else if self.choice(Opr(Neq)) {
-                node = NdNeq(Box::new(node), Box::new(self.relational()?));
+            if self.choice(lexer,Opr(Eq)) {
+                node = NdEq(Box::new(node), Box::new(self.relational(lexer)?));
+            } else if self.choice(lexer,Opr(Neq)) {
+                node = NdNeq(Box::new(node), Box::new(self.relational(lexer)?));
             } else {
                 break Ok(node);
             }
@@ -197,18 +201,18 @@ impl<'a> Parser<'a> {
     }
 
     //relational = add ("<" add | "<=" add | ">" add| ">=" add) *
-    fn relational(&mut self) -> Result<Node, ParseError> {
-        let mut node = self.add()?;
+    fn relational(&mut self,lexer:&mut Peekable<Lexer>) -> Result<Node, ParseError> {
+        let mut node = self.add(lexer)?;
 
         loop {
-            if self.choice(Opr(Lt)) {
-                node = NdLt(Box::new(node), Box::new(self.add()?));
-            } else if self.choice(Opr(Leq)) {
-                node = NdLeq(Box::new(node), Box::new(self.add()?));
-            } else if self.choice(Opr(Gt)) {
-                node = NdLt(Box::new(self.add()?), Box::new(node));
-            } else if self.choice(Opr(Geq)) {
-                node = NdLeq(Box::new(self.add()?), Box::new(node));
+            if self.choice(lexer,Opr(Lt)) {
+                node = NdLt(Box::new(node), Box::new(self.add(lexer)?));
+            } else if self.choice(lexer,Opr(Leq)) {
+                node = NdLeq(Box::new(node), Box::new(self.add(lexer)?));
+            } else if self.choice(lexer,Opr(Gt)) {
+                node = NdLt(Box::new(self.add(lexer)?), Box::new(node));
+            } else if self.choice(lexer,Opr(Geq)) {
+                node = NdLeq(Box::new(self.add(lexer)?), Box::new(node));
             } else {
                 break Ok(node);
             }
@@ -216,14 +220,14 @@ impl<'a> Parser<'a> {
     }
 
     // add    = mul ("+" mul | "-" mul)*
-    fn add(&mut self) -> Result<Node, ParseError> {
-        let mut node = self.mul()?;
+    fn add(&mut self,lexer:&mut Peekable<Lexer>) -> Result<Node, ParseError> {
+        let mut node = self.mul(lexer)?;
 
         loop {
-            if self.choice(Opr(Add)) {
-                node = NdAdd(Box::new(node), Box::new(self.mul()?));
-            } else if self.choice(Opr(Sub)) {
-                node = NdSub(Box::new(node), Box::new(self.mul()?));
+            if self.choice(lexer,Opr(Add)) {
+                node = NdAdd(Box::new(node), Box::new(self.mul(lexer)?));
+            } else if self.choice(lexer,Opr(Sub)) {
+                node = NdSub(Box::new(node), Box::new(self.mul(lexer)?));
             } else {
                 break Ok(node);
             }
@@ -231,14 +235,14 @@ impl<'a> Parser<'a> {
     }
 
     // mul     = unary ("*" unary | "/" unary)*
-    fn mul(&mut self) -> Result<Node, ParseError> {
-        let mut node = self.unary()?;
+    fn mul(&mut self,lexer:&mut Peekable<Lexer>) -> Result<Node, ParseError> {
+        let mut node = self.unary(lexer)?;
 
         loop {
-            if self.choice(Opr(Star)) {
-                node = NdMul(Box::new(node), Box::new(self.unary()?));
-            } else if self.choice(Opr(Div)) {
-                node = NdDiv(Box::new(node), Box::new(self.unary()?));
+            if self.choice(lexer,Opr(Star)) {
+                node = NdMul(Box::new(node), Box::new(self.unary(lexer)?));
+            } else if self.choice(lexer,Opr(Div)) {
+                node = NdDiv(Box::new(node), Box::new(self.unary(lexer)?));
             } else {
                 break Ok(node);
             }
@@ -253,15 +257,15 @@ impl<'a> Parser<'a> {
             |  "sizeof" primary
             |  primary
     */
-    fn unary(&mut self) -> Result<Node, ParseError> {
-        if self.choice(Opr(Add)) {
-            self.primary()
-        } else if self.choice(Opr(Sub)) {
-            Ok(NdSub(Box::new(NdNum(0)), Box::new(self.primary()?)))
-        } else if self.choice(Opr(Star)) {
-            Ok(NdDeref(Box::new(self.primary()?)))
-        } else if self.choice(Opr(Amp)) {
-            Ok(NdRef(Box::new(self.primary()?)))
+    fn unary(&mut self,lexer:&mut Peekable<Lexer>) -> Result<Node, ParseError> {
+        if self.choice(lexer,Opr(Add)) {
+            self.primary(lexer)
+        } else if self.choice(lexer,Opr(Sub)) {
+            Ok(NdSub(Box::new(NdNum(0)), Box::new(self.primary(lexer)?)))
+        } else if self.choice(lexer,Opr(Star)) {
+            Ok(NdDeref(Box::new(self.primary(lexer)?)))
+        } else if self.choice(lexer,Opr(Amp)) {
+            Ok(NdRef(Box::new(self.primary(lexer)?)))
         /*
         } else if self.choice(Opr(Sizeof)) {
             let node = self.primary()?;
@@ -274,30 +278,30 @@ impl<'a> Parser<'a> {
             Ok(NdSizeof())
         */
         } else {
-            self.primary()
+            self.primary(lexer)
         }
     }
 
     // primary = num | ident | "(" expr ")" | ident ( "(" argument ")" )?
     // argument = (expr ( "," expr )* ) ?
-    fn primary(&mut self) -> Result<Node, ParseError> {
-        if let Some(Num(n)) = self.take_num() {
+    fn primary(&mut self,lexer:&mut Peekable<Lexer>) -> Result<Node, ParseError> {
+        if let Some(Num(n)) = self.take_num(lexer) {
             Ok(NdNum(n))
-        } else if let Some(Id(name)) = self.take_id() {
-            if self.choice(Delim(Lparen)) {
+        } else if let Some(Id(name)) = self.take_id(lexer) {
+            if self.choice(lexer,Delim(Lparen)) {
                 let mut args = vec![];
 
                 /* exprにマッチすることを先読みできないので、")"がないかどうかを選択肢にしている。 */
-                if !self.choice(Delim(Rparen)) {
-                    args.push(self.expr()?);
+                if !self.choice(lexer,Delim(Rparen)) {
+                    args.push(self.expr(lexer)?);
                     loop {
-                        if self.choice(Delim(Comma)) {
-                            args.push(self.expr()?);
+                        if self.choice(lexer,Delim(Comma)) {
+                            args.push(self.expr(lexer)?);
                         } else {
                             break;
                         };
                     }
-                    self.expect(Delim(Rparen))?;
+                    self.expect(lexer,Delim(Rparen))?;
                 }
 
                 Ok(NdCall(name.to_string(), args))
@@ -307,15 +311,15 @@ impl<'a> Parser<'a> {
                 if let Some(lvar) = result {
                     Ok(NdLVar(lvar.0))
                 } else {
-                    Err(UndefinedSymbol(self.lexer.next().unwrap()))
+                    Err(UndefinedSymbol(lexer.next().unwrap()))
                 }
             }
-        } else if self.choice(Delim(Lparen)) {
-            let node = self.expr()?;
-            self.expect(Delim(Rparen))?;
+        } else if self.choice(lexer,Delim(Lparen)) {
+            let node = self.expr(lexer)?;
+            self.expect(lexer,Delim(Rparen))?;
             Ok(node)
         } else {
-            Err(UnexpectedToken(self.lexer.next().unwrap()))
+            Err(UnexpectedToken(lexer.next().unwrap()))
         }
     }
 }

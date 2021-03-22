@@ -3,7 +3,6 @@ pub mod parser;
 pub mod interpreter;
 pub mod types;
 
-
 use std::fs::File;
 use std::io::prelude::*;
 
@@ -27,6 +26,11 @@ use anyhow::Context;
 */
 
 fn main() -> Result<()> {
+    std::env::set_var("RUST_LOG", "trace");
+    env_logger::init();
+
+    log::trace!("start");
+
     let app = App::new("Compiler")
         .version("1.0,0")
         .author("SenK")
@@ -37,6 +41,8 @@ fn main() -> Result<()> {
 
     let matches = app.get_matches();
     let mut buf = String::new();
+
+    log::trace!("args parse phase");
 
     /* input processing section */
 
@@ -56,12 +62,15 @@ fn main() -> Result<()> {
 
     /*TODO ParseErrorをひとつにするかどうか */
 
-    let mut lexer = Lexer::new(input);
-    let mut parser = Parser::new(lexer);
+    let mut lexer = Lexer::new(input).peekable();
+    let mut parser = Parser::new();
 
-    match parser.parse() {
+    log::trace!("start parsing");
+
+    match parser.parse(&mut lexer) {
         Ok(asts) => {
             gen_inst_x86_64(asts, "out.s")?;
+            log::trace!("end");
             Ok(())
         }
         Err(kind) => {
@@ -69,6 +78,7 @@ fn main() -> Result<()> {
             Err(kind)?
         }
     }
+
 }
 
 
@@ -159,9 +169,53 @@ fn type_of<T>(_: T) -> String {
 
 
 mod tests {
+
     #[cfg(test)]
     fn type_of<T>(_: T) -> String {
         let a = std::any::type_name::<T>();
         return a.to_string();
+    }
+
+    #[cfg(test)]
+    fn test_compiler()->anyhow::Result<()>{
+        use super::lexer::Lexer;
+        use super::parser::Parser;
+        use super::interpreter::gen_instruction::gen_inst_x86_64;
+        use std::fs::File;
+        use std::io::prelude::*;
+
+        std::env::set_var("RUST_LOG", "trace");
+        env_logger::init();
+    
+        log::trace!("start");
+    
+        let mut buf = String::new();
+    
+        log::trace!("args parse phase");
+   
+        let input = {
+            let mut f = File::open("foo.c").expect("file not found");
+            f.read_to_string(&mut buf)
+            .expect("something went wrong reading the file");
+   
+            buf.as_bytes()
+        };
+    
+        let mut lexer = Lexer::new(input).peekable();
+        let mut parser = Parser::new();
+    
+        log::trace!("start parsing");
+    
+        match parser.parse(&mut lexer) {
+            Ok(asts) => {
+                gen_inst_x86_64(asts, "out.s")?;
+                log::trace!("end");
+                Ok(())
+            }
+            Err(kind) => {
+                super::print_error(&kind, input);
+                Err(kind)?
+            }
+        }
     }
 }

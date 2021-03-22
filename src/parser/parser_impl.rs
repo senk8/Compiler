@@ -14,14 +14,11 @@ use crate::types::error::ParseError::*;
 use crate::types::variable::LVar;
 use crate::types::variable::VarAnnot;
 
+use core::iter::Peekable;
 
-
-impl<'a> Parser<'a> {
-    pub fn new(lexer: Lexer<'a>) -> Parser<'a> {
-        let ll_1_lexer = lexer.peekable();
-
+impl Parser {
+    pub fn new() -> Parser {
         Parser {
-            lexer: ll_1_lexer,
             symbol_table: HashMap::new(),
             offset: 0,
         }
@@ -32,21 +29,21 @@ impl<'a> Parser<'a> {
             .insert(name.clone(), LVar(self.offset, ty));
     }
 
-    pub fn parse(&mut self) -> Result<Vec<Node>, ParseError> {
-        self.program()
+    pub fn parse(&mut self,lexer:&mut Peekable<Lexer> ) -> Result<Vec<Node>, ParseError> {
+        self.program(lexer)
     }
 
-    pub fn look_ahead(&mut self) -> Option<Token> {
+    pub fn look_ahead(&mut self,lexer:&mut Peekable<Lexer>) -> Option<Token> {
         //TODO : check it out. Whether we implement Deref trait for Token.
-        self.lexer.peek().cloned()
+        lexer.peek().cloned()
     }
 
-    pub(super) fn expect(&mut self, kind: TokenKind) -> Result<(), ParseError> {
-        self.look_ahead()
+    pub(super) fn expect(&mut self,lexer:&mut Peekable<Lexer> ,kind: TokenKind) -> Result<(), ParseError> {
+        self.look_ahead(lexer)
             .ok_or(Eof)
             .and_then(|tk| {
                 if tk.0 == kind {
-                    self.lexer.next();
+                    lexer.next();
                     Ok(())
                 } else {
                     match tk.0 {
@@ -57,27 +54,27 @@ impl<'a> Parser<'a> {
             })
     }
 
-    pub(super) fn take_id(&mut self) -> Option<TokenKind> {
-        match self.look_ahead().map(|tk| tk.0) {
-            Some(Id(_)) => self.lexer.next().map(|tk| tk.0),
+    pub(super) fn take_id(&mut self,lexer:&mut Peekable<Lexer>) -> Option<TokenKind> {
+        match self.look_ahead(lexer).map(|tk| tk.0) {
+            Some(Id(_)) => lexer.next().map(|tk| tk.0),
             _ => None,
         }
     }
 
-    fn take_type_helper(&mut self) -> Option<TokenKind> {
-        match self.look_ahead().map(|tk| tk.0) {
-            Some(Type(_)) => self.lexer.next().map(|tk| tk.0),
+    fn take_type_helper(&mut self,lexer:&mut Peekable<Lexer>) -> Option<TokenKind> {
+        match self.look_ahead(lexer).map(|tk| tk.0) {
+            Some(Type(_)) => lexer.next().map(|tk| tk.0),
             _ => None,
         }
     }
 
     //typeident = type '*' *
-    pub(super) fn take_type(&mut self)->Option<VarAnnot> {
-        if let Some(Type(t)) = self.take_type_helper(){
+    pub(super) fn take_type(&mut self,lexer:&mut Peekable<Lexer>)->Option<VarAnnot> {
+        if let Some(Type(t)) = self.take_type_helper(lexer){
 
             let mut ty = VarAnnot { ty: t, ptr: None };
 
-            while self.choice(Opr(OperatorKind::Star)) {
+            while self.choice(lexer,Opr(OperatorKind::Star)) {
                 ty = VarAnnot {
                     ty: Pointer,
                     ptr: Some(Box::new(ty)),
@@ -90,24 +87,24 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub(super) fn take_num(&mut self) -> Option<TokenKind> {
-        match self.look_ahead().map(|tk| tk.0) {
-            Some(Num(_)) => self.lexer.next().map(|tk| tk.0),
+    pub(super) fn take_num(&mut self,lexer:&mut Peekable<Lexer>) -> Option<TokenKind> {
+        match self.look_ahead(lexer).map(|tk| tk.0) {
+            Some(Num(_)) => lexer.next().map(|tk| tk.0),
             _ => None,
         }
     }
 
-    pub(super) fn take_token(&mut self) -> Option<Token> {
-        match self.look_ahead().map(|tk| tk.0) {
-            Some(_) => self.lexer.next(),
+    pub(super) fn take_token(&mut self,lexer:&mut Peekable<Lexer>) -> Option<Token> {
+        match self.look_ahead(lexer).map(|tk| tk.0) {
+            Some(_) => lexer.next(),
             _ => None,
         }
     }
 
-    pub(super) fn choice(&mut self, kind: TokenKind) -> bool {
-        match self.look_ahead().map(|tk| tk.0) {
+    pub(super) fn choice(&mut self,lexer:&mut Peekable<Lexer>, kind: TokenKind) -> bool {
+        match self.look_ahead(lexer).map(|tk| tk.0) {
             Some(k) if k == kind => {
-                self.lexer.next();
+                lexer.next();
                 true
             }
             _ => false,
