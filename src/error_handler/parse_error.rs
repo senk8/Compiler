@@ -1,4 +1,4 @@
-use super::token::Token;
+use crate::types::token::Token;
 use std::fmt;
 use std::error::Error;
 

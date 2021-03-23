@@ -7,8 +7,8 @@ use crate::types::token::TokenKind::*;
 use crate::types::token::TypeKind::*;
 use crate::types::token::*;
 
-use crate::types::error::ParseError;
-use crate::types::error::ParseError::*;
+use crate::error_handler::parse_error::ParseError;
+use crate::error_handler::parse_error::ParseError::*;
 
 use crate::types::variable::LVar;
 use crate::types::variable::VarAnnot;

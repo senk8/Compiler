@@ -11,10 +11,10 @@ mod relational;
 mod expr;
 
 use std::iter::Peekable;
-use crate::Parser;
-use crate::Lexer;
+use crate::parser::Parser;
+use crate::lexer::Lexer;
 
-use crate::types::error::ParseError;
+use crate::error_handler::parse_error::ParseError;
 use crate::types::node::Node;
 
 pub fn parse(parser:&mut Parser,lexer:&mut Peekable<Lexer>) -> Result<Vec<Node>,ParseError> {
