@@ -1,4 +1,3 @@
-use super::variable::*;
 use std::fmt;
 
 pub type Token = (TokenKind, Pos);

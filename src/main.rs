@@ -1,6 +1,7 @@
 pub mod lexer;
 pub mod parser;
 pub mod interpreter;
+pub mod grammar;
 pub mod types;
 
 use std::fs::File;
@@ -16,7 +17,6 @@ use types::error::ParseError;
 use types::error::ParseError::*;
 
 use anyhow::Result;
-use anyhow::Context;
 
 /* 懸念点
 
@@ -67,7 +67,7 @@ fn main() -> Result<()> {
 
     log::trace!("start parsing");
 
-    match parser.parse(&mut lexer) {
+    match grammar::parse(&mut parser,&mut lexer) {
         Ok(asts) => {
             gen_inst_x86_64(asts, "out.s")?;
             log::trace!("end");
@@ -168,15 +168,14 @@ fn type_of<T>(_: T) -> String {
 }
 
 
+#[cfg(test)]
 mod tests {
-
-    #[cfg(test)]
     fn type_of<T>(_: T) -> String {
         let a = std::any::type_name::<T>();
         return a.to_string();
     }
 
-    #[cfg(test)]
+    #[test]
     fn test_compiler()->anyhow::Result<()>{
         use super::lexer::Lexer;
         use super::parser::Parser;
@@ -206,7 +205,7 @@ mod tests {
     
         log::trace!("start parsing");
     
-        match parser.parse(&mut lexer) {
+        match super::grammar::parse(&mut parser,&mut lexer) {
             Ok(asts) => {
                 gen_inst_x86_64(asts, "out.s")?;
                 log::trace!("end");

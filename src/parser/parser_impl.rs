@@ -3,7 +3,6 @@ use super::Parser;
 use std::collections::HashMap;
 
 use crate::lexer::Lexer;
-use crate::types::node::Node;
 use crate::types::token::TokenKind::*;
 use crate::types::token::TypeKind::*;
 use crate::types::token::*;
@@ -29,8 +28,16 @@ impl Parser {
             .insert(name.clone(), LVar(self.offset, ty));
     }
 
-    pub fn parse(&mut self,lexer:&mut Peekable<Lexer> ) -> Result<Vec<Node>, ParseError> {
-        self.program(lexer)
+    pub fn find_var(&self,name:String)->Option<LVar>{
+        self.symbol_table.get(&name).cloned()
+    }
+
+    pub fn reset_vars(&mut self)->(){
+        self.symbol_table.clear();
+    }
+
+    pub fn offset(&self) -> usize {
+        self.offset
     }
 
     pub fn look_ahead(&mut self,lexer:&mut Peekable<Lexer>) -> Option<Token> {
@@ -38,7 +45,7 @@ impl Parser {
         lexer.peek().cloned()
     }
 
-    pub(super) fn expect(&mut self,lexer:&mut Peekable<Lexer> ,kind: TokenKind) -> Result<(), ParseError> {
+    pub fn expect(&mut self,lexer:&mut Peekable<Lexer> ,kind: TokenKind) -> Result<(), ParseError> {
         self.look_ahead(lexer)
             .ok_or(Eof)
             .and_then(|tk| {
@@ -54,7 +61,7 @@ impl Parser {
             })
     }
 
-    pub(super) fn take_id(&mut self,lexer:&mut Peekable<Lexer>) -> Option<TokenKind> {
+    pub fn take_id(&mut self,lexer:&mut Peekable<Lexer>) -> Option<TokenKind> {
         match self.look_ahead(lexer).map(|tk| tk.0) {
             Some(Id(_)) => lexer.next().map(|tk| tk.0),
             _ => None,
@@ -69,7 +76,7 @@ impl Parser {
     }
 
     //typeident = type '*' *
-    pub(super) fn take_type(&mut self,lexer:&mut Peekable<Lexer>)->Option<VarAnnot> {
+    pub fn take_type(&mut self,lexer:&mut Peekable<Lexer>)->Option<VarAnnot> {
         if let Some(Type(t)) = self.take_type_helper(lexer){
 
             let mut ty = VarAnnot { ty: t, ptr: None };
@@ -87,21 +94,21 @@ impl Parser {
         }
     }
 
-    pub(super) fn take_num(&mut self,lexer:&mut Peekable<Lexer>) -> Option<TokenKind> {
+    pub fn take_num(&mut self,lexer:&mut Peekable<Lexer>) -> Option<TokenKind> {
         match self.look_ahead(lexer).map(|tk| tk.0) {
             Some(Num(_)) => lexer.next().map(|tk| tk.0),
             _ => None,
         }
     }
 
-    pub(super) fn take_token(&mut self,lexer:&mut Peekable<Lexer>) -> Option<Token> {
+    pub fn take_token(&mut self,lexer:&mut Peekable<Lexer>) -> Option<Token> {
         match self.look_ahead(lexer).map(|tk| tk.0) {
             Some(_) => lexer.next(),
             _ => None,
         }
     }
 
-    pub(super) fn choice(&mut self,lexer:&mut Peekable<Lexer>, kind: TokenKind) -> bool {
+    pub fn choice(&mut self,lexer:&mut Peekable<Lexer>, kind: TokenKind) -> bool {
         match self.look_ahead(lexer).map(|tk| tk.0) {
             Some(k) if k == kind => {
                 lexer.next();
