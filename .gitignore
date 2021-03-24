@@ -1,3 +1,9 @@
 /target
 tmp
 Cargo.lock
+a.out
+out
+main
+*.o
+*.s
+*.py

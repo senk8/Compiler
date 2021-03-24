@@ -46,8 +46,8 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_arithmetic() -> Result<()> {
-        let input = "2+1;";
+    fn test_parse_plus() -> Result<()> {
+        let input = "2+1";
         let mut lexer = Lexer::new(input.as_bytes()).peekable();
         let mut parser = Parser::new();
 
@@ -62,5 +62,20 @@ mod tests {
         Ok(())
     }
 
+    #[test]
+    fn test_parse_sub() -> Result<()> {
+        let input = "2-1";
+        let mut lexer = Lexer::new(input.as_bytes()).peekable();
+        let mut parser = Parser::new();
 
+        let result = expr(&mut parser,&mut lexer)?;
+
+        dbg!(&result);
+
+        assert_eq!(result, 
+            node!(NdSub,NdNum(2),NdNum(1))
+        );
+
+        Ok(())
+    }
 }
