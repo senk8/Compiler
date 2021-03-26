@@ -4,7 +4,7 @@ C Compiler implemantation by Rust .
 
 # Features
 
-- This is compiler which contains Rust.
+- This is a compiler which contains Rust.
 - The input format is as a file or as a row program text.
 
 # Design
@@ -40,3 +40,5 @@ under construction
 # Progress
 
 Compiler can complie a functions declaration .
+
+
