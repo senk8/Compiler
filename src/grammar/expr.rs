@@ -45,37 +45,29 @@ mod tests {
         };
     }
 
+
     #[test]
-    fn test_parse_plus() -> Result<()> {
-        let input = "2+1";
-        let mut lexer = Lexer::new(input.as_bytes()).peekable();
-        let mut parser = Parser::new();
+    fn test_parse_arithmetic() -> Result<()> {
+        let inputs = ["2+1","2-1","2*1","2/1"];
 
-        let result = expr(&mut parser,&mut lexer)?;
+        let answers = [
+            node!(NdAdd,NdNum(2),NdNum(1)),
+            node!(NdSub,NdNum(2),NdNum(1)),
+            node!(NdMul,NdNum(2),NdNum(1)),
+            node!(NdDiv,NdNum(2),NdNum(1))
+        ];
 
-        dbg!(&result);
+        for (input,answer) in inputs.iter().zip(answers.iter()) {
+            let mut lexer = Lexer::new(input.as_bytes()).peekable();
+            let mut parser = Parser::new();
 
-        assert_eq!(result, 
-            node!(NdAdd,NdNum(2),NdNum(1))
-        );
+            let result = expr(&mut parser,&mut lexer)?;
+            dbg!(&result);
+
+            assert_eq!(result, *answer);
+        }
 
         Ok(())
     }
 
-    #[test]
-    fn test_parse_sub() -> Result<()> {
-        let input = "2-1";
-        let mut lexer = Lexer::new(input.as_bytes()).peekable();
-        let mut parser = Parser::new();
-
-        let result = expr(&mut parser,&mut lexer)?;
-
-        dbg!(&result);
-
-        assert_eq!(result, 
-            node!(NdSub,NdNum(2),NdNum(1))
-        );
-
-        Ok(())
-    }
 }
