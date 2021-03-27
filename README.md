@@ -34,11 +34,10 @@ $ cargo run -- -c "2+5;"
 
 # Contribution
 
-under construction
+comming soon.
 
 
 # Progress
 
 Compiler can complie a functions declaration .
-
 
