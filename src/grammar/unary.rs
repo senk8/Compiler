@@ -20,6 +20,7 @@ unary    = "+" primary
         |  primary
 */
 pub(super) fn unary(parser:&mut Parser,lexer:&mut Peekable<Lexer>) -> Result<Node, ParseError> {
+    log::trace!("enter unary");
     if parser.choice(lexer,Opr(Add)) {
         primary(parser,lexer)
     } else if parser.choice(lexer,Opr(Sub)) {
