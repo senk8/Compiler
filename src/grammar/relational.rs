@@ -12,6 +12,9 @@ use crate::types::token::TokenKind::*;
 use super::add::add;
 
 pub(super) fn relational(parser:&mut Parser,lexer:&mut Peekable<Lexer>) -> Result<Node, ParseError> {
+
+    log::info!("Parsing is entered 'relational' !");
+
     let mut node = add(parser,lexer)?;
 
     loop {

@@ -1,8 +1,8 @@
 use crate::types::token::Token;
-use std::fmt;
 use std::error::Error;
+use std::fmt;
 
-#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Hash )]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Hash)]
 pub enum ParseError {
     UnexpectedToken(Token),
     UnexpectedKeyword(Token),
@@ -23,7 +23,7 @@ impl fmt::Display for ParseError {
     }
 }
 
-impl Error for ParseError{}
+impl Error for ParseError {}
 
 /*
 use thiserror::Error;

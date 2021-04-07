@@ -14,6 +14,9 @@ use super::equality::equality;
 
 //assign = equality ( "=" assign )?
 pub(super) fn assign(parser:&mut Parser,lexer:&mut Peekable<Lexer>) -> Result<Node, ParseError> {
+
+    log::info!("Parsing is entered 'assign' !");
+
     let node = equality(parser,lexer)?;
 
     if parser.choice(lexer,Opr(Assign)) {

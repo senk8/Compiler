@@ -13,6 +13,9 @@ use crate::types::token::TokenKind::*;
 
 
 pub(super) fn decl(parser:&mut Parser,lexer:&mut Peekable<Lexer>) -> Result<Node, ParseError> {
+
+    log::info!("Parsing is entered 'decl' !");
+
     /* 引数コンパイルしたら同時にローカル変数の定義を行う。*/
 
     let _ = parser.take_type(lexer).ok_or_else(||
@@ -58,6 +61,7 @@ pub(super) fn decl(parser:&mut Parser,lexer:&mut Peekable<Lexer>) -> Result<Node
 
         Ok(NdDecl(name, args, Box::new(NdBlock(nodes))))
     } else {
+        log::error!("error occured at 'decl' !");
         /* TODO: it will be unused look_ahead.unwrap() */ 
         Err(UnexpectedToken(parser.look_ahead(lexer).unwrap()))
     }

@@ -15,6 +15,9 @@ use super::expr::expr;
 // primary = num | ident | "(" expr ")" | ident ( "(" argument ")" )?
 // argument = (expr ( "," expr )* ) ?
 pub(super) fn primary(parser:&mut Parser,lexer:&mut Peekable<Lexer>) -> Result<Node, ParseError> {
+
+    log::info!("Parsing is entered 'primary' !");
+
     if let Some(Num(n)) = parser.take_num(lexer) {
         Ok(NdNum(n))
     } else if let Some(Id(name)) = parser.take_id(lexer) {
@@ -41,6 +44,7 @@ pub(super) fn primary(parser:&mut Parser,lexer:&mut Peekable<Lexer>) -> Result<N
             if let Some(lvar) = result {
                 Ok(NdLVar(lvar.0))
             } else {
+                log::error!("error occured at 'primary'!");
                 Err(UndefinedSymbol(lexer.next().unwrap()))
             }
         }
@@ -49,6 +53,7 @@ pub(super) fn primary(parser:&mut Parser,lexer:&mut Peekable<Lexer>) -> Result<N
         parser.expect(lexer,Delim(Rparen))?;
         Ok(node)
     } else {
+        log::error!("error occured at 'primary'!");
         Err(UnexpectedToken(lexer.next().unwrap()))
     }
 }

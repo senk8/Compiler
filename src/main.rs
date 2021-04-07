@@ -19,6 +19,7 @@ use anyhow::Result;
 */
 
 fn main() -> Result<()> {
+    //LOG_LEVEL: error > warn > info > debug > trace
     std::env::set_var("RUST_LOG", "trace");
     env_logger::init();
 
@@ -40,12 +41,14 @@ fn main() -> Result<()> {
     /* input processing section */
 
     let input = if let Some(path) = matches.value_of("SOURCE_FILE") {
+        log::debug!("input from a file");
         let mut f = File::open(path).expect("file not found");
         f.read_to_string(&mut buf)
             .expect("something went wrong reading the file");
 
         buf.as_bytes()
     } else if let Some(source) = matches.value_of("compile") {
+        log::debug!("input from a command file");
         source.as_bytes()
     } else {
         unimplemented!();
@@ -59,19 +62,21 @@ fn main() -> Result<()> {
     let mut parser = parser::Parser::new();
 
     log::trace!("start parsing");
+    
+    let result = grammar::parse(&mut parser,&mut lexer);
 
-    match grammar::parse(&mut parser,&mut lexer) {
+    match result  {
         Ok(asts) => {
             interpreter::gen_instruction::gen_inst_x86_64(asts, "out.s")?;
             log::trace!("end");
             Ok(())
-        }
+        },
         Err(kind) => {
             error_handler::print::print_error(&kind, input);
+            log::error!("error occured!");
             Err(kind)?
         }
     }
-
 }
 
 

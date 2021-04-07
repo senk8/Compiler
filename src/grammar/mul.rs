@@ -13,6 +13,7 @@ use super::unary::unary;
 
 // mul     = unary ("*" unary | "/" unary)*
 pub(super) fn mul(parser:&mut Parser,lexer:&mut Peekable<Lexer>) -> Result<Node, ParseError> {
+    log::info!("Parsing is entered 'mul' !");
     let mut node = unary(parser,lexer)?;
 
     loop {

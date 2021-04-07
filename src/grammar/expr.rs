@@ -15,6 +15,7 @@ use super::assign::assign;
 
 //expr = assign | type ident
 pub(super) fn expr(parser:&mut Parser,lexer:&mut Peekable<Lexer>) -> Result<Node, ParseError> {
+    log::info!("Parsing is entered 'expr' !");
     if let Some(ty) = parser.take_type(lexer){
         let token = parser.take_token(lexer).ok_or(Eof)?;
 
@@ -22,6 +23,7 @@ pub(super) fn expr(parser:&mut Parser,lexer:&mut Peekable<Lexer>) -> Result<Node
             parser.set_var(name, ty);
             Ok(NdVdecl(parser.offset()))
         } else {
+            log::error!("error occured at expr!");
             Err(UnexpectedToken(token))
         }
     } else {

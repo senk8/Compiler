@@ -15,6 +15,9 @@ use super::mul::mul;
 
 // add    = mul ("+" mul | "-" mul)*
 pub(super) fn add(parser:&mut Parser,lexer:&mut Peekable<Lexer>) -> Result<Node, ParseError> {
+
+    log::info!("Parsing is entered 'add' !");
+
     /* MEMO: nodeがNdLVarの場合、その型を調べて＋１を別の値に置き換える。という風にできそう。 */
     let mut node = mul(parser,lexer)?;
 

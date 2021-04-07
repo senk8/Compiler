@@ -19,6 +19,8 @@ use super::expr::expr;
 /// | "while" "(" expr ")" stmt
 /// | "for" "(" expr? ";" expr? ";" expr? ")" stmt
 pub(super) fn stmt(parser:&mut Parser,lexer:&mut Peekable<Lexer>) -> Result<Node, ParseError> {
+
+    log::info!("Parsing is entered 'stmt' !");
     /* choice expr or return */
 
     if parser.choice(lexer,Key(Return)) {

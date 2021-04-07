@@ -14,6 +14,9 @@ use super::relational::relational;
 
 // equality = relational ("==" relational | "!=" relational)*
 pub(super) fn equality(parser:&mut Parser,lexer:&mut Peekable<Lexer>) -> Result<Node, ParseError> {
+
+    log::info!("Parsing is entered 'equality' !");
+
     let mut node = relational(parser,lexer)?;
 
     loop {
