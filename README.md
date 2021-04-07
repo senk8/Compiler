@@ -1,6 +1,6 @@
 # Compiler
 
-C Compiler implemantation by Rust .
+C Compiler implemantation by Rust lang . 
 
 # Features
 
