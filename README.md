@@ -33,8 +33,6 @@ $ cargo run -- -c "2+5;"
 
 # Contribution
 
-comming soon.
-
 
 # Progress
 
