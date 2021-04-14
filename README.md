@@ -1,6 +1,6 @@
 # Compiler
 
-C Compiler implemantation by Rust lang . 
+The C Compiler implemantation by Rust lang . 
 
 # Features
 
@@ -38,7 +38,6 @@ $ cargo run -- -c "2+5;"
 # Progress
 
 Compiler can complie a functions declaration .
-
 
 # Reference
 
