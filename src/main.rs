@@ -11,12 +11,7 @@ use std::io::prelude::*;
 use clap::{App, Arg, ArgGroup};
 use anyhow::Result;
 
-/* 懸念点
 
-    1. Blockとstmtが同じ
-    2. rspを16の倍数にしていない(スタックに退避する方法でなんとかなる)
-
-*/
 
 fn main() -> Result<()> {
     //LOG_LEVEL: error > warn > info > debug > trace
