@@ -1,6 +1,6 @@
 # Compiler
 
-C Compiler implemantation by Rust lang . 
+The C Compiler implemantation by Rust lang . 
 
 # Features
 
@@ -14,7 +14,6 @@ C Compiler implemantation by Rust lang .
 # Requirements
 
 - rustc 1.49.0
-
 
 # Usage
 
@@ -34,10 +33,14 @@ $ cargo run -- -c "2+5;"
 
 # Contribution
 
-comming soon.
-
+# License
 
 # Progress
 
 Compiler can complie a functions declaration .
+
+# Reference
+
+- 9cc
+https://www.sigbus.info/compilerbook
 
