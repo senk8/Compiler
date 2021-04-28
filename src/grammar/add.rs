@@ -21,6 +21,8 @@ pub(super) fn add(parser:&mut Parser,lexer:&mut Peekable<Lexer>) -> Result<Node,
     /* MEMO: nodeがNdLVarの場合、その型を調べて＋１を別の値に置き換える。という風にできそう。 */
     let mut node = mul(parser,lexer)?;
 
+    //if let NdLVar() = node
+
     loop {
         if parser.choice(lexer,Opr(Add)) {
             node = NdAdd(Box::new(node), Box::new(mul(parser,lexer)?));
