@@ -1,3 +1,5 @@
+use super::variable::VarAnnot;
+
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Hash)]
 pub enum Node {
     NdAdd(Box<Node>, Box<Node>),
@@ -15,7 +17,7 @@ pub enum Node {
     NdFor(Box<Node>, Box<Node>, Box<Node>, Box<Node>),
     NdReturn(Box<Node>),
     NdBlock(Vec<Node>),
-    NdLVar(usize),
+    NdLVar(usize,VarAnnot),
     NdNum(usize),
     NdCall(String, Vec<Node>),
     NdDecl(String, Vec<Node>, Box<Node>),

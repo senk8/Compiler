@@ -32,7 +32,7 @@ impl Parser {
         self.symbol_table.get(&name).cloned()
     }
 
-    pub fn reset_vars(&mut self)->(){
+    pub fn reset_table(&mut self)->(){
         self.symbol_table.clear();
     }
 

@@ -12,7 +12,7 @@ pub(super) fn program(parser:&mut Parser,lexer:&mut Peekable<Lexer>) -> Result<V
 
     while let Some(_) = parser.look_ahead(lexer) {
         trees.push(super::decl::decl(parser,lexer)?);
-        parser.reset_vars();
+        parser.reset_table();
     }
 
     Ok(trees)

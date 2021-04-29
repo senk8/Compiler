@@ -34,8 +34,8 @@ pub(super) fn decl(parser:&mut Parser,lexer:&mut Peekable<Lexer>) -> Result<Node
                     let token = parser.take_token(lexer).ok_or(Eof)?;
 
                     if let (Id(name), _) = token {
-                        parser.set_var(name, ty);
-                        args.push(NdLVar(parser.offset()));
+                        parser.set_var(name, ty.clone());
+                        args.push(NdLVar(parser.offset(),ty));
 
                         if !parser.choice(lexer,Delim(Comma)) {
                             parser.expect(lexer,Delim(Rparen))?;

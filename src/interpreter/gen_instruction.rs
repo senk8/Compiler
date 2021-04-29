@@ -1,5 +1,7 @@
 use crate::types::node::Node;
 use crate::types::node::Node::*;
+use crate::types::token::TypeKind;
+use crate::types::variable::VarAnnot;
 
 use std::fs::File;
 use std::io::{BufWriter, Write};
@@ -36,9 +38,22 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
             writeln!(stream, "  push {}", n)?;
         }
         NdAdd(lhs, rhs) => {
+
             gen(stream, lhs, n)?;
             gen(stream, rhs, n)?;
-            print_opration_epilogue(stream, "  add rax, rdi")?;
+
+            writeln!(stream, "  pop rdi")?;
+            writeln!(stream, "  pop rax")?;
+
+            if let NdLVar(_,ref type_)= **lhs {
+                if type_.ty == TypeKind::Pointer {
+                    let bits = bits_per_type(type_);
+                    writeln!(stream,"  imul rdi, {}",bits)?;
+                }
+            }
+
+            writeln!(stream, "  add rax, rdi")?;
+            writeln!(stream, "  push rax")?
         }
         NdSub(lhs, rhs) => {
             gen(stream, lhs, n)?;
@@ -56,7 +71,7 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
             print_opration_epilogue(stream, "  cqo\n  idiv rdi")?;
         }
         NdRef(operand) => {
-            get_addr_lval(stream, operand)?;
+            get_lvar_addr(stream, operand)?;
         }
         NdDeref(operand) => {
             gen(stream, operand, n)?;
@@ -84,8 +99,8 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
             gen(stream, rhs, n)?;
             print_opration_epilogue(stream, "  cmp rax, rdi\n  setle al\n  movzb rax, al")?;
         }
-        NdLVar(_) => {
-            get_addr_lval(stream, node)?;
+        NdLVar(_,_) => {
+            get_lvar_addr(stream, node)?;
 
             writeln!(stream, "  pop rax")?;
             writeln!(stream, "  mov rax, [rax]")?;
@@ -100,7 +115,7 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
 
             /* 引数名のローカル変数を確保する */
             for i in 0..args.len() {
-                get_addr_lval(stream, &args[i])?; /* オフセットを渡す.*/
+                get_lvar_addr(stream, &args[i])?; /* オフセットを渡す.*/
                 writeln!(stream, "  pop rax")?;
                 writeln!(stream, "  mov [rax], {}", ARG_REGS[i])?;
             }
@@ -137,7 +152,7 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
             if let NdDeref(ref node)= **lhs {
                 gen(stream, &node, n)?;
             }else{
-                get_addr_lval(stream, lhs)?;
+                get_lvar_addr(stream, lhs)?;
             }
 
             gen(stream, rhs, n)?;
@@ -223,8 +238,8 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
     return Ok(());
 }
 
-fn get_addr_lval(stream: &mut BufWriter<File>, node: &Node) -> Result<()> {
-    if let NdLVar(offset) = *node {
+fn get_lvar_addr(stream: &mut BufWriter<File>, node: &Node) -> Result<()> {
+    if let NdLVar(offset,_) = *node {
         writeln!(stream, "  mov rax, rbp")?;
         writeln!(stream, "  sub rax, {}", offset)?;
         writeln!(stream, "  push rax")?;
@@ -240,4 +255,13 @@ fn print_opration_epilogue(stream: &mut BufWriter<File>, message: &str) -> Resul
     writeln!(stream, "{}", message)?;
     writeln!(stream, "  push rax")?;
     Ok(())
+}
+
+
+
+fn bits_per_type(type_:&VarAnnot)->usize{
+    match type_.ptr.as_ref().unwrap().ty {
+        TypeKind::Int => 4,
+        TypeKind::Pointer => 8,
+    }
 }

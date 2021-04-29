@@ -42,7 +42,7 @@ pub(super) fn primary(parser:&mut Parser,lexer:&mut Peekable<Lexer>) -> Result<N
             let result = parser.find_var(name);
 
             if let Some(lvar) = result {
-                Ok(NdLVar(lvar.0))
+                Ok(NdLVar(lvar.0,lvar.1))
             } else {
                 log::error!("error occured at 'primary'!");
                 Err(UndefinedSymbol(lexer.next().unwrap()))
