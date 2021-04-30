@@ -8,4 +8,3 @@ pub struct Lexer<'a> {
     /* Cursor */
     pos: usize,
 }
-

@@ -15,7 +15,7 @@ pub enum Node {
     NdFor(Box<Node>, Box<Node>, Box<Node>, Box<Node>),
     NdReturn(Box<Node>),
     NdBlock(Vec<Node>),
-    NdLVar(usize,super::parse::TypeInfo),
+    NdLVar(usize, super::parse::TypeInfo),
     NdNum(usize),
     NdCall(String, Vec<Node>),
     NdDecl(String, Vec<Node>, Box<Node>),

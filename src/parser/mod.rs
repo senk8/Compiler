@@ -7,4 +7,3 @@ pub struct Parser {
     symbol_table: HashMap<String, LVar>,
     offset: usize,
 }
-

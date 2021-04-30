@@ -1,7 +1,7 @@
 use std::iter::Peekable;
 
-use crate::parser::Parser;
 use crate::lexer::Lexer;
+use crate::parser::Parser;
 
 use crate::error_handler::parse_error::ParseError;
 use crate::error_handler::parse_error::ParseError::*;
@@ -10,59 +10,53 @@ use crate::types::node::Node::*;
 use crate::types::tokenize::DelimitorKind::*;
 use crate::types::tokenize::TokenKind::*;
 
-
-
-pub(super) fn decl(parser:&mut Parser,lexer:&mut Peekable<Lexer>) -> Result<Node, ParseError> {
-
+pub(super) fn decl(parser: &mut Parser, lexer: &mut Peekable<Lexer>) -> Result<Node, ParseError> {
     log::info!("Parsing is entered 'decl' !");
 
     /* 引数コンパイルしたら同時にローカル変数の定義を行う。*/
 
-    let _ = parser.take_type(lexer).ok_or_else(||
-        UnexpectedToken(lexer.next().unwrap())
-    )?;
+    let _ = parser
+        .take_type(lexer)
+        .ok_or_else(|| UnexpectedToken(lexer.next().unwrap()))?;
 
     if let Some(Id(name)) = parser.take_id(lexer) {
-        parser.expect(lexer,Delim(Lparen))?;
+        parser.expect(lexer, Delim(Lparen))?;
 
         let mut args = vec![];
-        if !parser.choice(lexer,Delim(Rparen)) {
+        if !parser.choice(lexer, Delim(Rparen)) {
             loop {
-
-                if let Some(type_kind) = parser.take_type(lexer){
-
+                if let Some(type_kind) = parser.take_type(lexer) {
                     let token = parser.take_token(lexer).ok_or(Eof)?;
 
                     if let (Id(name), _) = token {
                         parser.set_var(name, type_kind.clone());
-                        args.push(NdLVar(parser.offset(),type_kind));
+                        args.push(NdLVar(parser.offset(), type_kind));
 
-                        if !parser.choice(lexer,Delim(Comma)) {
-                            parser.expect(lexer,Delim(Rparen))?;
+                        if !parser.choice(lexer, Delim(Comma)) {
+                            parser.expect(lexer, Delim(Rparen))?;
                             break;
                         }
-
                     } else {
                         return Err(UnexpectedToken(token));
                     }
-                }else{
+                } else {
                     panic!("Expect Type fonund");
                 }
             }
         };
 
-        parser.expect(lexer,Delim(Lbrace))?;
+        parser.expect(lexer, Delim(Lbrace))?;
 
         let mut nodes = Vec::new();
 
-        while !parser.choice(lexer,Delim(Rbrace)) {
-            nodes.push(super::stmt::stmt(parser,lexer)?);
+        while !parser.choice(lexer, Delim(Rbrace)) {
+            nodes.push(super::stmt::stmt(parser, lexer)?);
         }
 
         Ok(NdDecl(name, args, Box::new(NdBlock(nodes))))
     } else {
         log::error!("error occured at 'decl' !");
-        /* TODO: it will be unused look_ahead.unwrap() */ 
+        /* TODO: it will be unused look_ahead.unwrap() */
         Err(UnexpectedToken(parser.look_ahead(lexer).unwrap()))
     }
 }

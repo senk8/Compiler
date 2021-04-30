@@ -1,17 +1,15 @@
+pub mod error_handler;
+pub mod grammar;
+pub mod interpreter;
 pub mod lexer;
 pub mod parser;
-pub mod interpreter;
-pub mod grammar;
 pub mod types;
-pub mod error_handler;
 
 use std::fs::File;
 use std::io::prelude::*;
 
-use clap::{App, Arg, ArgGroup};
 use anyhow::Result;
-
-
+use clap::{App, Arg, ArgGroup};
 
 fn main() -> Result<()> {
     //LOG_LEVEL: error > warn > info > debug > trace
@@ -57,15 +55,15 @@ fn main() -> Result<()> {
     let mut parser = parser::Parser::new();
 
     log::trace!("start parsing");
-    
-    let result = grammar::parse(&mut parser,&mut lexer);
 
-    match result  {
+    let result = grammar::parse(&mut parser, &mut lexer);
+
+    match result {
         Ok(asts) => {
             interpreter::gen_instruction::gen_inst_x86_64(asts, "out.s")?;
             log::trace!("end");
             Ok(())
-        },
+        }
         Err(kind) => {
             error_handler::print::print_error(&kind, input);
             log::error!("error occured!");
@@ -73,7 +71,6 @@ fn main() -> Result<()> {
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -84,7 +81,7 @@ mod tests {
     }
 
     #[test]
-    fn test_compiler()->anyhow::Result<()>{
+    fn test_compiler() -> anyhow::Result<()> {
         use super::lexer::Lexer;
         use super::parser::Parser;
         use std::fs::File;
@@ -92,27 +89,27 @@ mod tests {
 
         std::env::set_var("RUST_LOG", "trace");
         env_logger::init();
-    
+
         log::trace!("start");
-    
+
         let mut buf = String::new();
-    
+
         log::trace!("args parse phase");
-   
+
         let input = {
             let mut f = File::open("foo.c").expect("file not found");
             f.read_to_string(&mut buf)
-            .expect("something went wrong reading the file");
-   
+                .expect("something went wrong reading the file");
+
             buf.as_bytes()
         };
-    
+
         let mut lexer = Lexer::new(input).peekable();
         let mut parser = Parser::new();
-    
+
         log::trace!("start parsing");
-    
-        match super::grammar::parse(&mut parser,&mut lexer) {
+
+        match super::grammar::parse(&mut parser, &mut lexer) {
             Ok(asts) => {
                 crate::interpreter::gen_instruction::gen_inst_x86_64(asts, "out.s")?;
                 log::trace!("end");

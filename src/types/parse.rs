@@ -1,9 +1,8 @@
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Hash)]
 pub struct LVar(pub usize, pub TypeInfo);
 
-#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone,Hash)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Hash)]
 pub enum TypeInfo {
     Int,
-    Pointer(Box<TypeInfo>)
+    Pointer(Box<TypeInfo>),
 }
-

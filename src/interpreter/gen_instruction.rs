@@ -36,38 +36,45 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
         NdNum(num) => {
             writeln!(stream, "  push {}", num)?;
         }
-        NdAdd(lhs, rhs) => {
-
+        NdAdd(lhs, rhs)
+        | NdSub(lhs, rhs)
+        | NdMul(lhs, rhs)
+        | NdDiv(lhs, rhs)
+        | NdEq(lhs, rhs)
+        | NdNeq(lhs, rhs)
+        | NdLt(lhs, rhs)
+        | NdLeq(lhs, rhs) => {
             gen(stream, lhs, n)?;
             gen(stream, rhs, n)?;
 
             writeln!(stream, "  pop rdi")?;
             writeln!(stream, "  pop rax")?;
 
-            if let NdLVar(_,ref type_kind)= **lhs {
-                if let TypeInfo::Pointer(_) = type_kind {
-                    let bytes = bytes_per_type(type_kind);
-                    writeln!(stream,"  imul rdi, {}",bytes)?;
+            /* a type */
+            match node {
+                NdAdd(_, _) | NdSub(_, _) => {
+                    if let NdLVar(_, ref type_kind) = **lhs {
+                        if let TypeInfo::Pointer(_) = type_kind {
+                            let bytes = bytes_per_type(type_kind);
+                            writeln!(stream, "  imul rdi, {}", bytes)?;
+                        }
+                    }
+                    match node {
+                        NdAdd(_, _) => writeln!(stream, "  add rax, rdi")?,
+                        NdSub(_, _) => writeln!(stream, "  sub rax, rdi")?,
+                        _ => unreachable!(),
+                    }
                 }
+                NdMul(_, _) => writeln!(stream, "  imul rax, rdi")?,
+                NdDiv(_, _) => writeln!(stream, "  cqo\n  idiv rdi")?,
+                NdEq(_, _) => writeln!(stream, "  cmp rax, rdi\n  sete al\n  movzb rax, al")?,
+                NdNeq(_, _) => writeln!(stream, "  cmp rax, rdi\n  setne al\n  movzb rax, al")?,
+                NdLt(_, _) => writeln!(stream, "  cmp rax, rdi\n  setl al\n  movzb rax, al")?,
+                NdLeq(_, _) => writeln!(stream, "  cmp rax, rdi\n  setle al\n  movzb rax, al")?,
+                _ => unreachable!(),
             }
 
-            writeln!(stream, "  add rax, rdi")?;
             writeln!(stream, "  push rax")?
-        }
-        NdSub(lhs, rhs) => {
-            gen(stream, lhs, n)?;
-            gen(stream, rhs, n)?;
-            print_opration_epilogue(stream, "  sub rax, rdi")?;
-        }
-        NdMul(lhs, rhs) => {
-            gen(stream, lhs, n)?;
-            gen(stream, rhs, n)?;
-            print_opration_epilogue(stream, "  imul rax, rdi")?;
-        }
-        NdDiv(lhs, rhs) => {
-            gen(stream, lhs, n)?;
-            gen(stream, rhs, n)?;
-            print_opration_epilogue(stream, "  cqo\n  idiv rdi")?;
         }
         NdRef(operand) => {
             get_lvar_addr(stream, operand)?;
@@ -78,27 +85,7 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
             writeln!(stream, "  mov rax, [rax]")?;
             writeln!(stream, "  push rax")?;
         }
-        NdNeq(lhs, rhs) => {
-            gen(stream, lhs, n)?;
-            gen(stream, rhs, n)?;
-            print_opration_epilogue(stream, "  cmp rax, rdi\n  setne al\n  movzb rax, al")?;
-        }
-        NdEq(lhs, rhs) => {
-            gen(stream, lhs, n)?;
-            gen(stream, rhs, n)?;
-            print_opration_epilogue(stream, "  cmp rax, rdi\n  sete al\n  movzb rax, al")?;
-        }
-        NdLt(lhs, rhs) => {
-            gen(stream, lhs, n)?;
-            gen(stream, rhs, n)?;
-            print_opration_epilogue(stream, "  cmp rax, rdi\n  setl al\n  movzb rax, al")?;
-        }
-        NdLeq(lhs, rhs) => {
-            gen(stream, lhs, n)?;
-            gen(stream, rhs, n)?;
-            print_opration_epilogue(stream, "  cmp rax, rdi\n  setle al\n  movzb rax, al")?;
-        }
-        NdLVar(_,_) => {
+        NdLVar(_, _) => {
             get_lvar_addr(stream, node)?;
 
             writeln!(stream, "  pop rax")?;
@@ -147,10 +134,9 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
             writeln!(stream, "  push rax")?;
         }
         NdAssign(lhs, rhs) => {
-
-            if let NdDeref(ref node)= **lhs {
+            if let NdDeref(ref node) = **lhs {
                 gen(stream, &node, n)?;
-            }else{
+            } else {
                 get_lvar_addr(stream, lhs)?;
             }
 
@@ -251,7 +237,7 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
 }
 
 fn get_lvar_addr(stream: &mut BufWriter<File>, node: &Node) -> Result<()> {
-    if let NdLVar(offset,_) = *node {
+    if let NdLVar(offset, _) = *node {
         writeln!(stream, "  mov rax, rbp")?;
         writeln!(stream, "  sub rax, {}", offset)?;
         writeln!(stream, "  push rax")?;
@@ -261,6 +247,7 @@ fn get_lvar_addr(stream: &mut BufWriter<File>, node: &Node) -> Result<()> {
     Ok(())
 }
 
+/*
 fn print_opration_epilogue(stream: &mut BufWriter<File>, message: &str) -> Result<()> {
     writeln!(stream, "  pop rdi")?;
     writeln!(stream, "  pop rax")?;
@@ -268,16 +255,15 @@ fn print_opration_epilogue(stream: &mut BufWriter<File>, message: &str) -> Resul
     writeln!(stream, "  push rax")?;
     Ok(())
 }
+*/
 
-
-
-fn bytes_per_type(type_info:&TypeInfo)->usize{
-    if let TypeInfo::Pointer(dst_type) = type_info{
+fn bytes_per_type(type_info: &TypeInfo) -> usize {
+    if let TypeInfo::Pointer(dst_type) = type_info {
         match **dst_type {
             TypeInfo::Int => 4,
             TypeInfo::Pointer(_) => 8,
         }
-    }else{
+    } else {
         panic!("Argument is not Pointer");
     }
 }
