@@ -59,7 +59,6 @@ pub enum KeywordKind {
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Hash)]
 pub enum TypeKind {
     Int,
-    Pointer,
 }
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Hash, Default)]

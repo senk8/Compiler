@@ -6,8 +6,8 @@ use crate::lexer::Lexer;
 use crate::error_handler::parse_error::ParseError;
 use crate::types::node::Node;
 use crate::types::node::Node::*;
-use crate::types::token::OperatorKind::*;
-use crate::types::token::TokenKind::*;
+use crate::types::tokenize::OperatorKind::*;
+use crate::types::tokenize::TokenKind::*;
 
 use super::primary::primary;
 

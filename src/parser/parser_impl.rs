@@ -3,15 +3,15 @@ use super::Parser;
 use std::collections::HashMap;
 
 use crate::lexer::Lexer;
-use crate::types::token::TokenKind::*;
-use crate::types::token::TypeKind::*;
-use crate::types::token::*;
+use crate::types::tokenize::TokenKind::*;
+use crate::types::tokenize::TypeKind;
+use crate::types::tokenize::*;
 
 use crate::error_handler::parse_error::ParseError;
 use crate::error_handler::parse_error::ParseError::*;
 
-use crate::types::variable::LVar;
-use crate::types::variable::TypeInfo;
+use crate::types::parse::LVar;
+use crate::types::parse::TypeInfo;
 
 use core::iter::Peekable;
 
@@ -54,7 +54,7 @@ impl Parser {
                     Ok(())
                 } else {
                     match tk.0 {
-                        Type(Int) => Err(UnexpectedToken(tk)),
+                        Type(TypeKind::Int) => Err(UnexpectedToken(tk)),
                         _ => Err(UnexpectedDelimitor(tk)),
                     }
                 }
@@ -79,13 +79,14 @@ impl Parser {
     pub fn take_type(&mut self,lexer:&mut Peekable<Lexer>)->Option<TypeInfo> {
         if let Some(Type(t)) = self.take_type_helper(lexer){
 
-            let mut type_info = TypeInfo { type_: t, ptr: None };
+            let mut type_info = match t {
+                TypeKind::Int => TypeInfo::Int,
+            };
 
             while self.choice(lexer,Opr(OperatorKind::Star)) {
-                type_info = TypeInfo {
-                    type_: Pointer,
-                    ptr: Some(Box::new(type_info)),
-                };
+                type_info = TypeInfo::Pointer(
+                    Box::new(type_info)
+                );
             }
 
             Some(type_info)
@@ -117,6 +118,5 @@ impl Parser {
             _ => false,
         }
     }
-
 }
 

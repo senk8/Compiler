@@ -1,7 +1,6 @@
 use crate::types::node::Node;
 use crate::types::node::Node::*;
-use crate::types::token::TypeKind;
-use crate::types::variable::TypeInfo;
+use crate::types::parse::TypeInfo;
 
 use std::fs::File;
 use std::io::{BufWriter, Write};
@@ -45,9 +44,9 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
             writeln!(stream, "  pop rdi")?;
             writeln!(stream, "  pop rax")?;
 
-            if let NdLVar(_,ref type_info)= **lhs {
-                if type_info.type_ == TypeKind::Pointer {
-                    let bytes = bytes_per_type(type_info);
+            if let NdLVar(_,ref type_kind)= **lhs {
+                if let TypeInfo::Pointer(_) = type_kind {
+                    let bytes = bytes_per_type(type_kind);
                     writeln!(stream,"  imul rdi, {}",bytes)?;
                 }
             }
@@ -272,9 +271,13 @@ fn print_opration_epilogue(stream: &mut BufWriter<File>, message: &str) -> Resul
 
 
 
-fn bytes_per_type(type_:&TypeInfo)->usize{
-    match type_.ptr.as_ref().unwrap().type_ {
-        TypeKind::Int => 4,
-        TypeKind::Pointer => 8,
+fn bytes_per_type(type_info:&TypeInfo)->usize{
+    if let TypeInfo::Pointer(dst_type) = type_info{
+        match **dst_type {
+            TypeInfo::Int => 4,
+            TypeInfo::Pointer(_) => 8,
+        }
+    }else{
+        panic!("Argument is not Pointer");
     }
 }

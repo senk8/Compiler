@@ -7,7 +7,7 @@ use crate::error_handler::parse_error::ParseError;
 use crate::error_handler::parse_error::ParseError::*;
 use crate::types::node::Node;
 use crate::types::node::Node::*;
-use crate::types::token::TokenKind::*;
+use crate::types::tokenize::TokenKind::*;
 
 
 use super::assign::assign;

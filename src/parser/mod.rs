@@ -1,5 +1,5 @@
 pub mod parser_impl;
-use crate::types::variable::LVar;
+use crate::types::parse::LVar;
 use std::collections::HashMap;
 
 pub struct Parser {

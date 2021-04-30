@@ -7,8 +7,8 @@ use crate::error_handler::parse_error::ParseError;
 use crate::error_handler::parse_error::ParseError::*;
 use crate::types::node::Node;
 use crate::types::node::Node::*;
-use crate::types::token::DelimitorKind::*;
-use crate::types::token::TokenKind::*;
+use crate::types::tokenize::DelimitorKind::*;
+use crate::types::tokenize::TokenKind::*;
 
 
 
@@ -29,13 +29,13 @@ pub(super) fn decl(parser:&mut Parser,lexer:&mut Peekable<Lexer>) -> Result<Node
         if !parser.choice(lexer,Delim(Rparen)) {
             loop {
 
-                if let Some(ty) = parser.take_type(lexer){
+                if let Some(type_kind) = parser.take_type(lexer){
 
                     let token = parser.take_token(lexer).ok_or(Eof)?;
 
                     if let (Id(name), _) = token {
-                        parser.set_var(name, ty.clone());
-                        args.push(NdLVar(parser.offset(),ty));
+                        parser.set_var(name, type_kind.clone());
+                        args.push(NdLVar(parser.offset(),type_kind));
 
                         if !parser.choice(lexer,Delim(Comma)) {
                             parser.expect(lexer,Delim(Rparen))?;

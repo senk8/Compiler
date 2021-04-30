@@ -2,12 +2,12 @@ use super::Lexer;
 
 use std::str::from_utf8;
 
-use crate::types::token::DelimitorKind::*;
-use crate::types::token::KeywordKind::*;
-use crate::types::token::OperatorKind::*;
-use crate::types::token::TypeKind::*;
-use crate::types::token::TokenKind::*;
-use crate::types::token::*;
+use crate::types::tokenize::DelimitorKind::*;
+use crate::types::tokenize::KeywordKind::*;
+use crate::types::tokenize::OperatorKind::*;
+use crate::types::tokenize::TypeKind::*;
+use crate::types::tokenize::TokenKind::*;
+use crate::types::tokenize::*;
 
 impl<'a> Lexer<'a> {
     pub fn new(input: &'a [u8]) -> Lexer<'a> {
