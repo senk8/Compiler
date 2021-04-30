@@ -53,12 +53,21 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
             /* a type */
             match node {
                 NdAdd(_, _) | NdSub(_, _) => {
+
+                    if let type_info @ TypeInfo::Pointer(_) = analyze_subtree(lhs) {
+                        let bytes = bytes_per_type(&type_info);
+                        writeln!(stream, "  imul rdi, {}", bytes)?;
+                    };
+
+                    /*
                     if let NdLVar(_, ref type_kind) = **lhs {
                         if let TypeInfo::Pointer(_) = type_kind {
                             let bytes = bytes_per_type(type_kind);
                             writeln!(stream, "  imul rdi, {}", bytes)?;
                         }
                     }
+                    */
+
                     match node {
                         NdAdd(_, _) => writeln!(stream, "  add rax, rdi")?,
                         NdSub(_, _) => writeln!(stream, "  sub rax, rdi")?,
@@ -84,6 +93,22 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
             writeln!(stream, "  pop rax")?;
             writeln!(stream, "  mov rax, [rax]")?;
             writeln!(stream, "  push rax")?;
+        }
+        NdSizeof(operand) => {
+            gen(stream, operand, n)?;
+
+            let type_info = analyze_subtree(operand);
+            let bytes = bytes_per_type(&type_info);
+
+            /*
+            let bytes = match **operand {
+                NdNum(_) => 4,
+                NdLVar(_,ref type_info) => bytes_per_type(type_info),
+                _ => unreachable!(),
+            };
+            */
+
+            writeln!(stream, "  push {}", bytes)?;
         }
         NdLVar(_, _) => {
             get_lvar_addr(stream, node)?;
@@ -147,19 +172,6 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
             writeln!(stream, "  mov [rax], rdi")?;
             writeln!(stream, "  push rdi")?;
         }
-        /*
-        NdSizeof(operand) => {
-
-            gen(stream, operand, n)?;
-
-            let bytes = match operand {
-                NdNum(_) => 4,
-                NdLVar(_,annot) => bytes_per_type(annot),
-            }
-
-            writeln!(stream, "  push {}", bytes)?;
-        }
-        */
         NdReturn(lhs) => {
             gen(stream, lhs, n)?;
 
@@ -256,6 +268,41 @@ fn print_opration_epilogue(stream: &mut BufWriter<File>, message: &str) -> Resul
     Ok(())
 }
 */
+
+fn analyze_subtree(node: &Node) -> TypeInfo {
+    match node {
+        NdNum(_num) => {
+           TypeInfo::Int
+        },
+        NdAdd(lhs, _)
+        | NdSub(lhs, _)
+        | NdMul(lhs, _)
+        | NdDiv(lhs, _)
+        | NdEq(lhs, _)
+        | NdNeq(lhs, _)
+        | NdLt(lhs, _)
+        | NdLeq(lhs, _)
+        =>{
+            analyze_subtree(&lhs)
+        },
+        NdSizeof(operand) 
+        | NdRef(operand)
+        | NdDeref(operand)
+        =>{
+            analyze_subtree(&operand)
+        },
+        NdLVar(_,type_info)=>{
+            type_info.clone()
+        },
+        NdCall(_,_)=>{
+            TypeInfo::Int
+        },
+        _ => {
+            dbg!("BUG:{}",node);
+            unreachable!()
+        },
+    }
+}
 
 fn bytes_per_type(type_info: &TypeInfo) -> usize {
     if let TypeInfo::Pointer(dst_type) = type_info {

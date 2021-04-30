@@ -22,4 +22,5 @@ pub enum Node {
     NdVdecl(usize),
     NdRef(Box<Node>),
     NdDeref(Box<Node>),
+    NdSizeof(Box<Node>),
 }

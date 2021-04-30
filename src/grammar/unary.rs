@@ -30,11 +30,8 @@ pub(super) fn unary(parser: &mut Parser, lexer: &mut Peekable<Lexer>) -> Result<
         Ok(NdDeref(Box::new(primary(parser, lexer)?)))
     } else if parser.choice(lexer, Opr(Amp)) {
         Ok(NdRef(Box::new(primary(parser, lexer)?)))
-    /*
-    } else if parser.choice(Opr(Sizeof)) {
-        let node = self.primary()?;
-        Ok(NdSizeof(node))
-    */
+    } else if parser.choice(lexer,Opr(Sizeof)) {
+        Ok(NdSizeof(Box::new(primary(parser, lexer)?)))
     } else {
         primary(parser, lexer)
     }
