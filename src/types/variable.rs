@@ -1,10 +1,10 @@
 use super::token::TypeKind;
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Hash)]
-pub struct LVar(pub usize, pub VarAnnot);
+pub struct LVar(pub usize, pub TypeInfo);
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone,Hash)]
-pub struct VarAnnot {
-    pub ty: TypeKind,
-    pub ptr: Option<Box<VarAnnot>>,
+pub struct TypeInfo {
+    pub type_: TypeKind,
+    pub ptr: Option<Box<TypeInfo>>,
 }

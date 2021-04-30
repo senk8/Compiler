@@ -1,7 +1,7 @@
 use crate::types::node::Node;
 use crate::types::node::Node::*;
 use crate::types::token::TypeKind;
-use crate::types::variable::VarAnnot;
+use crate::types::variable::TypeInfo;
 
 use std::fs::File;
 use std::io::{BufWriter, Write};
@@ -34,8 +34,8 @@ pub fn gen_inst_x86_64(asts: Vec<Node>, path_name: &str) -> Result<()> {
 
 fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
     match node {
-        NdNum(n) => {
-            writeln!(stream, "  push {}", n)?;
+        NdNum(num) => {
+            writeln!(stream, "  push {}", num)?;
         }
         NdAdd(lhs, rhs) => {
 
@@ -45,10 +45,10 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
             writeln!(stream, "  pop rdi")?;
             writeln!(stream, "  pop rax")?;
 
-            if let NdLVar(_,ref type_)= **lhs {
-                if type_.ty == TypeKind::Pointer {
-                    let bits = bits_per_type(type_);
-                    writeln!(stream,"  imul rdi, {}",bits)?;
+            if let NdLVar(_,ref type_info)= **lhs {
+                if type_info.type_ == TypeKind::Pointer {
+                    let bytes = bytes_per_type(type_info);
+                    writeln!(stream,"  imul rdi, {}",bytes)?;
                 }
             }
 
@@ -162,6 +162,19 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
             writeln!(stream, "  mov [rax], rdi")?;
             writeln!(stream, "  push rdi")?;
         }
+        /*
+        NdSizeof(operand) => {
+
+            gen(stream, operand, n)?;
+
+            let bytes = match operand {
+                NdNum(_) => 4,
+                NdLVar(_,annot) => bytes_per_type(annot),
+            }
+
+            writeln!(stream, "  push {}", bytes)?;
+        }
+        */
         NdReturn(lhs) => {
             gen(stream, lhs, n)?;
 
@@ -259,8 +272,8 @@ fn print_opration_epilogue(stream: &mut BufWriter<File>, message: &str) -> Resul
 
 
 
-fn bits_per_type(type_:&VarAnnot)->usize{
-    match type_.ptr.as_ref().unwrap().ty {
+fn bytes_per_type(type_:&TypeInfo)->usize{
+    match type_.ptr.as_ref().unwrap().type_ {
         TypeKind::Int => 4,
         TypeKind::Pointer => 8,
     }

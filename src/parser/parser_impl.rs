@@ -11,7 +11,7 @@ use crate::error_handler::parse_error::ParseError;
 use crate::error_handler::parse_error::ParseError::*;
 
 use crate::types::variable::LVar;
-use crate::types::variable::VarAnnot;
+use crate::types::variable::TypeInfo;
 
 use core::iter::Peekable;
 
@@ -22,10 +22,10 @@ impl Parser {
             offset: 0,
         }
     }
-    pub fn set_var(&mut self, name: String, ty: VarAnnot) -> () {
+    pub fn set_var(&mut self, name: String, type_info: TypeInfo) -> () {
         self.offset += 8;
         self.symbol_table
-            .insert(name.clone(), LVar(self.offset, ty));
+            .insert(name.clone(), LVar(self.offset, type_info));
     }
 
     pub fn find_var(&self,name:String)->Option<LVar>{
@@ -76,19 +76,19 @@ impl Parser {
     }
 
     //typeident = type '*' *
-    pub fn take_type(&mut self,lexer:&mut Peekable<Lexer>)->Option<VarAnnot> {
+    pub fn take_type(&mut self,lexer:&mut Peekable<Lexer>)->Option<TypeInfo> {
         if let Some(Type(t)) = self.take_type_helper(lexer){
 
-            let mut ty = VarAnnot { ty: t, ptr: None };
+            let mut type_info = TypeInfo { type_: t, ptr: None };
 
             while self.choice(lexer,Opr(OperatorKind::Star)) {
-                ty = VarAnnot {
-                    ty: Pointer,
-                    ptr: Some(Box::new(ty)),
+                type_info = TypeInfo {
+                    type_: Pointer,
+                    ptr: Some(Box::new(type_info)),
                 };
             }
 
-            Some(ty)
+            Some(type_info)
         }else{
             None
         }
