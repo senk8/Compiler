@@ -311,6 +311,9 @@ fn bytes_per_type(type_info: &TypeInfo) -> usize {
             TypeInfo::Pointer(_) => 8,
         }
     } else {
-        panic!("Argument is not Pointer");
+        match type_info {
+            TypeInfo::Int => 4,
+            _ => unreachable!(),
+        }
     }
 }

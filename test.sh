@@ -17,3 +17,19 @@ assert() {
 
 assert 12 test_c/fn1.c
 assert 5 test_c/fib.c
+assert 8 test_c/sizeof.c
+
+cc test_c/for_alloc.c -c
+cargo run -- test_c/alloc.c
+cc out.s -c
+cc out.o for_alloc.o -o main
+./main
+result="$?"
+expected=2
+
+if [ "$result" = "$expected" ]; then
+  echo "test_c/test_alloc.c => $result"
+else
+  echo "test_c/test_alloc.c => $expected expected, but got $result"
+  exit 1
+fi
