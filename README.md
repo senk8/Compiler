@@ -37,7 +37,7 @@ $ cargo run -- -c "2+5;"
 
 # Progress
 
-Compiler can complie a functions declaration .
+Compiler can complie a pointer operation .
 
 # Reference
 
