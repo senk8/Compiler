@@ -1,3 +1,7 @@
+/*
+    NOTE : gccでコンパイルする。
+*/
+
 #include <stdlib.h>
 
 void alloc(int** p) {

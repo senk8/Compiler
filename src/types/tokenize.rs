@@ -42,6 +42,8 @@ pub enum DelimitorKind {
     Rparen,
     Lbrace,
     Rbrace,
+    Lbracket,
+    Rbracket,
     Comma,
     Semicolon,
 }

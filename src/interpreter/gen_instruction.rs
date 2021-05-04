@@ -55,7 +55,7 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
                 NdAdd(_, _) | NdSub(_, _) => {
 
                     if let type_info @ TypeInfo::Pointer(_) = analyze_subtree(lhs) {
-                        let bytes = bytes_per_type(&type_info);
+                        let bytes = size_pointer_to(&type_info);
                         writeln!(stream, "  imul rdi, {}", bytes)?;
                     };
 
@@ -98,15 +98,7 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
             gen(stream, operand, n)?;
 
             let type_info = analyze_subtree(operand);
-            let bytes = bytes_per_type(&type_info);
-
-            /*
-            let bytes = match **operand {
-                NdNum(_) => 4,
-                NdLVar(_,ref type_info) => bytes_per_type(type_info),
-                _ => unreachable!(),
-            };
-            */
+            let bytes = size_of_type(&type_info);
 
             writeln!(stream, "  push {}", bytes)?;
         }
@@ -141,19 +133,7 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
                 writeln!(stream, "  pop {}", ARG_REGS[i])?;
             }
 
-            /*
-            今の設計だと、raxの値が変更されてしまい関数呼び出しがおかしくなる。
-            let label = *n;
-            *n += 1;
-            println!("  mov rdx, 0");
-            println!("  mov rax, 16");
-            println!("  mov rbx, rsp");
-            println!("  div rbx");
-            println!("  cmp rdx, 0");
-            println!("  je  .Lend{}", label);
-            println!("  sub rsp, 8");
-            println!(".Lend{}:", label);
-            */
+            //writeln!(stream,"  and spl, 0b11110000")?;
 
             writeln!(stream, "  call {}", name)?;
             writeln!(stream, "  push rax")?;
@@ -259,16 +239,6 @@ fn get_lvar_addr(stream: &mut BufWriter<File>, node: &Node) -> Result<()> {
     Ok(())
 }
 
-/*
-fn print_opration_epilogue(stream: &mut BufWriter<File>, message: &str) -> Result<()> {
-    writeln!(stream, "  pop rdi")?;
-    writeln!(stream, "  pop rax")?;
-    writeln!(stream, "{}", message)?;
-    writeln!(stream, "  push rax")?;
-    Ok(())
-}
-*/
-
 fn analyze_subtree(node: &Node) -> TypeInfo {
     match node {
         NdNum(_num) => {
@@ -304,16 +274,31 @@ fn analyze_subtree(node: &Node) -> TypeInfo {
     }
 }
 
-fn bytes_per_type(type_info: &TypeInfo) -> usize {
+fn size_of_type(type_info: &TypeInfo) -> usize{
+    match type_info {
+        TypeInfo::Int => 4,
+        TypeInfo::Pointer(_) => 8,
+    }
+}
+
+fn size_pointer_to(type_info: &TypeInfo) -> usize {
     if let TypeInfo::Pointer(dst_type) = type_info {
         match **dst_type {
             TypeInfo::Int => 4,
             TypeInfo::Pointer(_) => 8,
         }
     } else {
-        match type_info {
-            TypeInfo::Int => 4,
-            _ => unreachable!(),
-        }
-    }
+        panic!("Argument is not Pointer");
+   }
 }
+
+/*
+fn print_opration_epilogue(stream: &mut BufWriter<File>, message: &str) -> Result<()> {
+    writeln!(stream, "  pop rdi")?;
+    writeln!(stream, "  pop rax")?;
+    writeln!(stream, "{}", message)?;
+    writeln!(stream, "  push rax")?;
+    Ok(())
+}
+*/
+

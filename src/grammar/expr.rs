@@ -7,18 +7,28 @@ use crate::error_handler::parse_error::ParseError;
 use crate::error_handler::parse_error::ParseError::*;
 use crate::types::node::Node;
 use crate::types::node::Node::*;
+use crate::types::parse::TypeInfo;
 use crate::types::tokenize::TokenKind::*;
+use crate::types::tokenize::DelimitorKind::*;
 
 use super::assign::assign;
 
-//expr = assign | type ident
+//expr = assign | type ident ([ num ])?
 pub(super) fn expr(parser: &mut Parser, lexer: &mut Peekable<Lexer>) -> Result<Node, ParseError> {
     log::info!("Parsing is entered 'expr' !");
-    if let Some(ty) = parser.take_type(lexer) {
+    if let Some(type_) = parser.take_type(lexer) {
         let token = parser.take_token(lexer).ok_or(Eof)?;
 
+        /*
+        if parser.choice(lexer, Delim(Lbracket)) {
+            let array_size = parser.take_num(lexer)?;
+            type_ = TypeInfo::Array(Box::new(type_),array_size);
+            parser.expect(lexer, Delim(Rbracket))?;
+        }
+        */
+
         if let (Id(name), _) = token {
-            parser.set_var(name, ty);
+            parser.set_var(name, type_);
             Ok(NdVdecl(parser.offset()))
         } else {
             log::error!("error occured at expr!");
