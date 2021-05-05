@@ -59,15 +59,6 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
                         writeln!(stream, "  imul rdi, {}", bytes)?;
                     };
 
-                    /*
-                    if let NdLVar(_, ref type_kind) = **lhs {
-                        if let TypeInfo::Pointer(_) = type_kind {
-                            let bytes = bytes_per_type(type_kind);
-                            writeln!(stream, "  imul rdi, {}", bytes)?;
-                        }
-                    }
-                    */
-
                     match node {
                         NdAdd(_, _) => writeln!(stream, "  add rax, rdi")?,
                         NdSub(_, _) => writeln!(stream, "  sub rax, rdi")?,
@@ -230,6 +221,7 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
 
 fn get_lvar_addr(stream: &mut BufWriter<File>, node: &Node) -> Result<()> {
     if let NdLVar(offset, _) = *node {
+        //let offset = offset * size_of_type(type_info);
         writeln!(stream, "  mov rax, rbp")?;
         writeln!(stream, "  sub rax, {}", offset)?;
         writeln!(stream, "  push rax")?;
@@ -278,14 +270,21 @@ fn size_of_type(type_info: &TypeInfo) -> usize{
     match type_info {
         TypeInfo::Int => 4,
         TypeInfo::Pointer(_) => 8,
+        TypeInfo::Array(type_,array_size) => {
+            array_size * size_of_type(type_)
+        }
     }
 }
 
+/// for p++;
 fn size_pointer_to(type_info: &TypeInfo) -> usize {
     if let TypeInfo::Pointer(dst_type) = type_info {
         match **dst_type {
             TypeInfo::Int => 4,
             TypeInfo::Pointer(_) => 8,
+            TypeInfo::Array(_,_) => {
+                8
+            }
         }
     } else {
         panic!("Argument is not Pointer");

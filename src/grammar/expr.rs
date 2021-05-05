@@ -16,16 +16,17 @@ use super::assign::assign;
 //expr = assign | type ident ([ num ])?
 pub(super) fn expr(parser: &mut Parser, lexer: &mut Peekable<Lexer>) -> Result<Node, ParseError> {
     log::info!("Parsing is entered 'expr' !");
-    if let Some(type_) = parser.take_type(lexer) {
+    if let Some(mut type_) = parser.take_type(lexer) {
         let token = parser.take_token(lexer).ok_or(Eof)?;
 
-        /*
         if parser.choice(lexer, Delim(Lbracket)) {
-            let array_size = parser.take_num(lexer)?;
-            type_ = TypeInfo::Array(Box::new(type_),array_size);
-            parser.expect(lexer, Delim(Rbracket))?;
-        }
-        */
+            if let Some(Num(array_size)) = parser.take_num(lexer) {
+                type_ = TypeInfo::Array(Box::new(type_),array_size);
+                parser.expect(lexer, Delim(Rbracket))?;
+            }else{
+                panic!("Num is luck");
+            }
+       }
 
         if let (Id(name), _) = token {
             parser.set_var(name, type_);
