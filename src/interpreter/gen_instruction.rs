@@ -124,8 +124,8 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
                 writeln!(stream, "  pop {}", ARG_REGS[i])?;
             }
 
-            //writeln!(stream,"  and spl, 0b11110000")?;
-
+            //writeln!(stream, "  mov rbp, rsp")?;
+            //writeln!(stream, "  and rsp, 0xfffffffffffffff0")?;
             writeln!(stream, "  call {}", name)?;
             writeln!(stream, "  push rax")?;
         }
