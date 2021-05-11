@@ -124,9 +124,16 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
                 writeln!(stream, "  pop {}", ARG_REGS[i])?;
             }
 
-            //writeln!(stream, "  mov rbp, rsp")?;
-            //writeln!(stream, "  and rsp, 0xfffffffffffffff0")?;
+            // rspの値をrbxに残しておき、rspを8の倍数に調整する。調整後にrbxをスタックトップに置くことで、16の倍数になる。
+            writeln!(stream, "  mov rbx, rsp")?;
+            writeln!(stream, "  and rsp, 0xfffffffffffffff8")?;
+            writeln!(stream, "  push rbx")?;
+
             writeln!(stream, "  call {}", name)?;
+
+            // 調整前のrspに復帰する。
+            writeln!(stream, "  pop rsp")?;
+
             writeln!(stream, "  push rax")?;
         }
         NdAssign(lhs, rhs) => {

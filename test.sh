@@ -15,6 +15,7 @@ assert() {
   fi
 }
 
+assert 0 test_c/test_basic.c
 assert 12 test_c/fn1.c
 assert 5 test_c/fib.c
 assert 8 test_c/sizeof.c
