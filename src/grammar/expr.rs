@@ -8,27 +8,23 @@ use crate::error_handler::parse_error::ParseError::*;
 use crate::types::node::Node;
 use crate::types::node::Node::*;
 use crate::types::parse::TypeInfo;
-use crate::types::tokenize::TokenKind::*;
 use crate::types::tokenize::DelimitorKind::*;
+use crate::types::tokenize::TokenKind::*;
 
 use super::assign::assign;
+use super::add::add;
 
-//expr = assign | type ident ([ num ])?
+//expr = assign | type ident ([ add ])?
 pub(super) fn expr(parser: &mut Parser, lexer: &mut Peekable<Lexer>) -> Result<Node, ParseError> {
     log::info!("Parsing is entered 'expr' !");
-    if let Some(type_) = parser.take_type(lexer) {
+    if let Some(mut type_) = parser.take_type(lexer) {
         let token = parser.take_token(lexer).ok_or(Eof)?;
 
-        let type_ = if parser.choice(lexer, Delim(Lbracket)) {
-                                if let Some(Num(array_size)) = parser.take_num(lexer) {
-                                    parser.expect(lexer, Delim(Rbracket))?;
-                                    TypeInfo::Array(Box::new(type_),array_size)
-                                }else{
-                                    panic!("Num is luck");
-                                }
-                            }else{
-                                type_
-                            };
+        if parser.choice(lexer, Delim(Lbracket)) {
+            let node = add(parser, lexer);
+            parser.expect(lexer, Delim(Rbracket))?;
+            type_ = TypeInfo::Array(Box::new(type_));
+        };
 
         if let (Id(name), _) = token {
             parser.set_var(name, type_);

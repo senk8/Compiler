@@ -53,7 +53,6 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
             /* a type */
             match node {
                 NdAdd(_, _) | NdSub(_, _) => {
-
                     if let type_info @ TypeInfo::Pointer(_) = analyze_subtree(lhs) {
                         let bytes = size_pointer_to(&type_info);
                         writeln!(stream, "  imul rdi, {}", bytes)?;
@@ -240,9 +239,7 @@ fn get_lvar_addr(stream: &mut BufWriter<File>, node: &Node) -> Result<()> {
 
 fn analyze_subtree(node: &Node) -> TypeInfo {
     match node {
-        NdNum(_num) => {
-           TypeInfo::Int
-        },
+        NdNum(_num) => TypeInfo::Int,
         NdAdd(lhs, _)
         | NdSub(lhs, _)
         | NdMul(lhs, _)
@@ -250,36 +247,22 @@ fn analyze_subtree(node: &Node) -> TypeInfo {
         | NdEq(lhs, _)
         | NdNeq(lhs, _)
         | NdLt(lhs, _)
-        | NdLeq(lhs, _)
-        =>{
-            analyze_subtree(&lhs)
-        },
-        NdSizeof(operand) 
-        | NdRef(operand)
-        | NdDeref(operand)
-        =>{
-            analyze_subtree(&operand)
-        },
-        NdLVar(_,type_info)=>{
-            type_info.clone()
-        },
-        NdCall(_,_)=>{
-            TypeInfo::Int
-        },
+        | NdLeq(lhs, _) => analyze_subtree(&lhs),
+        NdSizeof(operand) | NdRef(operand) | NdDeref(operand) => analyze_subtree(&operand),
+        NdLVar(_, type_info) => type_info.clone(),
+        NdCall(_, _) => TypeInfo::Int,
         _ => {
-            dbg!("BUG:{}",node);
+            dbg!("BUG:{}", node);
             unreachable!()
-        },
+        }
     }
 }
 
-fn size_of_type(type_info: &TypeInfo) -> usize{
+fn size_of_type(type_info: &TypeInfo) -> usize {
     match type_info {
         TypeInfo::Int => 4,
         TypeInfo::Pointer(_) => 8,
-        TypeInfo::Array(type_,array_size) => {
-            array_size * size_of_type(type_)
-        }
+        TypeInfo::Array(type_) => 8,
     }
 }
 
@@ -289,13 +272,11 @@ fn size_pointer_to(type_info: &TypeInfo) -> usize {
         match **dst_type {
             TypeInfo::Int => 4,
             TypeInfo::Pointer(_) => 8,
-            TypeInfo::Array(_,_) => {
-                8
-            }
+            TypeInfo::Array(_) => 8,
         }
     } else {
         panic!("Argument is not Pointer");
-   }
+    }
 }
 
 /*
@@ -307,4 +288,3 @@ fn print_opration_epilogue(stream: &mut BufWriter<File>, message: &str) -> Resul
     Ok(())
 }
 */
-
