@@ -226,10 +226,9 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
 }
 
 fn get_lvar_addr(stream: &mut BufWriter<File>, node: &Node) -> Result<()> {
-    if let NdLVar(offset, _) = *node {
-        //let offset = offset * size_of_type(type_info);
+    if let NdLVar(offset, _ ) = *node {
         writeln!(stream, "  mov rax, rbp")?;
-        writeln!(stream, "  sub rax, {}", offset)?;
+        writeln!(stream, "  sub rax, {}", offset )?;
         writeln!(stream, "  push rax")?;
     } else {
         panic!("left hand side in Assign is not variable.");
@@ -262,29 +261,16 @@ fn size_of_type(type_info: &TypeInfo) -> usize {
     match type_info {
         TypeInfo::Int => 4,
         TypeInfo::Pointer(_) => 8,
-        TypeInfo::Array(type_) => 8,
+        TypeInfo::Array(type_,size_) => size_ * size_of_type(&*type_),
     }
 }
 
 /// for p++;
 fn size_pointer_to(type_info: &TypeInfo) -> usize {
     if let TypeInfo::Pointer(dst_type) = type_info {
-        match **dst_type {
-            TypeInfo::Int => 4,
-            TypeInfo::Pointer(_) => 8,
-            TypeInfo::Array(_) => 8,
-        }
+        size_of_type(dst_type)
     } else {
         panic!("Argument is not Pointer");
     }
 }
 
-/*
-fn print_opration_epilogue(stream: &mut BufWriter<File>, message: &str) -> Result<()> {
-    writeln!(stream, "  pop rdi")?;
-    writeln!(stream, "  pop rax")?;
-    writeln!(stream, "{}", message)?;
-    writeln!(stream, "  push rax")?;
-    Ok(())
-}
-*/

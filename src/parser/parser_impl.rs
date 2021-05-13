@@ -22,10 +22,10 @@ impl Parser {
             offset: 0,
         }
     }
-    pub fn set_var(&mut self, name: String, type_info: TypeInfo) -> () {
-        self.offset += 8;
+    pub fn set_var(&mut self, name: String, type_: TypeInfo) -> () {
+        self.offset += Self::size_of_type(&type_);
         self.symbol_table
-            .insert(name.clone(), LVar(self.offset, type_info));
+            .insert(name.clone(), LVar(self.offset, type_));
     }
 
     pub fn find_var(&self, name: String) -> Option<LVar> {
@@ -115,6 +115,16 @@ impl Parser {
                 true
             }
             _ => false,
+        }
+    }
+}
+
+impl Parser {
+    fn size_of_type(type_info: &TypeInfo) -> usize {
+        match type_info {
+            TypeInfo::Int => 8,
+            TypeInfo::Pointer(_) => 8,
+            TypeInfo::Array(type_,size_) => size_ * Self::size_of_type(&*type_),
         }
     }
 }

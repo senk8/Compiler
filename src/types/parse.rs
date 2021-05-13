@@ -5,5 +5,5 @@ pub struct LVar(pub usize, pub TypeInfo);
 pub enum TypeInfo {
     Int,
     Pointer(Box<TypeInfo>),
-    Array(Box<TypeInfo>),
+    Array(Box<TypeInfo>,usize),
 }

@@ -12,7 +12,6 @@ use crate::types::tokenize::DelimitorKind::*;
 use crate::types::tokenize::TokenKind::*;
 
 use super::assign::assign;
-use super::add::add;
 
 //expr = assign | type ident ([ add ])?
 pub(super) fn expr(parser: &mut Parser, lexer: &mut Peekable<Lexer>) -> Result<Node, ParseError> {
@@ -21,9 +20,13 @@ pub(super) fn expr(parser: &mut Parser, lexer: &mut Peekable<Lexer>) -> Result<N
         let token = parser.take_token(lexer).ok_or(Eof)?;
 
         if parser.choice(lexer, Delim(Lbracket)) {
-            let node = add(parser, lexer);
-            parser.expect(lexer, Delim(Rbracket))?;
-            type_ = TypeInfo::Array(Box::new(type_));
+            if let Some(Num(size_)) = parser.take_num(lexer) {
+                parser.expect(lexer, Delim(Rbracket))?;
+                type_ = TypeInfo::Array(Box::new(type_),size_);
+            } else {
+                log::error!("error occured at expr!");
+                return Err(ExpectedNumeric(token));
+            }
         };
 
         if let (Id(name), _) = token {
