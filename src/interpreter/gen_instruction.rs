@@ -53,7 +53,12 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
             /* a type */
             match node {
                 NdAdd(_, _) | NdSub(_, _) => {
-                    if let type_info @ TypeInfo::Pointer(_) = analyze_subtree(lhs) {
+                    let type_info = match analyze_subtree(lhs) {
+                        Array(type_,_)=>Pointer(type_),
+                        other => other
+                    };
+                    
+                    if TypeInfo::Pointer(_) = type_info {
                         let bytes = size_pointer_to(&type_info);
                         writeln!(stream, "  imul rdi, {}", bytes)?;
                     };
