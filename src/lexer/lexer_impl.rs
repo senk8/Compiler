@@ -50,7 +50,7 @@ impl<'a> Lexer<'a> {
 
         /* TODO : TokenizeError isn't used  */
         let val = Num(from_utf8(&self.txt[begin..self.pos])
-            .map(|s| usize::from_str_radix(s, 10))
+            .map(|s| s.parse::<usize>())
             .unwrap()
             .unwrap());
 
@@ -69,7 +69,7 @@ impl<'a> Lexer<'a> {
 
         /* TODO : TokenizeError isn't used  */
         let val = Id(from_utf8(&self.txt[begin..self.pos])
-            .map(|s| String::from(s))
+            .map(String::from)
             .unwrap());
 
         Some((val, pos))
@@ -80,7 +80,7 @@ impl<'a> Lexer<'a> {
         let mut message = format!("\n{}\n", from_utf8(self.txt).unwrap());
         message.push_str(&format!("{:>width$}", "^", width = pos + 1));
         message.push_str(&format!("\n{}", description));
-        return message;
+        message
     }
 }
 
@@ -88,11 +88,8 @@ impl<'a> Iterator for Lexer<'a> {
     type Item = Token;
     fn next(&mut self) -> Option<Token> {
         // Consumes as long as a '\n' or ' ' remains.
-        loop {
-            match *self.txt.get(self.pos)? {
-                b' ' | b'\n' => self.pos += 1,
-                _ => break,
-            }
+        while let b' ' | b'\n' = *self.txt.get(self.pos)? {
+            self.pos += 1
         }
         match self.txt[self.pos..] {
             [b's', b'i', b'z', b'e', b'o', b'f', ..] => self.lex_token(Opr(Sizeof), 6),
@@ -124,7 +121,7 @@ impl<'a> Iterator for Lexer<'a> {
             [b']', ..] => self.lex_token(Delim(Rbracket), 1),
             [b'0'..=b'9', ..] => self.lex_num(),
             [b'a'..=b'z', ..] => self.lex_ident(),
-            _ => panic!(self.error_at("unexpected token")),
+            _ => panic!("{}", self.error_at("unexpected token")),
         }
     }
 }

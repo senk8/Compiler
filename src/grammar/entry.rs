@@ -12,7 +12,7 @@ pub(super) fn program(
     log::info!("Parsing is entered 'program' !");
     let mut trees = vec![];
 
-    while let Some(_) = parser.look_ahead(lexer) {
+    while parser.look_ahead(lexer).is_some() {
         trees.push(super::decl::decl(parser, lexer)?);
         parser.reset_table();
     }

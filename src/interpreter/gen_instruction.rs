@@ -23,7 +23,7 @@ pub fn gen_inst_x86_64(asts: Vec<Node>, path_name: &str) -> Result<()> {
 
     let mut n = 0;
     for ast in asts.iter() {
-        gen(&mut stream, &ast, &mut n)?;
+        gen(&mut stream, ast, &mut n)?;
     }
 
     stream.flush()?;
@@ -54,10 +54,10 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
             match node {
                 NdAdd(_, _) | NdSub(_, _) => {
                     let type_info = match analyze_subtree(lhs) {
-                        TypeInfo::Array(type_,_)=>TypeInfo::Pointer(type_),
-                        other => other
+                        TypeInfo::Array(type_, _) => TypeInfo::Pointer(type_),
+                        other => other,
                     };
-                    
+
                     if let TypeInfo::Pointer(_) = type_info {
                         let bytes = size_pointer_to(&type_info);
                         writeln!(stream, "  imul rdi, {}", bytes)?;
@@ -119,9 +119,7 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
             }
             gen(stream, body, n)?; //NdBlock
         }
-        NdVdecl(_) => {
-            ();
-        }
+        NdVdecl(_) => {}
         NdCall(name, args) => {
             for i in 0..args.len() {
                 gen(stream, &args[i], n)?;
@@ -142,7 +140,7 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
         }
         NdAssign(lhs, rhs) => {
             if let NdDeref(ref node) = **lhs {
-                gen(stream, &node, n)?;
+                gen(stream, node, n)?;
             } else {
                 get_lvar_addr(stream, lhs)?;
             }
@@ -212,13 +210,10 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
             writeln!(stream, ".Lend{}:", label)?;
         }
         NdBlock(nodes) => {
-            let len = nodes.len();
-            for i in 0..len {
-                gen(stream, &nodes[i], n)?;
+            for node in nodes.iter() {
+                gen(stream, node, n)?;
 
-                if let NdReturn(_) = &nodes[i] {
-                    continue;
-                } else if let NdBlock(_) = &nodes[i] {
+                if let NdReturn(_) | NdBlock(_) = node {
                     continue;
                 }
 
@@ -227,13 +222,13 @@ fn gen(stream: &mut BufWriter<File>, node: &Node, n: &mut usize) -> Result<()> {
             }
         }
     };
-    return Ok(());
+    Ok(())
 }
 
 fn get_lvar_addr(stream: &mut BufWriter<File>, node: &Node) -> Result<()> {
-    if let NdLVar(offset, _ ) = *node {
+    if let NdLVar(offset, _) = *node {
         writeln!(stream, "  mov rax, rbp")?;
-        writeln!(stream, "  sub rax, {}", offset )?;
+        writeln!(stream, "  sub rax, {}", offset)?;
         writeln!(stream, "  push rax")?;
     } else {
         panic!("left hand side in Assign is not variable.");
@@ -251,8 +246,8 @@ fn analyze_subtree(node: &Node) -> TypeInfo {
         | NdEq(lhs, _)
         | NdNeq(lhs, _)
         | NdLt(lhs, _)
-        | NdLeq(lhs, _) => analyze_subtree(&lhs),
-        NdSizeof(operand) | NdRef(operand) | NdDeref(operand) => analyze_subtree(&operand),
+        | NdLeq(lhs, _) => analyze_subtree(lhs),
+        NdSizeof(operand) | NdRef(operand) | NdDeref(operand) => analyze_subtree(operand),
         NdLVar(_, type_info) => type_info.clone(),
         NdCall(_, _) => TypeInfo::Int,
         _ => {
@@ -266,7 +261,7 @@ fn size_of_type(type_info: &TypeInfo) -> usize {
     match type_info {
         TypeInfo::Int => 4,
         TypeInfo::Pointer(_) => 8,
-        TypeInfo::Array(type_,size_) => size_ * size_of_type(&*type_),
+        TypeInfo::Array(type_, size_) => size_ * size_of_type(&*type_),
     }
 }
 
@@ -278,4 +273,3 @@ fn size_pointer_to(type_info: &TypeInfo) -> usize {
         panic!("Argument is not Pointer");
     }
 }
-

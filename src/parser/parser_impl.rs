@@ -15,6 +15,12 @@ use crate::types::parse::TypeInfo;
 
 use core::iter::Peekable;
 
+impl Default for Parser {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Parser {
     pub fn new() -> Parser {
         Parser {
@@ -22,7 +28,7 @@ impl Parser {
             offset: 0,
         }
     }
-    pub fn set_var(&mut self, name: String, type_: TypeInfo) -> () {
+    pub fn set_var(&mut self, name: String, type_: TypeInfo) {
         self.offset += Self::size_of_type(&type_);
         self.symbol_table
             .insert(name.clone(), LVar(self.offset, type_));
@@ -32,7 +38,7 @@ impl Parser {
         self.symbol_table.get(&name).cloned()
     }
 
-    pub fn reset_table(&mut self) -> () {
+    pub fn reset_table(&mut self) {
         self.symbol_table.clear();
     }
 
@@ -117,14 +123,12 @@ impl Parser {
             _ => false,
         }
     }
-}
 
-impl Parser {
     fn size_of_type(type_info: &TypeInfo) -> usize {
         match type_info {
             TypeInfo::Int => 8,
             TypeInfo::Pointer(_) => 8,
-            TypeInfo::Array(type_,size_) => size_ * Self::size_of_type(&*type_),
+            TypeInfo::Array(type_, size_) => size_ * Self::size_of_type(&*type_),
         }
     }
 }

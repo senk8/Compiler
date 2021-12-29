@@ -22,7 +22,7 @@ pub(super) fn expr(parser: &mut Parser, lexer: &mut Peekable<Lexer>) -> Result<N
         if parser.choice(lexer, Delim(Lbracket)) {
             if let Some(Num(size_)) = parser.take_num(lexer) {
                 parser.expect(lexer, Delim(Rbracket))?;
-                type_ = TypeInfo::Array(Box::new(type_),size_);
+                type_ = TypeInfo::Array(Box::new(type_), size_);
             } else {
                 log::error!("error occured at expr!");
                 return Err(ExpectedNumeric(token));
